@@ -1,0 +1,63 @@
+name: PR - Security
+
+on:
+  pull_request:
+    branches: [main, develop]
+
+permissions:
+  contents: read
+  security-events: write
+  pull-requests: write
+
+jobs:
+  security:
+    name: Security Scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: '10.28.2'
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Semgrep SAST scan
+        uses: semgrep/semgrep-action@v1
+        with:
+          config: >-
+            p/security-audit
+            p/secrets
+            p/owasp-top-ten
+            p/xss
+            p/typescript
+        env:
+          SEMGREP_APP_TOKEN: ${{ secrets.SEMGREP_APP_TOKEN }}
+
+      - name: Upload SARIF to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        if: always() && hashFiles('semgrep.sarif') != ''
+        with:
+          sarif_file: semgrep.sarif
+
+      - name: Dependency audit
+        run: pnpm audit --audit-level high
+        continue-on-error: true
+
+      - name: Comment on PR if scan failed
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '**Security scan detected issues.** Check the workflow logs and the Security tab for details.'
+            });
