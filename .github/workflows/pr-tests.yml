@@ -29,8 +29,6 @@ jobs:
 
       - name: Run tests with coverage
         run: pnpm test:coverage
-        # vitest.config.ts enforces 95% thresholds on lines/functions/branches/statements
-        # If coverage drops below 95%, this step fails automatically — no bash parsing needed
 
       - name: Upload coverage artifact
         if: always()
