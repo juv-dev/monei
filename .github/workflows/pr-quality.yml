@@ -1,13 +1,15 @@
 name: PR - Quality
 
 on:
-  pull_request:
-    branches: [main, develop]
+  workflow_run:
+    workflows: ['PR - Security']
+    types: [completed]
 
 jobs:
   lint:
     name: Lint
     runs-on: ubuntu-latest
+    if: github.event.workflow_run.conclusion == 'success'
     steps:
       - uses: actions/checkout@v4
 
@@ -28,6 +30,7 @@ jobs:
   format:
     name: Format
     runs-on: ubuntu-latest
+    if: github.event.workflow_run.conclusion == 'success'
     steps:
       - uses: actions/checkout@v4
 
@@ -48,6 +51,7 @@ jobs:
   typecheck:
     name: Typecheck
     runs-on: ubuntu-latest
+    if: github.event.workflow_run.conclusion == 'success'
     steps:
       - uses: actions/checkout@v4
 
