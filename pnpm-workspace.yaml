@@ -1,0 +1,14 @@
+packages:
+  - .
+
+onlyBuiltDependencies:
+  - esbuild
+  - vue-demi
+
+pnpm:
+  minimumReleaseAge: 1440
+  blockExoticSubdeps: true
+  trustPolicy: no-downgrade
+  overrides:
+    minimatch@>=9.0.0 <9.0.7: '>=9.0.7'
+    serialize-javascript@<=7.0.2: '>=7.0.3'
