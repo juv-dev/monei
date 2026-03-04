@@ -34,3 +34,4 @@ coverage
 .claude/
 .continue/
 skills-lock.json
+.vercel
