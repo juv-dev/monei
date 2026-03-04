@@ -20,7 +20,7 @@
   },
   "dependencies": {
     "@supabase/supabase-js": "2.98.0",
-    "@tailwindcss/vite": "4.1.18",
+    "@tailwindcss/vite": "4.2.1",
     "@tanstack/vue-query": "5.92.9",
     "@vitest/coverage-v8": "4.0.18",
     "chart.js": "4.5.1",
