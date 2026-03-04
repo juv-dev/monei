@@ -1,20 +1,17 @@
 packages:
-  - '.'
+  - .
+
+onlyBuiltDependencies:
+  - esbuild
+  - vue-demi
 
 pnpm:
-  # Solo instala paquetes publicados hace más de 24h (protege contra ataques de publish-and-yank)
   minimumReleaseAge: 1440
-
-  # Bloquea dependencias transitivas de fuentes exóticas (git+ssh, tarballs remotos)
   blockExoticSubdeps: true
-
-  # Falla si una dependencia baja su nivel de confianza (ej: pierde provenance attestation)
   trustPolicy: no-downgrade
-
-  # Solo estos paquetes pueden ejecutar scripts de instalación (postinstall, preinstall)
   onlyBuiltDependencies:
     - esbuild
-
+    - vue-demi
   overrides:
     minimatch@>=9.0.0 <9.0.7: '>=9.0.7'
     serialize-javascript@<=7.0.2: '>=7.0.3'
