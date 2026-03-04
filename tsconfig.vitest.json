@@ -1,0 +1,11 @@
+{
+	"extends": "./tsconfig.app.json",
+		"include": ["src/**/*", "test/**/*", "env.d.ts", "remotes.d.ts", "components.d.ts"],
+	"exclude": [],
+	"compilerOptions": {
+		"composite": true,
+		"lib": ["DOM", "ESNext"],
+		"types": ["node"]
+	},
+
+}
