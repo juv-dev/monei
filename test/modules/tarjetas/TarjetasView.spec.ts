@@ -120,9 +120,7 @@ describe('should TarjetasView', () => {
     await wrapper.find('[data-testid="tarjetas-form"]').trigger('submit')
     await flushPromises()
 
-    expect(wrapper.find('[data-testid="form-error"]').text()).toBe(
-      'La descripción es requerida',
-    )
+    expect(wrapper.find('[data-testid="form-error"]').text()).toBe('La descripción es requerida')
   })
 
   it('should show error when lineaTotal is zero or invalid', async () => {
@@ -163,9 +161,7 @@ describe('should TarjetasView', () => {
     await flushPromises()
 
     expect(wrapper.find('[data-testid="form-error"]').exists()).toBe(false)
-    expect(
-      (wrapper.find('[data-testid="descripcion-input"]').element as HTMLInputElement).value,
-    ).toBe('')
+    expect((wrapper.find('[data-testid="descripcion-input"]').element as HTMLInputElement).value).toBe('')
   })
 
   it('should add tarjeta with pagoMinimo and saldoTotal fields', async () => {

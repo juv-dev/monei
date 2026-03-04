@@ -94,9 +94,7 @@ describe('should deudasApi', () => {
   })
 
   it('should throw when updating non-existent deuda', async () => {
-    await expect(deudasApi.update(userId, 'fake-id', { nombrePersona: 'X' })).rejects.toThrow(
-      'Deuda not found',
-    )
+    await expect(deudasApi.update(userId, 'fake-id', { nombrePersona: 'X' })).rejects.toThrow('Deuda not found')
   })
 
   it('should persist update in localStorage', async () => {

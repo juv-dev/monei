@@ -2,10 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest'
 import { flushPromises } from '@vue/test-utils'
 import { withSetup } from '../../helpers/setup'
 import { useAuthStore } from '~/stores/auth'
-import {
-  useTarjetas,
-  TARJETAS_QUERY_KEY,
-} from '~/modules/tarjetas/composables/useTarjetas'
+import { useTarjetas, TARJETAS_QUERY_KEY } from '~/modules/tarjetas/composables/useTarjetas'
 import { tarjetasApi } from '~/modules/tarjetas/services/api'
 
 describe('should useTarjetas', () => {

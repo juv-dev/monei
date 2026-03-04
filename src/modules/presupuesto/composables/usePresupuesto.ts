@@ -4,8 +4,7 @@ import { useAuthStore } from '~/stores/auth'
 import { presupuestoApi } from '../services/api'
 import type { NuevoGasto, CategoriaResumen } from '~/shared/types'
 
-export const PRESUPUESTO_QUERY_KEY = (userId: string) =>
-  ['finance', userId, 'presupuesto'] as const
+export const PRESUPUESTO_QUERY_KEY = (userId: string) => ['finance', userId, 'presupuesto'] as const
 
 export function usePresupuesto() {
   const auth = useAuthStore()
@@ -20,9 +19,7 @@ export function usePresupuesto() {
 
   const gastos = computed(() => query.data.value ?? [])
 
-  const totalGastado = computed(
-    () => gastos.value.reduce((sum, item) => sum + item.monto, 0),
-  )
+  const totalGastado = computed(() => gastos.value.reduce((sum, item) => sum + item.monto, 0))
 
   /** Gastos agrupados por categoría con subtotal */
   const porCategoria = computed<CategoriaResumen[]>(() => {
@@ -40,9 +37,7 @@ export function usePresupuesto() {
   })
 
   /** Lista de nombres de categorías únicas ya registradas */
-  const categorias = computed<string[]>(() =>
-    Array.from(new Set(gastos.value.map((g) => g.categoria || 'General'))),
-  )
+  const categorias = computed<string[]>(() => Array.from(new Set(gastos.value.map((g) => g.categoria || 'General'))))
 
   const addMutation = useMutation({
     mutationFn: (data: NuevoGasto) => presupuestoApi.create(userId.value, data),
@@ -54,13 +49,8 @@ export function usePresupuesto() {
   })
 
   const updateMutation = useMutation({
-    mutationFn: ({
-      id,
-      data,
-    }: {
-      id: string
-      data: { monto?: number; descripcion?: string; categoria?: string }
-    }) => presupuestoApi.update(userId.value, id, data),
+    mutationFn: ({ id, data }: { id: string; data: { monto?: number; descripcion?: string; categoria?: string } }) =>
+      presupuestoApi.update(userId.value, id, data),
     onSuccess: () => {
       void queryClient.invalidateQueries({
         queryKey: PRESUPUESTO_QUERY_KEY(userId.value),
@@ -85,10 +75,8 @@ export function usePresupuesto() {
     isError: computed(() => query.isError.value),
     totalGastado,
     addGasto: (data: NuevoGasto) => addMutation.mutate(data),
-    updateGasto: (
-      id: string,
-      data: { monto?: number; descripcion?: string; categoria?: string },
-    ) => updateMutation.mutate({ id, data }),
+    updateGasto: (id: string, data: { monto?: number; descripcion?: string; categoria?: string }) =>
+      updateMutation.mutate({ id, data }),
     removeGasto: (id: string) => removeMutation.mutate(id),
     isAdding: computed(() => addMutation.isPending.value),
     isUpdating: computed(() => updateMutation.isPending.value),

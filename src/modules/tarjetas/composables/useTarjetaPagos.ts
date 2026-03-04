@@ -6,8 +6,7 @@ import { tarjetasApi } from '../services/api'
 import { TARJETAS_QUERY_KEY } from './useTarjetas'
 import type { NuevoTarjetaPago } from '../types'
 
-export const PAGOS_QUERY_KEY = (userId: string) =>
-  ['finance', userId, 'tarjeta_pagos'] as const
+export const PAGOS_QUERY_KEY = (userId: string) => ['finance', userId, 'tarjeta_pagos'] as const
 
 export function useTarjetaPagos() {
   const auth = useAuthStore()
@@ -29,9 +28,7 @@ export function useTarjetaPagos() {
       if (tarjeta) {
         await tarjetasApi.update(userId.value, data.tarjetaId, {
           montoDeudaActual: Math.max(0, tarjeta.montoDeudaActual - data.monto),
-          saldoTotal: tarjeta.saldoTotal != null
-            ? Math.max(0, tarjeta.saldoTotal - data.monto)
-            : undefined,
+          saldoTotal: tarjeta.saldoTotal != null ? Math.max(0, tarjeta.saldoTotal - data.monto) : undefined,
         })
       }
 
@@ -53,9 +50,7 @@ export function useTarjetaPagos() {
   const pagos = computed(() => query.data.value ?? [])
 
   function pagosDeTarjeta(tarjetaId: string) {
-    return pagos.value
-      .filter((p) => p.tarjetaId === tarjetaId)
-      .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+    return pagos.value.filter((p) => p.tarjetaId === tarjetaId).sort((a, b) => b.createdAt.localeCompare(a.createdAt))
   }
 
   return {

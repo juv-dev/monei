@@ -4,8 +4,7 @@ import { useAuthStore } from '~/stores/auth'
 import { ingresosApi } from '../services/api'
 import type { NuevoIngreso } from '../types'
 
-export const INGRESOS_QUERY_KEY = (userId: string) =>
-  ['finance', userId, 'ingresos'] as const
+export const INGRESOS_QUERY_KEY = (userId: string) => ['finance', userId, 'ingresos'] as const
 
 export function useIngresos() {
   const auth = useAuthStore()
@@ -18,9 +17,7 @@ export function useIngresos() {
     enabled: computed(() => !!userId.value),
   })
 
-  const totalIngresos = computed(
-    () => query.data.value?.reduce((sum, item) => sum + item.monto, 0) ?? 0,
-  )
+  const totalIngresos = computed(() => query.data.value?.reduce((sum, item) => sum + item.monto, 0) ?? 0)
 
   const addMutation = useMutation({
     mutationFn: (data: NuevoIngreso) => ingresosApi.create(userId.value, data),

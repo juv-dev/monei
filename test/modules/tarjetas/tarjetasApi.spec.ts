@@ -82,9 +82,9 @@ describe('should tarjetasApi', () => {
   })
 
   it('should throw when updating non-existent tarjeta', async () => {
-    await expect(
-      tarjetasApi.update(userId, 'non-existent-id', { descripcion: 'X' }),
-    ).rejects.toThrow('Tarjeta not found')
+    await expect(tarjetasApi.update(userId, 'non-existent-id', { descripcion: 'X' })).rejects.toThrow(
+      'Tarjeta not found',
+    )
   })
 
   it('should persist tarjeta update in localStorage', async () => {

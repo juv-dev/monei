@@ -2,10 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest'
 import { flushPromises } from '@vue/test-utils'
 import { withSetup } from '../../helpers/setup'
 import { useAuthStore } from '~/stores/auth'
-import {
-  usePresupuesto,
-  PRESUPUESTO_QUERY_KEY,
-} from '~/modules/presupuesto/composables/usePresupuesto'
+import { usePresupuesto, PRESUPUESTO_QUERY_KEY } from '~/modules/presupuesto/composables/usePresupuesto'
 import { presupuestoApi } from '~/modules/presupuesto/services/api'
 
 describe('should usePresupuesto', () => {
@@ -157,13 +154,15 @@ describe('should usePresupuesto', () => {
 
   it('should fallback to General for legacy gastos without categoria', async () => {
     // Simulate legacy data stored without categoria field (e.g. old app data)
-    const legacyData = JSON.stringify([{
-      id: 'legacy-1',
-      userId: 'jugaz',
-      monto: 75,
-      descripcion: 'Old item',
-      createdAt: new Date().toISOString(),
-    }])
+    const legacyData = JSON.stringify([
+      {
+        id: 'legacy-1',
+        userId: 'jugaz',
+        monto: 75,
+        descripcion: 'Old item',
+        createdAt: new Date().toISOString(),
+      },
+    ])
     localStorage.setItem('finance_jugaz_presupuesto', legacyData)
 
     const { result, unmount } = setupWithUser()

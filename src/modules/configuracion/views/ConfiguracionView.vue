@@ -22,7 +22,6 @@ async function handleLogout(): Promise<void> {
 <template>
   <div class="min-h-screen bg-[#F0F2F5]" data-testid="configuracion-view">
     <div class="max-w-2xl mx-auto p-5 lg:p-8 space-y-5">
-
       <div>
         <h1 class="text-2xl lg:text-3xl font-bold text-[#1A1A2E]">Configuración</h1>
         <p class="text-sm text-[#64748B] mt-0.5">Gestiona tu cuenta y preferencias</p>
@@ -30,7 +29,7 @@ async function handleLogout(): Promise<void> {
 
       <div
         class="rounded-3xl p-6 lg:p-8 relative overflow-hidden shadow-lg"
-        style="background: linear-gradient(135deg, #B6A77A 0%, #8A7050 100%)"
+        style="background: linear-gradient(135deg, #b6a77a 0%, #8a7050 100%)"
       >
         <div class="absolute -top-10 -right-10 w-44 h-44 rounded-full opacity-[0.08]" style="background: white"></div>
         <div class="absolute -bottom-14 -left-6 w-52 h-52 rounded-full opacity-[0.05]" style="background: white"></div>
@@ -52,9 +51,13 @@ async function handleLogout(): Promise<void> {
           </div>
 
           <div>
-            <p class="text-white text-xl font-black" data-testid="user-display-name">{{ auth.currentUser?.displayName }}</p>
+            <p class="text-white text-xl font-black" data-testid="user-display-name">
+              {{ auth.currentUser?.displayName }}
+            </p>
             <p class="text-white/60 text-sm mt-0.5" data-testid="user-email">{{ auth.currentUser?.username }}</p>
-            <span class="inline-flex items-center gap-1.5 mt-2 text-xs font-semibold bg-white/20 text-white rounded-full px-3 py-1">
+            <span
+              class="inline-flex items-center gap-1.5 mt-2 text-xs font-semibold bg-white/20 text-white rounded-full px-3 py-1"
+            >
               <span class="w-1.5 h-1.5 rounded-full bg-white/80 inline-block"></span>
               Sesión activa
             </span>
@@ -64,8 +67,11 @@ async function handleLogout(): Promise<void> {
 
       <div class="bg-white rounded-2xl shadow-sm border border-[#EEEEF0] overflow-hidden">
         <div class="flex items-center gap-3 px-6 py-5 border-b border-[#F0F2F5]">
-          <div class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style="background: rgba(182,167,122,0.15)">
-            <Shield :size="18" style="color: #8A7050" aria-hidden="true" />
+          <div
+            class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+            style="background: rgba(182, 167, 122, 0.15)"
+          >
+            <Shield :size="18" style="color: #8a7050" aria-hidden="true" />
           </div>
           <div>
             <h2 class="text-sm font-bold text-[#1A1A2E]">Información de la cuenta</h2>
@@ -78,7 +84,9 @@ async function handleLogout(): Promise<void> {
             <UserIcon :size="16" class="text-[#94A3B8] shrink-0" aria-hidden="true" />
             <div>
               <p class="text-xs text-[#94A3B8] uppercase tracking-wide font-semibold">Nombre</p>
-              <p class="text-sm text-[#1A1A2E] font-medium" data-testid="info-name">{{ auth.currentUser?.displayName }}</p>
+              <p class="text-sm text-[#1A1A2E] font-medium" data-testid="info-name">
+                {{ auth.currentUser?.displayName }}
+              </p>
             </div>
           </div>
 
@@ -86,7 +94,9 @@ async function handleLogout(): Promise<void> {
             <Mail :size="16" class="text-[#94A3B8] shrink-0" aria-hidden="true" />
             <div>
               <p class="text-xs text-[#94A3B8] uppercase tracking-wide font-semibold">Correo</p>
-              <p class="text-sm text-[#1A1A2E] font-medium" data-testid="info-email">{{ auth.currentUser?.username }}</p>
+              <p class="text-sm text-[#1A1A2E] font-medium" data-testid="info-email">
+                {{ auth.currentUser?.username }}
+              </p>
             </div>
           </div>
 
@@ -113,7 +123,6 @@ async function handleLogout(): Promise<void> {
           </div>
         </div>
       </div>
-
     </div>
   </div>
 </template>

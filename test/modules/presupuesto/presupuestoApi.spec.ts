@@ -117,9 +117,7 @@ describe('should presupuestoApi', () => {
   })
 
   it('should throw when updating non-existent gasto', async () => {
-    await expect(
-      presupuestoApi.update(userId, 'fake-id', { monto: 500 }),
-    ).rejects.toThrow('Gasto not found')
+    await expect(presupuestoApi.update(userId, 'fake-id', { monto: 500 })).rejects.toThrow('Gasto not found')
   })
 
   it('should persist update in localStorage', async () => {

@@ -6,8 +6,7 @@ import type { NuevaTarjeta } from '../types'
 
 type UpdatePayload = { id: string; data: Partial<NuevaTarjeta> }
 
-export const TARJETAS_QUERY_KEY = (userId: string) =>
-  ['finance', userId, 'tarjetas'] as const
+export const TARJETAS_QUERY_KEY = (userId: string) => ['finance', userId, 'tarjetas'] as const
 
 export function useTarjetas() {
   const auth = useAuthStore()
@@ -20,13 +19,9 @@ export function useTarjetas() {
     enabled: computed(() => !!userId.value),
   })
 
-  const totalTarjetas = computed(
-    () => query.data.value?.reduce((sum, item) => sum + item.montoDeudaActual, 0) ?? 0,
-  )
+  const totalTarjetas = computed(() => query.data.value?.reduce((sum, item) => sum + item.montoDeudaActual, 0) ?? 0)
 
-  const lineaTotalCombinada = computed(
-    () => query.data.value?.reduce((sum, item) => sum + item.lineaTotal, 0) ?? 0,
-  )
+  const lineaTotalCombinada = computed(() => query.data.value?.reduce((sum, item) => sum + item.lineaTotal, 0) ?? 0)
 
   const addMutation = useMutation({
     mutationFn: (data: NuevaTarjeta) => tarjetasApi.create(userId.value, data),

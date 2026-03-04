@@ -126,9 +126,7 @@ describe('should PresupuestoView', () => {
     await flushPromises()
 
     expect(wrapper.find('[data-testid="form-error"]').exists()).toBe(false)
-    expect(
-      (wrapper.find('[data-testid="categoria-input"]').element as HTMLInputElement).value,
-    ).toBe('')
+    expect((wrapper.find('[data-testid="categoria-input"]').element as HTMLInputElement).value).toBe('')
   })
 
   it('should show inline add form after creating a category', async () => {
@@ -991,5 +989,4 @@ describe('should PresupuestoView', () => {
     const stored = await presupuestoApi.getAll('jugaz')
     expect(stored[0].categoria).toBe('Hogar')
   })
-
 })

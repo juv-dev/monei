@@ -20,14 +20,27 @@ describe('should useInsights', () => {
     })
   }
 
-  function nextId() { return `seed-${++uid}` }
+  function nextId() {
+    return `seed-${++uid}`
+  }
 
-  function seedData(userId: string, data: {
-    ingresos?: { monto: number; descripcion: string }[]
-    gastos?: { monto: number; descripcion: string; categoria: string }[]
-    deudas?: { nombrePersona: string; totalDeuda: number; tasaInteres: number; cuotasPagadas: number; montoActualPendiente: number; cuotaMensual?: number; descripcion: string }[]
-    tarjetas?: { lineaTotal: number; montoDeudaActual: number; pagoMinimo?: number; descripcion: string }[]
-  }) {
+  function seedData(
+    userId: string,
+    data: {
+      ingresos?: { monto: number; descripcion: string }[]
+      gastos?: { monto: number; descripcion: string; categoria: string }[]
+      deudas?: {
+        nombrePersona: string
+        totalDeuda: number
+        tasaInteres: number
+        cuotasPagadas: number
+        montoActualPendiente: number
+        cuotaMensual?: number
+        descripcion: string
+      }[]
+      tarjetas?: { lineaTotal: number; montoDeudaActual: number; pagoMinimo?: number; descripcion: string }[]
+    },
+  ) {
     const now = new Date().toISOString()
     if (data.ingresos) {
       const items = data.ingresos.map((i) => ({ id: nextId(), userId, createdAt: now, ...i }))
@@ -100,7 +113,17 @@ describe('should useInsights', () => {
     seedData('jugaz', {
       ingresos: [{ monto: 1000, descripcion: 'Sueldo' }],
       gastos: [{ monto: 2000, descripcion: 'Exceso', categoria: 'General' }],
-      deudas: [{ nombrePersona: 'Banco', totalDeuda: 10000, tasaInteres: 30, cuotasPagadas: 0, montoActualPendiente: 10000, cuotaMensual: 800, descripcion: 'Préstamo' }],
+      deudas: [
+        {
+          nombrePersona: 'Banco',
+          totalDeuda: 10000,
+          tasaInteres: 30,
+          cuotasPagadas: 0,
+          montoActualPendiente: 10000,
+          cuotaMensual: 800,
+          descripcion: 'Préstamo',
+        },
+      ],
       tarjetas: [{ lineaTotal: 5000, montoDeudaActual: 4500, descripcion: 'Visa' }],
     })
     const { result, unmount } = setupWithUser()
@@ -216,7 +239,17 @@ describe('should useInsights', () => {
   it('should show high commitments alert', async () => {
     seedData('jugaz', {
       ingresos: [{ monto: 2000, descripcion: 'Sueldo' }],
-      deudas: [{ nombrePersona: 'Banco', totalDeuda: 5000, tasaInteres: 10, cuotasPagadas: 0, montoActualPendiente: 5000, cuotaMensual: 900, descripcion: 'Préstamo' }],
+      deudas: [
+        {
+          nombrePersona: 'Banco',
+          totalDeuda: 5000,
+          tasaInteres: 10,
+          cuotasPagadas: 0,
+          montoActualPendiente: 5000,
+          cuotaMensual: 900,
+          descripcion: 'Préstamo',
+        },
+      ],
     })
     const { result, unmount } = setupWithUser()
     await flushPromises()
@@ -297,15 +330,17 @@ describe('should useInsights', () => {
 
   it('should project debt without interest', async () => {
     seedData('jugaz', {
-      deudas: [{
-        nombrePersona: 'Amigo',
-        totalDeuda: 1000,
-        tasaInteres: 0,
-        cuotasPagadas: 0,
-        montoActualPendiente: 1000,
-        cuotaMensual: 200,
-        descripcion: 'Préstamo',
-      }],
+      deudas: [
+        {
+          nombrePersona: 'Amigo',
+          totalDeuda: 1000,
+          tasaInteres: 0,
+          cuotasPagadas: 0,
+          montoActualPendiente: 1000,
+          cuotaMensual: 200,
+          descripcion: 'Préstamo',
+        },
+      ],
     })
     const { result, unmount } = setupWithUser()
     await flushPromises()
@@ -318,15 +353,17 @@ describe('should useInsights', () => {
 
   it('should project debt with interest', async () => {
     seedData('jugaz', {
-      deudas: [{
-        nombrePersona: 'Banco',
-        totalDeuda: 10000,
-        tasaInteres: 12,
-        cuotasPagadas: 0,
-        montoActualPendiente: 10000,
-        cuotaMensual: 500,
-        descripcion: 'Préstamo',
-      }],
+      deudas: [
+        {
+          nombrePersona: 'Banco',
+          totalDeuda: 10000,
+          tasaInteres: 12,
+          cuotasPagadas: 0,
+          montoActualPendiente: 10000,
+          cuotaMensual: 500,
+          descripcion: 'Préstamo',
+        },
+      ],
     })
     const { result, unmount } = setupWithUser()
     await flushPromises()
@@ -340,14 +377,16 @@ describe('should useInsights', () => {
 
   it('should skip debts with no cuotaMensual', async () => {
     seedData('jugaz', {
-      deudas: [{
-        nombrePersona: 'Amigo',
-        totalDeuda: 500,
-        tasaInteres: 0,
-        cuotasPagadas: 0,
-        montoActualPendiente: 500,
-        descripcion: 'Sin cuota',
-      }],
+      deudas: [
+        {
+          nombrePersona: 'Amigo',
+          totalDeuda: 500,
+          tasaInteres: 0,
+          cuotasPagadas: 0,
+          montoActualPendiente: 500,
+          descripcion: 'Sin cuota',
+        },
+      ],
     })
     const { result, unmount } = setupWithUser()
     await flushPromises()
@@ -441,15 +480,17 @@ describe('should useInsights', () => {
 
   it('should return high interest tip for expensive debts', async () => {
     seedData('jugaz', {
-      deudas: [{
-        nombrePersona: 'Banco Caro',
-        totalDeuda: 5000,
-        tasaInteres: 25,
-        cuotasPagadas: 0,
-        montoActualPendiente: 5000,
-        cuotaMensual: 300,
-        descripcion: 'Préstamo caro',
-      }],
+      deudas: [
+        {
+          nombrePersona: 'Banco Caro',
+          totalDeuda: 5000,
+          tasaInteres: 25,
+          cuotasPagadas: 0,
+          montoActualPendiente: 5000,
+          cuotaMensual: 300,
+          descripcion: 'Préstamo caro',
+        },
+      ],
     })
     const { result, unmount } = setupWithUser()
     await flushPromises()

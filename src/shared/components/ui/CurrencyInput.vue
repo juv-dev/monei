@@ -18,11 +18,7 @@ const emit = defineEmits<{ 'update:modelValue': [value: string] }>()
 
 <template>
   <div>
-    <label
-      v-if="label"
-      :for="id"
-      class="block text-xs font-semibold text-[#64748B] mb-1.5 uppercase tracking-wide"
-    >
+    <label v-if="label" :for="id" class="block text-xs font-semibold text-[#64748B] mb-1.5 uppercase tracking-wide">
       {{ label }}
     </label>
     <input
@@ -36,8 +32,11 @@ const emit = defineEmits<{ 'update:modelValue': [value: string] }>()
       :style="`--tw-ring-color: ${accentColor}4D`"
       style="--tw-ring-shadow: 0 0 0 2px var(--tw-ring-color)"
       @focus="($event.target as HTMLElement).style.boxShadow = `0 0 0 2px ${accentColor}4D`"
-      @blur="($event.target as HTMLElement).style.boxShadow = ''; emit('update:modelValue', formatMoneyDisplay(modelValue))"
-      @input="onDecimalInput($event, v => emit('update:modelValue', v))"
+      @blur="
+        ;($event.target as HTMLElement).style.boxShadow = ''
+        emit('update:modelValue', formatMoneyDisplay(modelValue))
+      "
+      @input="onDecimalInput($event, (v) => emit('update:modelValue', v))"
     />
   </div>
 </template>

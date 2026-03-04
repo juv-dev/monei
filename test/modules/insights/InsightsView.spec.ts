@@ -22,12 +22,22 @@ describe('should InsightsView', () => {
     return { wrapper, auth, router }
   }
 
-  function nextId() { return `seed-${++uid}` }
+  function nextId() {
+    return `seed-${++uid}`
+  }
 
   function seedData(data: {
     ingresos?: { monto: number; descripcion: string }[]
     gastos?: { monto: number; descripcion: string; categoria: string }[]
-    deudas?: { nombrePersona: string; totalDeuda: number; tasaInteres: number; cuotasPagadas: number; montoActualPendiente: number; cuotaMensual?: number; descripcion: string }[]
+    deudas?: {
+      nombrePersona: string
+      totalDeuda: number
+      tasaInteres: number
+      cuotasPagadas: number
+      montoActualPendiente: number
+      cuotaMensual?: number
+      descripcion: string
+    }[]
     tarjetas?: { lineaTotal: number; montoDeudaActual: number; pagoMinimo?: number; descripcion: string }[]
   }) {
     const userId = 'test-user'
@@ -134,15 +144,17 @@ describe('should InsightsView', () => {
 
   it('should show debt projections when deudas with cuotaMensual exist', async () => {
     seedData({
-      deudas: [{
-        nombrePersona: 'Banco',
-        totalDeuda: 5000,
-        tasaInteres: 10,
-        cuotasPagadas: 0,
-        montoActualPendiente: 5000,
-        cuotaMensual: 500,
-        descripcion: 'Préstamo',
-      }],
+      deudas: [
+        {
+          nombrePersona: 'Banco',
+          totalDeuda: 5000,
+          tasaInteres: 10,
+          cuotasPagadas: 0,
+          montoActualPendiente: 5000,
+          cuotaMensual: 500,
+          descripcion: 'Préstamo',
+        },
+      ],
     })
     const { wrapper } = mountWithAuthUser()
     await flushPromises()
@@ -203,18 +215,18 @@ describe('should InsightsView', () => {
         { monto: 1000, descripcion: 'Comida', categoria: 'Alimentación' },
         { monto: 500, descripcion: 'Bus', categoria: 'Transporte' },
       ],
-      deudas: [{
-        nombrePersona: 'Banco',
-        totalDeuda: 10000,
-        tasaInteres: 18,
-        cuotasPagadas: 2,
-        montoActualPendiente: 8000,
-        cuotaMensual: 600,
-        descripcion: 'Préstamo personal',
-      }],
-      tarjetas: [
-        { lineaTotal: 10000, montoDeudaActual: 4000, descripcion: 'Visa' },
+      deudas: [
+        {
+          nombrePersona: 'Banco',
+          totalDeuda: 10000,
+          tasaInteres: 18,
+          cuotasPagadas: 2,
+          montoActualPendiente: 8000,
+          cuotaMensual: 600,
+          descripcion: 'Préstamo personal',
+        },
       ],
+      tarjetas: [{ lineaTotal: 10000, montoDeudaActual: 4000, descripcion: 'Visa' }],
     })
     const { wrapper } = mountWithAuthUser()
     await flushPromises()

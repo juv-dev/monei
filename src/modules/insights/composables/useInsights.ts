@@ -217,9 +217,7 @@ export function useInsights() {
             mesesRestantes = Infinity
             totalIntereses = Infinity
           } else {
-            mesesRestantes = Math.ceil(
-              -Math.log(1 - (pendiente * tasaMensual) / cuota) / Math.log(1 + tasaMensual),
-            )
+            mesesRestantes = Math.ceil(-Math.log(1 - (pendiente * tasaMensual) / cuota) / Math.log(1 + tasaMensual))
             totalIntereses = cuota * mesesRestantes - pendiente
           }
         } else {
@@ -282,10 +280,11 @@ export function useInsights() {
 
     // Top expensive category tip
     const cats = categoryAnalysis.value
-    if (cats.length > 0 && cats[0].porcentaje > 40) {
+    const topCat = cats[0]
+    if (cats.length > 0 && topCat && topCat.porcentaje > 40) {
       result.push({
         id: 'tip-top-category',
-        text: `"${cats[0].nombre}" representa el ${cats[0].porcentaje.toFixed(0)}% de tus gastos. Considera diversificar.`,
+        text: `"${topCat.nombre}" representa el ${topCat.porcentaje.toFixed(0)}% de tus gastos. Considera diversificar.`,
         category: 'gasto',
       })
     }
@@ -294,11 +293,11 @@ export function useInsights() {
     const highInterest = deudas.value
       .filter((d) => d.tasaInteres > 15 && d.montoActualPendiente > 0)
       .sort((a, b) => b.tasaInteres - a.tasaInteres)
-    if (highInterest.length > 0) {
-      const d = highInterest[0]
+    const topDebt = highInterest[0]
+    if (highInterest.length > 0 && topDebt) {
       result.push({
         id: 'tip-high-interest',
-        text: `Prioriza pagar la deuda con ${d.nombrePersona} (${d.tasaInteres}% interés) para ahorrar en intereses.`,
+        text: `Prioriza pagar la deuda con ${topDebt.nombrePersona} (${topDebt.tasaInteres}% interés) para ahorrar en intereses.`,
         category: 'deuda',
       })
     }

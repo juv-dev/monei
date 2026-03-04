@@ -6,12 +6,8 @@ export function useConfiguracion() {
   const auth = useAuthStore()
 
   const mutation = useMutation({
-    mutationFn: async (data: {
-      currentPass: string
-      newPass: string
-      confirmPass: string
-    }) => {
-      const result = auth.changePassword(data.currentPass, data.newPass, data.confirmPass)
+    mutationFn: async (data: { currentPass: string; newPass: string; confirmPass: string }) => {
+      const result = await auth.changePassword(data.currentPass, data.newPass, data.confirmPass)
       if (!result.success) {
         throw new Error(result.error!)
       }
@@ -20,11 +16,7 @@ export function useConfiguracion() {
   })
 
   return {
-    changePassword: (data: {
-      currentPass: string
-      newPass: string
-      confirmPass: string
-    }) => mutation.mutate(data),
+    changePassword: (data: { currentPass: string; newPass: string; confirmPass: string }) => mutation.mutate(data),
     isChanging: computed(() => mutation.isPending.value),
     isSuccess: computed(() => mutation.isSuccess.value),
     error: computed(() => mutation.error.value?.message ?? null),

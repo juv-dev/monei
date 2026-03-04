@@ -44,7 +44,9 @@ export const useAuthStore = defineStore('auth', () => {
         return
       }
 
-      const { data: { session } } = await supabase.auth.getSession()
+      const {
+        data: { session },
+      } = await supabase.auth.getSession()
       if (session) {
         setUser(mapSessionToUser(session))
       }
@@ -74,6 +76,22 @@ export const useAuthStore = defineStore('auth', () => {
   function signInAsDemo(): void {
     sessionStorage.setItem(DEMO_SESSION_KEY, '1')
     setUser(DEMO_USER)
+  }
+
+  async function changePassword(
+    _currentPass: string,
+    newPass: string,
+    confirmPass: string,
+  ): Promise<{ success: boolean; error?: string }> {
+    if (newPass !== confirmPass) {
+      return { success: false, error: 'Las contraseñas no coinciden' }
+    }
+    if (newPass.length < 6) {
+      return { success: false, error: 'La contraseña debe tener al menos 6 caracteres' }
+    }
+    const { error } = await supabase.auth.updateUser({ password: newPass })
+    if (error) return { success: false, error: error.message }
+    return { success: true }
   }
 
   async function logout(): Promise<void> {
@@ -110,6 +128,7 @@ export const useAuthStore = defineStore('auth', () => {
     signInWithGoogle,
     signInWithGitHub,
     signInAsDemo,
+    changePassword,
     logout,
   }
 })

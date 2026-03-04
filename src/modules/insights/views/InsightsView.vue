@@ -58,7 +58,6 @@ function formatMonth(iso: string): string {
 <template>
   <div class="min-h-screen bg-[#F0F2F5]" data-testid="insights-view">
     <div class="max-w-4xl mx-auto p-5 lg:p-8 space-y-5">
-
       <PageHeader title="Insights" subtitle="Análisis inteligente de tus finanzas" />
 
       <LoadingBar :active="isLoading" color="#2D9F8F" />
@@ -74,13 +73,13 @@ function formatMonth(iso: string): string {
 
       <template v-if="!isLoading && hasData">
         <!-- Score Financiero -->
-        <div
-          class="bg-white rounded-2xl shadow-sm border border-[#EEEEF0] p-6 lg:p-8"
-          data-testid="score-section"
-        >
+        <div class="bg-white rounded-2xl shadow-sm border border-[#EEEEF0] p-6 lg:p-8" data-testid="score-section">
           <div class="flex items-center gap-3 mb-6">
-            <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background: rgba(45, 159, 143, 0.12)">
-              <Lightbulb :size="18" style="color: #2D9F8F" aria-hidden="true" />
+            <div
+              class="w-10 h-10 rounded-xl flex items-center justify-center"
+              style="background: rgba(45, 159, 143, 0.12)"
+            >
+              <Lightbulb :size="18" style="color: #2d9f8f" aria-hidden="true" />
             </div>
             <div>
               <h2 class="text-sm font-bold text-[#1A1A2E]">Score Financiero</h2>
@@ -94,7 +93,10 @@ function formatMonth(iso: string): string {
               <svg viewBox="0 0 120 120" class="w-full h-full -rotate-90">
                 <circle cx="60" cy="60" r="52" fill="none" stroke="#EEEEF0" stroke-width="8" />
                 <circle
-                  cx="60" cy="60" r="52" fill="none"
+                  cx="60"
+                  cy="60"
+                  r="52"
+                  fill="none"
                   :stroke="score.color"
                   stroke-width="8"
                   stroke-linecap="round"
@@ -103,18 +105,24 @@ function formatMonth(iso: string): string {
               </svg>
               <div class="absolute inset-0 flex flex-col items-center justify-center">
                 <span class="text-3xl font-black text-[#1A1A2E]" data-testid="score-value">{{ score.total }}</span>
-                <span class="text-xs font-semibold" :style="{ color: score.color }" data-testid="score-label">{{ score.label }}</span>
+                <span class="text-xs font-semibold" :style="{ color: score.color }" data-testid="score-label">{{
+                  score.label
+                }}</span>
               </div>
             </div>
 
             <!-- Score breakdown -->
             <div class="flex-1 w-full space-y-3">
-              <div v-for="item in [
-                { label: 'Tasa de ahorro', value: score.savingsRatio, max: 25 },
-                { label: 'Utilización crédito', value: score.creditUtilization, max: 25 },
-                { label: 'Control de gastos', value: score.expenseControl, max: 25 },
-                { label: 'Gestión de deudas', value: score.debtManagement, max: 25 },
-              ]" :key="item.label" data-testid="score-breakdown-item">
+              <div
+                v-for="item in [
+                  { label: 'Tasa de ahorro', value: score.savingsRatio, max: 25 },
+                  { label: 'Utilización crédito', value: score.creditUtilization, max: 25 },
+                  { label: 'Control de gastos', value: score.expenseControl, max: 25 },
+                  { label: 'Gestión de deudas', value: score.debtManagement, max: 25 },
+                ]"
+                :key="item.label"
+                data-testid="score-breakdown-item"
+              >
                 <div class="flex justify-between text-xs mb-1">
                   <span class="text-[#64748B] font-medium">{{ item.label }}</span>
                   <span class="font-bold text-[#1A1A2E]">{{ item.value }}/{{ item.max }}</span>
@@ -131,11 +139,7 @@ function formatMonth(iso: string): string {
         </div>
 
         <!-- Alertas -->
-        <div
-          v-if="alerts.length > 0"
-          class="space-y-3"
-          data-testid="alerts-section"
-        >
+        <div v-if="alerts.length > 0" class="space-y-3" data-testid="alerts-section">
           <h2 class="text-sm font-bold text-[#1A1A2E] px-1">Alertas</h2>
           <div
             v-for="alert in alerts"
@@ -165,8 +169,11 @@ function formatMonth(iso: string): string {
           data-testid="category-section"
         >
           <div class="flex items-center gap-3 mb-5">
-            <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background: rgba(198, 90, 58, 0.12)">
-              <Target :size="18" style="color: #C65A3A" aria-hidden="true" />
+            <div
+              class="w-10 h-10 rounded-xl flex items-center justify-center"
+              style="background: rgba(198, 90, 58, 0.12)"
+            >
+              <Target :size="18" style="color: #c65a3a" aria-hidden="true" />
             </div>
             <div>
               <h2 class="text-sm font-bold text-[#1A1A2E]">Distribución de Gastos</h2>
@@ -186,7 +193,7 @@ function formatMonth(iso: string): string {
               <div class="h-2.5 bg-[#F0F2F5] rounded-full overflow-hidden">
                 <div
                   class="h-full rounded-full"
-                  style="background: linear-gradient(90deg, #C65A3A, #C65A3Acc)"
+                  style="background: linear-gradient(90deg, #c65a3a, #c65a3acc)"
                   :style="{ width: `${cat.porcentaje}%` }"
                 />
               </div>
@@ -201,8 +208,11 @@ function formatMonth(iso: string): string {
           data-testid="debt-section"
         >
           <div class="flex items-center gap-3 mb-5">
-            <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background: rgba(212, 160, 23, 0.12)">
-              <TrendingDown :size="18" style="color: #D4A017" aria-hidden="true" />
+            <div
+              class="w-10 h-10 rounded-xl flex items-center justify-center"
+              style="background: rgba(212, 160, 23, 0.12)"
+            >
+              <TrendingDown :size="18" style="color: #d4a017" aria-hidden="true" />
             </div>
             <div>
               <h2 class="text-sm font-bold text-[#1A1A2E]">Proyección de Deudas</h2>
@@ -219,7 +229,16 @@ function formatMonth(iso: string): string {
             >
               <div class="flex items-center justify-between mb-2">
                 <span class="text-sm font-semibold text-[#1A1A2E]">{{ proj.nombrePersona }}</span>
-                <span class="text-xs font-bold px-2.5 py-1 rounded-full" :class="proj.mesesRestantes <= 6 ? 'bg-green-50 text-green-700' : proj.mesesRestantes <= 12 ? 'bg-amber-50 text-amber-700' : 'bg-red-50 text-red-700'">
+                <span
+                  class="text-xs font-bold px-2.5 py-1 rounded-full"
+                  :class="
+                    proj.mesesRestantes <= 6
+                      ? 'bg-green-50 text-green-700'
+                      : proj.mesesRestantes <= 12
+                        ? 'bg-amber-50 text-amber-700'
+                        : 'bg-red-50 text-red-700'
+                  "
+                >
                   {{ proj.mesesRestantes === Infinity ? '∞' : proj.mesesRestantes }} meses
                 </span>
               </div>
@@ -248,14 +267,31 @@ function formatMonth(iso: string): string {
           data-testid="credit-section"
         >
           <div class="flex items-center gap-3 mb-5">
-            <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background: rgba(106, 30, 45, 0.10)">
-              <CreditCard :size="18" style="color: #6A1E2D" aria-hidden="true" />
+            <div
+              class="w-10 h-10 rounded-xl flex items-center justify-center"
+              style="background: rgba(106, 30, 45, 0.1)"
+            >
+              <CreditCard :size="18" style="color: #6a1e2d" aria-hidden="true" />
             </div>
             <div>
               <h2 class="text-sm font-bold text-[#1A1A2E]">Salud Crediticia</h2>
               <p class="text-xs text-[#94A3B8]">
                 Utilización combinada:
-                <span class="font-bold" :style="{ color: creditStatusColor[creditUtilizationTotal < 30 ? 'bueno' : creditUtilizationTotal < 50 ? 'moderado' : creditUtilizationTotal < 75 ? 'alto' : 'critico'] }">
+                <span
+                  class="font-bold"
+                  :style="{
+                    color:
+                      creditStatusColor[
+                        creditUtilizationTotal < 30
+                          ? 'bueno'
+                          : creditUtilizationTotal < 50
+                            ? 'moderado'
+                            : creditUtilizationTotal < 75
+                              ? 'alto'
+                              : 'critico'
+                      ],
+                  }"
+                >
                   {{ creditUtilizationTotal.toFixed(0) }}%
                 </span>
               </p>
@@ -273,7 +309,10 @@ function formatMonth(iso: string): string {
               <div class="h-2.5 bg-[#F0F2F5] rounded-full overflow-hidden">
                 <div
                   class="h-full rounded-full transition-all"
-                  :style="{ width: `${Math.min(card.utilizacion, 100)}%`, backgroundColor: creditStatusColor[card.status] }"
+                  :style="{
+                    width: `${Math.min(card.utilizacion, 100)}%`,
+                    backgroundColor: creditStatusColor[card.status],
+                  }"
                 />
               </div>
               <div class="flex justify-between text-[10px] text-[#94A3B8] mt-1">
@@ -291,8 +330,11 @@ function formatMonth(iso: string): string {
           data-testid="tips-section"
         >
           <div class="flex items-center gap-3 mb-5">
-            <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background: rgba(45, 159, 143, 0.12)">
-              <Sparkles :size="18" style="color: #2D9F8F" aria-hidden="true" />
+            <div
+              class="w-10 h-10 rounded-xl flex items-center justify-center"
+              style="background: rgba(45, 159, 143, 0.12)"
+            >
+              <Sparkles :size="18" style="color: #2d9f8f" aria-hidden="true" />
             </div>
             <div>
               <h2 class="text-sm font-bold text-[#1A1A2E]">Recomendaciones</h2>
@@ -310,7 +352,7 @@ function formatMonth(iso: string): string {
               <component
                 :is="tipIcons[tip.category] ?? Sparkles"
                 :size="16"
-                style="color: #2D9F8F"
+                style="color: #2d9f8f"
                 class="shrink-0 mt-0.5"
                 aria-hidden="true"
               />
@@ -319,7 +361,6 @@ function formatMonth(iso: string): string {
           </div>
         </div>
       </template>
-
     </div>
   </div>
 </template>

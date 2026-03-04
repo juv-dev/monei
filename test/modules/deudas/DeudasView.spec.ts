@@ -127,9 +127,7 @@ describe('should DeudasView', () => {
     await wrapper.find('[data-testid="deudas-form"]').trigger('submit')
     await flushPromises()
 
-    expect(wrapper.find('[data-testid="form-error"]').text()).toBe(
-      'El nombre de la persona es requerido',
-    )
+    expect(wrapper.find('[data-testid="form-error"]').text()).toBe('El nombre de la persona es requerido')
   })
 
   it('should show error when descripcion is empty', async () => {
@@ -143,9 +141,7 @@ describe('should DeudasView', () => {
     await wrapper.find('[data-testid="deudas-form"]').trigger('submit')
     await flushPromises()
 
-    expect(wrapper.find('[data-testid="form-error"]').text()).toBe(
-      'La descripción es requerida',
-    )
+    expect(wrapper.find('[data-testid="form-error"]').text()).toBe('La descripción es requerida')
   })
 
   it('should show error when totalDeuda is zero or invalid', async () => {
@@ -207,9 +203,7 @@ describe('should DeudasView', () => {
     await flushPromises()
 
     expect(wrapper.find('[data-testid="form-error"]').exists()).toBe(false)
-    expect(
-      (wrapper.find('[data-testid="nombre-persona-input"]').element as HTMLInputElement).value,
-    ).toBe('')
+    expect((wrapper.find('[data-testid="nombre-persona-input"]').element as HTMLInputElement).value).toBe('')
   })
 
   it('should use 0 cuotasPagadas when the field is left empty', async () => {
@@ -894,5 +888,4 @@ describe('should DeudasView', () => {
     // After dragend, no item should have the dragging visual state
     expect(item.classes()).not.toContain('opacity-40')
   })
-
 })

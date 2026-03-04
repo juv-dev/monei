@@ -31,10 +31,7 @@ watch(
 </script>
 
 <template>
-  <div
-    v-show="visible"
-    class="fixed bottom-0 left-0 right-0 z-50 h-[3px] bg-transparent pointer-events-none"
-  >
+  <div v-show="visible" class="fixed bottom-0 left-0 right-0 z-50 h-[3px] bg-transparent pointer-events-none">
     <div
       class="h-full"
       :class="width < 100 ? 'transition-[width] duration-[1500ms] ease-out' : 'transition-[width] duration-300 ease-in'"

@@ -10,7 +10,15 @@ describe('should ConfiguracionView', () => {
     sessionStorage.clear()
   })
 
-  function mountWithAuthUser(overrides: Partial<{ id: string; username: string; displayName: string; provider: string; avatarUrl?: string }> = {}) {
+  function mountWithAuthUser(
+    overrides: Partial<{
+      id: string
+      username: string
+      displayName: string
+      provider: string
+      avatarUrl?: string
+    }> = {},
+  ) {
     const { wrapper, pinia, router } = mountWithPlugins(ConfiguracionView)
     const auth = useAuthStore(pinia)
     auth.$patch({

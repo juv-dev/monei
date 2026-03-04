@@ -25,9 +25,9 @@ export const deudasApi = {
     const all = await deudasApi.getAll(userId)
     const idx = all.findIndex((item) => item.id === id)
     if (idx === -1) throw new Error('Deuda not found')
-    all[idx] = { ...all[idx], ...data }
+    all[idx] = { ...all[idx]!, ...data }
     localStorage.setItem(storageKey(userId), JSON.stringify(all))
-    return all[idx]
+    return all[idx]!
   },
 
   async remove(userId: string, id: string): Promise<void> {

@@ -1,6 +1,17 @@
 <script setup lang="ts">
 import { ref, reactive, computed, watch } from 'vue'
-import { ShoppingBag, ChevronDown, ChevronUp, Trash2, Inbox, Plus, GripVertical, Pencil, Check, X } from 'lucide-vue-next'
+import {
+  ShoppingBag,
+  ChevronDown,
+  ChevronUp,
+  Trash2,
+  Inbox,
+  Plus,
+  GripVertical,
+  Pencil,
+  Check,
+  X,
+} from 'lucide-vue-next'
 import { usePresupuesto } from '../composables/usePresupuesto'
 import { useAppFeedback } from '~/shared/composables/useAppFeedback'
 import { useAuthStore } from '~/stores/auth'
@@ -56,7 +67,9 @@ const sortedPorCategoria = computed(() => {
     ...categoryOrder.value,
     ...porCategoria.value.map((c) => c.nombre).filter((n) => !categoryOrder.value.includes(n)),
   ]
-  return allNames.map((nombre) => porCategoria.value.find((c) => c.nombre === nombre) ?? { nombre, items: [], subtotal: 0 })
+  return allNames.map(
+    (nombre) => porCategoria.value.find((c) => c.nombre === nombre) ?? { nombre, items: [], subtotal: 0 },
+  )
 })
 
 const draggingNombre = ref<string | null>(null)
@@ -262,7 +275,6 @@ function handleDelete(id: string): void {
 <template>
   <div class="min-h-screen bg-[#F0F2F5]" data-testid="presupuesto-view">
     <div class="max-w-5xl mx-auto p-5 lg:p-8 space-y-5">
-
       <PageHeader
         title="Presupuesto"
         subtitle="Organiza tus gastos por secciones"
@@ -274,7 +286,7 @@ function handleDelete(id: string): void {
 
       <div
         class="rounded-3xl p-6 lg:p-8 relative overflow-hidden shadow-lg"
-        style="background: linear-gradient(135deg, #C65A3A 0%, #9A3D27 100%)"
+        style="background: linear-gradient(135deg, #c65a3a 0%, #9a3d27 100%)"
         data-testid="summary-card"
       >
         <div class="absolute -top-10 -right-10 w-44 h-44 rounded-full opacity-[0.08]" style="background: white"></div>
@@ -306,11 +318,9 @@ function handleDelete(id: string): void {
       </div>
 
       <div class="space-y-3">
-        <div v-if="isLoading" class="text-center py-16 text-[#94A3B8]" data-testid="loading-state">
-          Cargando...
-        </div>
+        <div v-if="isLoading" class="text-center py-16 text-[#94A3B8]" data-testid="loading-state">Cargando...</div>
 
-        <div v-else-if="isError" class="text-center py-16 text-sm" style="color: #C65A3A" data-testid="error-state">
+        <div v-else-if="isError" class="text-center py-16 text-sm" style="color: #c65a3a" data-testid="error-state">
           Error al cargar los gastos
         </div>
 
@@ -349,14 +359,14 @@ function handleDelete(id: string): void {
             <button
               type="button"
               class="flex-1 flex items-center justify-between p-4 hover:bg-[#F8F9FB] transition-colors text-left group/header"
-              :aria-expanded="String(categoriasExpandidas.has(cat.nombre))"
+              :aria-expanded="categoriasExpandidas.has(cat.nombre)"
               data-testid="categoria-header"
               @click="editingCategoria !== cat.nombre && toggleCategoria(cat.nombre)"
             >
               <div class="flex items-center gap-3">
                 <div
                   class="w-9 h-9 rounded-xl flex items-center justify-center text-xs font-black shrink-0"
-                  style="background: rgba(198,90,58,0.10); color: #C65A3A"
+                  style="background: rgba(198, 90, 58, 0.1); color: #c65a3a"
                   aria-hidden="true"
                 >
                   {{ cat.nombre.charAt(0).toUpperCase() }}
@@ -406,7 +416,7 @@ function handleDelete(id: string): void {
                 </span>
               </div>
               <div class="flex items-center gap-2">
-                <span class="font-black text-sm" style="color: #C65A3A" data-testid="categoria-subtotal">
+                <span class="font-black text-sm" style="color: #c65a3a" data-testid="categoria-subtotal">
                   {{ formatCurrency(cat.subtotal) }}
                 </span>
                 <button
@@ -435,16 +445,19 @@ function handleDelete(id: string): void {
                 class="hover:bg-[#F8F9FB] transition-colors group"
                 data-testid="gasto-item"
               >
-                <div
-                  v-if="editingId !== gasto.id"
-                  class="flex items-center justify-between px-5 py-3"
-                >
+                <div v-if="editingId !== gasto.id" class="flex items-center justify-between px-5 py-3">
                   <div class="flex items-center gap-3 flex-1 min-w-0">
-                    <div class="w-1.5 h-1.5 rounded-full shrink-0" style="background: rgba(198,90,58,0.4)" aria-hidden="true"></div>
-                    <span class="text-sm text-[#1A1A2E] truncate" data-testid="gasto-descripcion">{{ gasto.descripcion }}</span>
+                    <div
+                      class="w-1.5 h-1.5 rounded-full shrink-0"
+                      style="background: rgba(198, 90, 58, 0.4)"
+                      aria-hidden="true"
+                    ></div>
+                    <span class="text-sm text-[#1A1A2E] truncate" data-testid="gasto-descripcion">{{
+                      gasto.descripcion
+                    }}</span>
                   </div>
                   <div class="flex items-center gap-2 shrink-0 ml-3">
-                    <span class="text-sm font-bold tabular-nums" style="color: #C65A3A" data-testid="gasto-monto">
+                    <span class="text-sm font-bold tabular-nums" style="color: #c65a3a" data-testid="gasto-monto">
                       {{ formatCurrency(gasto.monto) }}
                     </span>
                     <button
@@ -466,10 +479,7 @@ function handleDelete(id: string): void {
                   </div>
                 </div>
 
-                <div
-                  v-else
-                  class="px-5 py-3 space-y-2"
-                >
+                <div v-else class="px-5 py-3 space-y-2">
                   <div class="flex gap-2">
                     <input
                       v-model="editForm.descripcion"
@@ -487,7 +497,7 @@ function handleDelete(id: string): void {
                       placeholder="0.00"
                       class="w-24 px-3 py-1.5 border border-[#EEEEF0] rounded-lg text-sm bg-white text-[#1A1A2E] focus:outline-none focus:ring-2 focus:ring-[#C65A3A]/30"
                       data-testid="edit-monto-input"
-                      @input="onDecimalInput($event, v => editForm.monto = v)"
+                      @input="onDecimalInput($event, (v) => (editForm.monto = v))"
                       @blur="editForm.monto = formatMoneyDisplay(editForm.monto)"
                       @keydown.enter.prevent="saveEdit(gasto.id)"
                       @keydown.esc.prevent="cancelEdit"
@@ -556,7 +566,7 @@ function handleDelete(id: string): void {
                   placeholder="0.00"
                   class="w-28 px-3 py-2 border border-[#EEEEF0] rounded-xl text-sm bg-white text-[#1A1A2E] placeholder-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#C65A3A]/30"
                   data-testid="inline-monto-input"
-                  @input="onDecimalInput($event, v => addInlineForm.monto = v)"
+                  @input="onDecimalInput($event, (v) => (addInlineForm.monto = v))"
                   @blur="addInlineForm.monto = formatMoneyDisplay(addInlineForm.monto)"
                   @keydown.enter.prevent="saveNewItem(cat.nombre)"
                   @keydown.esc.prevent="cancelAddItem"
@@ -579,24 +589,16 @@ function handleDelete(id: string): void {
                   <X :size="14" />
                 </button>
               </div>
-              <p
-                v-if="addInlineError"
-                class="text-xs"
-                style="color: #C65A3A"
-                data-testid="inline-error"
-              >
+              <p v-if="addInlineError" class="text-xs" style="color: #c65a3a" data-testid="inline-error">
                 {{ addInlineError }}
               </p>
             </div>
 
-            <div
-              v-else
-              class="px-5 py-2.5 border-t border-[#F0F2F5]"
-            >
+            <div v-else class="px-5 py-2.5 border-t border-[#F0F2F5]">
               <button
                 type="button"
                 class="flex items-center gap-1.5 text-xs font-semibold hover:opacity-70 transition-opacity"
-                style="color: #C65A3A"
+                style="color: #c65a3a"
                 data-testid="add-item-button"
                 @click.stop="startAddItem(cat.nombre)"
               >
@@ -607,20 +609,17 @@ function handleDelete(id: string): void {
           </div>
         </div>
       </div>
-
     </div>
   </div>
 
-  <AppModal
-    :open="isModalOpen"
-    title="Nueva Sección"
-    accent-color="#C65A3A"
-    @close="isModalOpen = false"
-  >
+  <AppModal :open="isModalOpen" title="Nueva Sección" accent-color="#C65A3A" @close="isModalOpen = false">
     <form data-testid="presupuesto-form" novalidate @submit.prevent="handleSubmit">
       <div class="space-y-4">
         <div>
-          <label for="categoria-gasto" class="block text-xs font-semibold text-[#64748B] mb-1.5 uppercase tracking-wide">
+          <label
+            for="categoria-gasto"
+            class="block text-xs font-semibold text-[#64748B] mb-1.5 uppercase tracking-wide"
+          >
             Nombre de la sección
           </label>
           <input
@@ -641,7 +640,7 @@ function handleDelete(id: string): void {
         <p
           v-if="formError"
           class="text-sm bg-[#C65A3A]/8 border border-[#C65A3A]/20 rounded-xl px-3 py-2.5"
-          style="color: #C65A3A"
+          style="color: #c65a3a"
           role="alert"
           data-testid="form-error"
         >
@@ -651,7 +650,7 @@ function handleDelete(id: string): void {
         <button
           type="submit"
           class="w-full py-3 text-white font-bold rounded-xl transition-all shadow-md hover:opacity-90 active:scale-95"
-          style="background: linear-gradient(135deg, #C65A3A 0%, #9A3D27 100%)"
+          style="background: linear-gradient(135deg, #c65a3a 0%, #9a3d27 100%)"
           data-testid="submit-button"
         >
           + Agregar sección

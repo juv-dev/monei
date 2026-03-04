@@ -2,10 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest'
 import { flushPromises } from '@vue/test-utils'
 import { withSetup } from '../../helpers/setup'
 import { useAuthStore } from '~/stores/auth'
-import {
-  useDeudas,
-  DEUDAS_QUERY_KEY,
-} from '~/modules/deudas/composables/useDeudas'
+import { useDeudas, DEUDAS_QUERY_KEY } from '~/modules/deudas/composables/useDeudas'
 import { deudasApi } from '~/modules/deudas/services/api'
 
 describe('should useDeudas', () => {

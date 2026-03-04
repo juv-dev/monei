@@ -37,7 +37,6 @@ async function handleLogout(): Promise<void> {
 
 <template>
   <div class="flex h-screen bg-[#F5F6FA]" data-testid="app-layout">
-
     <aside
       class="hidden lg:flex flex-col bg-white border-r border-[#EEEEF0] shrink-0 transition-all duration-300"
       :class="sidebarOpen ? 'w-55' : 'w-15'"
@@ -50,9 +49,15 @@ async function handleLogout(): Promise<void> {
         <template v-if="sidebarOpen">
           <div class="flex items-center gap-2.5">
             <svg class="w-7 h-7 shrink-0" viewBox="0 0 40 40" fill="none" aria-hidden="true">
-              <rect width="40" height="40" rx="10" fill="#B6A77A"/>
-              <path d="M10 30 L16 18 L22 24 L28 12 L34 20" stroke="white" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
-              <circle cx="28" cy="12" r="2" fill="white"/>
+              <rect width="40" height="40" rx="10" fill="#B6A77A" />
+              <path
+                d="M10 30 L16 18 L22 24 L28 12 L34 20"
+                stroke="white"
+                stroke-width="3.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <circle cx="28" cy="12" r="2" fill="white" />
             </svg>
             <span class="text-sm font-bold text-[#1A1A2E]" data-testid="app-title">Monei</span>
           </div>
@@ -72,18 +77,21 @@ async function handleLogout(): Promise<void> {
           @click="sidebarOpen = true"
         >
           <svg class="w-7 h-7" viewBox="0 0 40 40" fill="none" aria-hidden="true">
-            <rect width="40" height="40" rx="10" fill="#B6A77A"/>
-            <path d="M10 30 L16 18 L22 24 L28 12 L34 20" stroke="white" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
-            <circle cx="28" cy="12" r="2" fill="white"/>
+            <rect width="40" height="40" rx="10" fill="#B6A77A" />
+            <path
+              d="M10 30 L16 18 L22 24 L28 12 L34 20"
+              stroke="white"
+              stroke-width="3.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+            <circle cx="28" cy="12" r="2" fill="white" />
           </svg>
         </button>
       </div>
 
       <nav class="flex-1 overflow-y-auto py-3 px-2 space-y-0.5" aria-label="Navegación principal">
-        <p
-          v-if="sidebarOpen"
-          class="px-3 pt-1 pb-2 text-[10px] font-semibold uppercase tracking-widest text-[#94A3B8]"
-        >
+        <p v-if="sidebarOpen" class="px-3 pt-1 pb-2 text-[10px] font-semibold uppercase tracking-widest text-[#94A3B8]">
           Menu
         </p>
         <RouterLink
@@ -152,13 +160,18 @@ async function handleLogout(): Promise<void> {
     </aside>
 
     <div class="flex-1 flex flex-col overflow-hidden">
-
       <header class="lg:hidden flex items-center justify-between px-4 h-14 bg-white border-b border-[#EEEEF0] shrink-0">
         <div class="flex items-center gap-2">
           <svg class="w-7 h-7" viewBox="0 0 40 40" fill="none" aria-hidden="true">
-            <rect width="40" height="40" rx="10" fill="#B6A77A"/>
-            <path d="M10 30 L16 18 L22 24 L28 12 L34 20" stroke="white" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
-            <circle cx="28" cy="12" r="2" fill="white"/>
+            <rect width="40" height="40" rx="10" fill="#B6A77A" />
+            <path
+              d="M10 30 L16 18 L22 24 L28 12 L34 20"
+              stroke="white"
+              stroke-width="3.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+            <circle cx="28" cy="12" r="2" fill="white" />
           </svg>
           <span class="text-sm font-bold text-[#1A1A2E]">Monei</span>
         </div>
@@ -194,16 +207,29 @@ async function handleLogout(): Promise<void> {
 </template>
 
 <style scoped>
-.sidebar-link { color: #64748b; }
-.sidebar-link:hover { color: #1a1a2e; background-color: #f5f6fa; }
+.sidebar-link {
+  color: #64748b;
+}
+.sidebar-link:hover {
+  color: #1a1a2e;
+  background-color: #f5f6fa;
+}
 .sidebar-link.router-link-active {
   color: #8a7050;
   background-color: rgba(182, 167, 122, 0.14);
   font-weight: 600;
 }
-.sidebar-link.router-link-active svg { color: #b6a77a; }
+.sidebar-link.router-link-active svg {
+  color: #b6a77a;
+}
 
-.bottom-link { color: #94a3b8; }
-.bottom-link.router-link-active { color: #b6a77a; }
-.bottom-link.router-link-active svg { color: #b6a77a; }
+.bottom-link {
+  color: #94a3b8;
+}
+.bottom-link.router-link-active {
+  color: #b6a77a;
+}
+.bottom-link.router-link-active svg {
+  color: #b6a77a;
+}
 </style>

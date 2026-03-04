@@ -96,10 +96,7 @@ export function createGlobalMountOptions() {
 // ─── Monta un componente con todos los plugins ────────────────────────────────
 import { mount } from '@vue/test-utils'
 
-export function mountWithPlugins(
-  component: Component,
-  options: Record<string, unknown> = {},
-) {
+export function mountWithPlugins(component: Component, options: Record<string, unknown> = {}) {
   const { global, pinia, queryClient, router } = createGlobalMountOptions()
   const wrapper = mount(component, { global, ...options })
   return { wrapper, pinia, queryClient, router }

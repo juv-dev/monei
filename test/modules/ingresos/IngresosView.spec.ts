@@ -99,9 +99,7 @@ describe('should IngresosView', () => {
     await flushPromises()
 
     expect(wrapper.find('[data-testid="form-error"]').exists()).toBe(true)
-    expect(wrapper.find('[data-testid="form-error"]').text()).toBe(
-      'La descripción es requerida',
-    )
+    expect(wrapper.find('[data-testid="form-error"]').text()).toBe('La descripción es requerida')
   })
 
   it('should show error when monto is zero or negative', async () => {
@@ -113,9 +111,7 @@ describe('should IngresosView', () => {
     await wrapper.find('[data-testid="ingresos-form"]').trigger('submit')
     await flushPromises()
 
-    expect(wrapper.find('[data-testid="form-error"]').text()).toBe(
-      'El monto debe ser un número positivo',
-    )
+    expect(wrapper.find('[data-testid="form-error"]').text()).toBe('El monto debe ser un número positivo')
   })
 
   it('should show error when monto is not a number', async () => {
@@ -142,9 +138,7 @@ describe('should IngresosView', () => {
 
     expect(wrapper.find('[data-testid="form-error"]').exists()).toBe(false)
     expect((wrapper.find('[data-testid="monto-input"]').element as HTMLInputElement).value).toBe('')
-    expect(
-      (wrapper.find('[data-testid="descripcion-input"]').element as HTMLInputElement).value,
-    ).toBe('')
+    expect((wrapper.find('[data-testid="descripcion-input"]').element as HTMLInputElement).value).toBe('')
   })
 
   it('should render delete buttons for each ingreso', async () => {

@@ -17,10 +17,7 @@ defineProps<{
     :class="inline ? '' : 'bg-white rounded-2xl border border-[#EEEEF0]'"
     :data-testid="testid"
   >
-    <div
-      class="w-14 h-14 rounded-2xl flex items-center justify-center mb-3"
-      :style="{ backgroundColor: color + '14' }"
-    >
+    <div class="w-14 h-14 rounded-2xl flex items-center justify-center mb-3" :style="{ backgroundColor: color + '14' }">
       <component :is="icon" :size="26" :style="{ color }" aria-hidden="true" />
     </div>
     <p class="text-sm font-semibold text-[#1A1A2E]">{{ title }}</p>

@@ -8,7 +8,13 @@ import CurrencyInput from '~/shared/components/ui/CurrencyInput.vue'
 defineProps<{
   tarjeta: TarjetaCredito
   isEditing: boolean
-  editForm: { descripcion: string; lineaTotal: string; montoDeudaActual: string; pagoMinimo: string; saldoTotal: string }
+  editForm: {
+    descripcion: string
+    lineaTotal: string
+    montoDeudaActual: string
+    pagoMinimo: string
+    saldoTotal: string
+  }
   isUpdating: boolean
   isPaying: boolean
   payAmount: string
@@ -51,10 +57,7 @@ function utilizacionColor(pct: number): string {
 </script>
 
 <template>
-  <div
-    class="bg-white rounded-2xl border border-[#EEEEF0] shadow-sm p-5"
-    data-testid="tarjeta-item"
-  >
+  <div class="bg-white rounded-2xl border border-[#EEEEF0] shadow-sm p-5" data-testid="tarjeta-item">
     <template v-if="isEditing">
       <div class="space-y-3">
         <input
@@ -103,7 +106,7 @@ function utilizacionColor(pct: number): string {
             type="button"
             :disabled="isUpdating"
             class="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-white transition-all hover:opacity-90 disabled:opacity-50"
-            style="background: linear-gradient(135deg, #6A1E2D 0%, #4A1520 100%)"
+            style="background: linear-gradient(135deg, #6a1e2d 0%, #4a1520 100%)"
             data-testid="save-edit-button"
             @click="emit('save', tarjeta.id)"
           >
@@ -128,10 +131,10 @@ function utilizacionColor(pct: number): string {
         <div class="flex items-center gap-3">
           <div
             class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
-            style="background: rgba(106,30,45,0.10)"
+            style="background: rgba(106, 30, 45, 0.1)"
             aria-hidden="true"
           >
-            <CreditCard :size="18" style="color: #6A1E2D" />
+            <CreditCard :size="18" style="color: #6a1e2d" />
           </div>
           <div>
             <p class="font-semibold text-[#1A1A2E]" data-testid="tarjeta-descripcion">
@@ -210,9 +213,9 @@ function utilizacionColor(pct: number): string {
             {{ tarjeta.pagoMinimo != null ? formatCurrency(tarjeta.pagoMinimo) : '—' }}
           </p>
         </div>
-        <div class="rounded-xl p-2.5" style="background: rgba(106,30,45,0.08)">
-          <p class="text-xs mb-0.5" style="color: #6A1E2D">Saldo disponible</p>
-          <p class="text-sm font-bold" style="color: #6A1E2D">
+        <div class="rounded-xl p-2.5" style="background: rgba(106, 30, 45, 0.08)">
+          <p class="text-xs mb-0.5" style="color: #6a1e2d">Saldo disponible</p>
+          <p class="text-sm font-bold" style="color: #6a1e2d">
             {{ formatCurrency(tarjeta.lineaTotal - (tarjeta.saldoTotal ?? tarjeta.montoDeudaActual)) }}
           </p>
         </div>
@@ -234,7 +237,7 @@ function utilizacionColor(pct: number): string {
             type="button"
             :disabled="isConfirmingPay"
             class="flex items-center gap-1.5 px-4 py-3 rounded-xl text-xs font-bold text-white transition-all hover:opacity-90 disabled:opacity-50 shrink-0"
-            style="background: linear-gradient(135deg, #6A1E2D 0%, #4A1520 100%)"
+            style="background: linear-gradient(135deg, #6a1e2d 0%, #4a1520 100%)"
             data-testid="confirm-pay-button"
             @click="emit('confirm-pay', tarjeta.id)"
           >

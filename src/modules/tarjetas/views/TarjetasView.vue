@@ -37,9 +37,7 @@ function formatCurrency(value: number): string {
 }
 
 const utilizacionTotal = computed(() =>
-  lineaTotalCombinada.value > 0
-    ? Math.round((totalTarjetas.value / lineaTotalCombinada.value) * 100)
-    : 0,
+  lineaTotalCombinada.value > 0 ? Math.round((totalTarjetas.value / lineaTotalCombinada.value) * 100) : 0,
 )
 
 function openModal(): void {
@@ -169,7 +167,6 @@ function handleRemovePago(pagoId: string): void {
 <template>
   <div class="min-h-screen bg-[#F0F2F5]" data-testid="tarjetas-view">
     <div class="max-w-5xl mx-auto p-5 lg:p-8 space-y-5">
-
       <PageHeader
         title="Tarjetas de Crédito"
         subtitle="Controla la utilización de tus tarjetas"
@@ -181,7 +178,7 @@ function handleRemovePago(pagoId: string): void {
 
       <div
         class="rounded-3xl p-6 lg:p-8 relative overflow-hidden shadow-lg"
-        style="background: linear-gradient(135deg, #6A1E2D 0%, #4A1520 100%)"
+        style="background: linear-gradient(135deg, #6a1e2d 0%, #4a1520 100%)"
       >
         <div class="absolute -top-10 -right-10 w-44 h-44 rounded-full opacity-[0.08]" style="background: white"></div>
         <div class="absolute -bottom-14 -left-6 w-52 h-52 rounded-full opacity-[0.05]" style="background: white"></div>
@@ -207,18 +204,18 @@ function handleRemovePago(pagoId: string): void {
               <p class="text-2xl lg:text-3xl font-black text-white tracking-tight" data-testid="linea-total-combinada">
                 {{ formatCurrency(lineaTotalCombinada) }}
               </p>
-              <p class="text-white/40 text-xs mt-1">{{ tarjetas.length }} tarjeta{{ tarjetas.length !== 1 ? 's' : '' }}</p>
+              <p class="text-white/40 text-xs mt-1">
+                {{ tarjetas.length }} tarjeta{{ tarjetas.length !== 1 ? 's' : '' }}
+              </p>
             </div>
           </div>
         </div>
       </div>
 
       <div class="space-y-4">
-        <div v-if="isLoading" class="text-center py-16 text-[#94A3B8]" data-testid="loading-state">
-          Cargando...
-        </div>
+        <div v-if="isLoading" class="text-center py-16 text-[#94A3B8]" data-testid="loading-state">Cargando...</div>
 
-        <div v-else-if="isError" class="text-center py-16 text-sm" style="color: #C65A3A" data-testid="error-state">
+        <div v-else-if="isError" class="text-center py-16 text-sm" style="color: #c65a3a" data-testid="error-state">
           Error al cargar las tarjetas
         </div>
 
@@ -255,20 +252,17 @@ function handleRemovePago(pagoId: string): void {
           />
         </div>
       </div>
-
     </div>
   </div>
 
-  <AppModal
-    :open="isModalOpen"
-    title="Agregar Tarjeta"
-    accent-color="#6A1E2D"
-    @close="isModalOpen = false"
-  >
+  <AppModal :open="isModalOpen" title="Agregar Tarjeta" accent-color="#6A1E2D" @close="isModalOpen = false">
     <form data-testid="tarjetas-form" novalidate @submit.prevent="handleSubmit">
       <div class="space-y-4">
         <div>
-          <label for="descripcion-tarjeta" class="block text-xs font-semibold text-[#64748B] mb-1.5 uppercase tracking-wide">
+          <label
+            for="descripcion-tarjeta"
+            class="block text-xs font-semibold text-[#64748B] mb-1.5 uppercase tracking-wide"
+          >
             Descripción
           </label>
           <input
@@ -293,14 +287,17 @@ function handleRemovePago(pagoId: string): void {
             placeholder="0.00"
             class="w-full px-4 py-3 border border-[#EEEEF0] rounded-xl text-sm bg-[#F5F6FA] text-[#1A1A2E] placeholder-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#6A1E2D]/30 focus:border-transparent focus:bg-white transition-all"
             data-testid="linea-total-input"
-            @input="onDecimalInput($event, v => form.lineaTotal = v)"
+            @input="onDecimalInput($event, (v) => (form.lineaTotal = v))"
             @blur="form.lineaTotal = formatMoneyDisplay(form.lineaTotal)"
           />
         </div>
 
         <div class="grid grid-cols-2 gap-3">
           <div>
-            <label for="monto-deuda-actual" class="block text-xs font-semibold text-[#64748B] mb-1.5 uppercase tracking-wide">
+            <label
+              for="monto-deuda-actual"
+              class="block text-xs font-semibold text-[#64748B] mb-1.5 uppercase tracking-wide"
+            >
               Pago del mes (S/)
             </label>
             <input
@@ -311,7 +308,7 @@ function handleRemovePago(pagoId: string): void {
               placeholder="0.00"
               class="w-full px-3 py-3 border border-[#EEEEF0] rounded-xl text-sm bg-[#F5F6FA] text-[#1A1A2E] placeholder-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#6A1E2D]/30 focus:border-transparent focus:bg-white transition-all"
               data-testid="monto-deuda-input"
-              @input="onDecimalInput($event, v => form.montoDeudaActual = v)"
+              @input="onDecimalInput($event, (v) => (form.montoDeudaActual = v))"
               @blur="form.montoDeudaActual = formatMoneyDisplay(form.montoDeudaActual)"
             />
           </div>
@@ -327,7 +324,7 @@ function handleRemovePago(pagoId: string): void {
               placeholder="0.00"
               class="w-full px-3 py-3 border border-[#EEEEF0] rounded-xl text-sm bg-[#F5F6FA] text-[#1A1A2E] placeholder-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#6A1E2D]/30 focus:border-transparent focus:bg-white transition-all"
               data-testid="pago-minimo-input"
-              @input="onDecimalInput($event, v => form.pagoMinimo = v)"
+              @input="onDecimalInput($event, (v) => (form.pagoMinimo = v))"
               @blur="form.pagoMinimo = formatMoneyDisplay(form.pagoMinimo)"
             />
           </div>
@@ -345,19 +342,22 @@ function handleRemovePago(pagoId: string): void {
             placeholder="0.00"
             class="w-full px-4 py-3 border border-[#EEEEF0] rounded-xl text-sm bg-[#F5F6FA] text-[#1A1A2E] placeholder-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#6A1E2D]/30 focus:border-transparent focus:bg-white transition-all"
             data-testid="saldo-total-input"
-            @input="onDecimalInput($event, v => form.saldoTotal = v)"
+            @input="onDecimalInput($event, (v) => (form.saldoTotal = v))"
             @blur="form.saldoTotal = formatMoneyDisplay(form.saldoTotal)"
           />
         </div>
 
         <div class="flex items-center justify-between px-3 py-2 rounded-xl bg-[#F5F6FA] border border-[#EEEEF0]">
           <span class="text-xs text-[#64748B]">Saldo disponible (auto)</span>
-          <span class="text-sm font-bold" style="color: #6A1E2D">
+          <span class="text-sm font-bold" style="color: #6a1e2d">
             {{
               form.lineaTotal && form.saldoTotal
                 ? formatCurrency(parseMoneyInput(form.lineaTotal) - parseMoneyInput(form.saldoTotal))
                 : form.lineaTotal
-                  ? formatCurrency(parseMoneyInput(form.lineaTotal) - (form.montoDeudaActual ? parseMoneyInput(form.montoDeudaActual) : 0))
+                  ? formatCurrency(
+                      parseMoneyInput(form.lineaTotal) -
+                        (form.montoDeudaActual ? parseMoneyInput(form.montoDeudaActual) : 0),
+                    )
                   : '—'
             }}
           </span>
@@ -366,7 +366,7 @@ function handleRemovePago(pagoId: string): void {
         <p
           v-if="formError"
           class="text-sm bg-[#C65A3A]/8 border border-[#C65A3A]/20 rounded-xl px-3 py-2.5"
-          style="color: #C65A3A"
+          style="color: #c65a3a"
           role="alert"
           data-testid="form-error"
         >
@@ -377,7 +377,7 @@ function handleRemovePago(pagoId: string): void {
           type="submit"
           :disabled="isAdding"
           class="w-full py-3 text-white font-bold rounded-xl transition-all shadow-md hover:opacity-90 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-          style="background: linear-gradient(135deg, #6A1E2D 0%, #4A1520 100%)"
+          style="background: linear-gradient(135deg, #6a1e2d 0%, #4a1520 100%)"
           data-testid="submit-button"
         >
           {{ isAdding ? 'Agregando...' : '+ Agregar tarjeta' }}

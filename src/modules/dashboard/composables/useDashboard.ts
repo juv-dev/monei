@@ -8,29 +8,18 @@ import type { DescripcionResumen, ResumenGeneral } from '~/shared/types'
 export function useDashboard() {
   const { ingresos, totalIngresos, isLoading: loadingIngresos } = useIngresos()
   const { gastos, totalGastado, isLoading: loadingGastos } = usePresupuesto()
-  const {
-    deudas,
-    totalDeudas,
-    totalPendiente,
-    isLoading: loadingDeudas,
-  } = useDeudas()
+  const { deudas, totalDeudas, totalPendiente, isLoading: loadingDeudas } = useDeudas()
   const { tarjetas, totalTarjetas, lineaTotalCombinada, isLoading: loadingTarjetas } = useTarjetas()
 
   const isLoading = computed(
-    () =>
-      loadingIngresos.value ||
-      loadingGastos.value ||
-      loadingDeudas.value ||
-      loadingTarjetas.value,
+    () => loadingIngresos.value || loadingGastos.value || loadingDeudas.value || loadingTarjetas.value,
   )
 
   const totalCuotaMensual = computed(() =>
     deudas.value.reduce((sum, d) => sum + (d.cuotaMensual ?? d.montoActualPendiente), 0),
   )
 
-  const totalPagoMinimo = computed(() =>
-    tarjetas.value.reduce((sum, t) => sum + (t.pagoMinimo ?? 0), 0),
-  )
+  const totalPagoMinimo = computed(() => tarjetas.value.reduce((sum, t) => sum + (t.pagoMinimo ?? 0), 0))
 
   const resumen = computed<ResumenGeneral>(() => ({
     totalIngresos: totalIngresos.value,
@@ -39,11 +28,7 @@ export function useDashboard() {
     totalPendienteDeudas: totalPendiente.value,
     totalCuotaMensualDeudas: totalCuotaMensual.value,
     totalTarjetas: totalTarjetas.value,
-    balance:
-      totalIngresos.value -
-      totalGastado.value -
-      totalCuotaMensual.value -
-      totalTarjetas.value,
+    balance: totalIngresos.value - totalGastado.value - totalCuotaMensual.value - totalTarjetas.value,
   }))
 
   const todasLasDescripciones = computed<DescripcionResumen[]>(() => [

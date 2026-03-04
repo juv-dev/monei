@@ -261,7 +261,12 @@ describe('should DashboardView', () => {
 
   // ─── Forecast tarjetas section ────────────────────────────────────────
   it('should show forecast section when tarjetas have data', async () => {
-    await tarjetasApi.create('jugaz', { lineaTotal: 10000, montoDeudaActual: 3000, descripcion: 'Visa', pagoMinimo: 500 })
+    await tarjetasApi.create('jugaz', {
+      lineaTotal: 10000,
+      montoDeudaActual: 3000,
+      descripcion: 'Visa',
+      pagoMinimo: 500,
+    })
 
     const { wrapper } = mountAuthenticated()
     await flushPromises()
@@ -339,7 +344,12 @@ describe('should DashboardView', () => {
 
   it('should show negative balance styling in forecast sections', async () => {
     await presupuestoApi.create('jugaz', { monto: 8000, descripcion: 'Mucho gasto', categoria: 'General' })
-    await tarjetasApi.create('jugaz', { lineaTotal: 5000, montoDeudaActual: 3000, descripcion: 'Visa', pagoMinimo: 500 })
+    await tarjetasApi.create('jugaz', {
+      lineaTotal: 5000,
+      montoDeudaActual: 3000,
+      descripcion: 'Visa',
+      pagoMinimo: 500,
+    })
     await deudasApi.create('jugaz', deudaBase)
 
     const { wrapper } = mountAuthenticated()
@@ -459,7 +469,12 @@ describe('should DashboardView', () => {
     await ingresosApi.create('jugaz', { monto: 10000, descripcion: 'Salario' })
     await presupuestoApi.create('jugaz', { monto: 500, descripcion: 'Gasto', categoria: 'General' })
     await deudasApi.create('jugaz', { ...deudaBase, cuotaMensual: 300 })
-    await tarjetasApi.create('jugaz', { lineaTotal: 5000, montoDeudaActual: 1000, descripcion: 'Visa', pagoMinimo: 200 })
+    await tarjetasApi.create('jugaz', {
+      lineaTotal: 5000,
+      montoDeudaActual: 1000,
+      descripcion: 'Visa',
+      pagoMinimo: 200,
+    })
 
     const { wrapper } = mountAuthenticated()
     await flushPromises()
@@ -497,7 +512,12 @@ describe('should DashboardView', () => {
     await ingresosApi.create('jugaz', { monto: 100, descripcion: 'Poco' })
     await presupuestoApi.create('jugaz', { monto: 5000, descripcion: 'Mucho', categoria: 'General' })
     await deudasApi.create('jugaz', { ...deudaBase, cuotaMensual: 500 })
-    await tarjetasApi.create('jugaz', { lineaTotal: 5000, montoDeudaActual: 2000, descripcion: 'Visa', pagoMinimo: 300 })
+    await tarjetasApi.create('jugaz', {
+      lineaTotal: 5000,
+      montoDeudaActual: 2000,
+      descripcion: 'Visa',
+      pagoMinimo: 300,
+    })
 
     const { wrapper } = mountAuthenticated()
     await flushPromises()

@@ -1,10 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import {
-  formatMoneyDisplay,
-  parseMoneyInput,
-  onDecimalInput,
-  onIntInput,
-} from '~/shared/utils/format'
+import { formatMoneyDisplay, parseMoneyInput, onDecimalInput, onIntInput } from '~/shared/utils/format'
 
 describe('should formatMoneyDisplay', () => {
   it('should return empty string for empty input', () => {
@@ -86,12 +81,12 @@ describe('should parseMoneyInput', () => {
   })
 
   it('should parse American format (comma = thousands)', () => {
-    expect(parseMoneyInput('1,000.50')).toBe(1000.50)
-    expect(parseMoneyInput('40,000.50')).toBe(40000.50)
+    expect(parseMoneyInput('1,000.50')).toBe(1000.5)
+    expect(parseMoneyInput('40,000.50')).toBe(40000.5)
   })
 
   it('should parse European format (dot = thousands, comma = decimal)', () => {
-    expect(parseMoneyInput('1.000,50')).toBe(1000.50)
+    expect(parseMoneyInput('1.000,50')).toBe(1000.5)
   })
 
   it('should parse dot-as-thousands (21.988 → 21988)', () => {
@@ -119,7 +114,7 @@ describe('should parseMoneyInput', () => {
   })
 
   it('should strip non-numeric characters', () => {
-    expect(parseMoneyInput('S/ 1,200.50')).toBe(1200.50)
+    expect(parseMoneyInput('S/ 1,200.50')).toBe(1200.5)
   })
 
   it('should return NaN for empty input', () => {

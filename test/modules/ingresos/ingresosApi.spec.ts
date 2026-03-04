@@ -99,9 +99,7 @@ describe('should ingresosApi', () => {
   })
 
   it('should throw when updating non-existent ingreso', async () => {
-    await expect(
-      ingresosApi.update(userId, 'fake-id', { monto: 500 }),
-    ).rejects.toThrow('Ingreso not found')
+    await expect(ingresosApi.update(userId, 'fake-id', { monto: 500 })).rejects.toThrow('Ingreso not found')
   })
 
   it('should persist update in localStorage', async () => {

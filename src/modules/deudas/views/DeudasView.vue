@@ -344,7 +344,6 @@ function calcularAmortizacion(deuda: Deuda): CuotaRow[] {
 <template>
   <div class="min-h-screen bg-[#F0F2F5]" data-testid="deudas-view">
     <div class="max-w-5xl mx-auto p-5 lg:p-8 space-y-5">
-
       <PageHeader
         title="Deudas"
         subtitle="Gestiona tus deudas personales"
@@ -356,7 +355,7 @@ function calcularAmortizacion(deuda: Deuda): CuotaRow[] {
 
       <div
         class="rounded-3xl p-6 lg:p-8 relative overflow-hidden shadow-lg"
-        style="background: linear-gradient(135deg, #D4A017 0%, #A87A0F 100%)"
+        style="background: linear-gradient(135deg, #d4a017 0%, #a87a0f 100%)"
       >
         <div class="absolute -top-10 -right-10 w-44 h-44 rounded-full opacity-[0.08]" style="background: white"></div>
         <div class="absolute -bottom-14 -left-6 w-52 h-52 rounded-full opacity-[0.05]" style="background: white"></div>
@@ -385,17 +384,17 @@ function calcularAmortizacion(deuda: Deuda): CuotaRow[] {
           </div>
 
           <div class="mt-4 pt-4 border-t border-white/20">
-            <p class="text-white/50 text-xs">{{ deudas.length }} deuda{{ deudas.length !== 1 ? 's' : '' }} activa{{ deudas.length !== 1 ? 's' : '' }}</p>
+            <p class="text-white/50 text-xs">
+              {{ deudas.length }} deuda{{ deudas.length !== 1 ? 's' : '' }} activa{{ deudas.length !== 1 ? 's' : '' }}
+            </p>
           </div>
         </div>
       </div>
 
       <div class="space-y-4">
-        <div v-if="isLoading" class="text-center py-16 text-[#94A3B8]" data-testid="loading-state">
-          Cargando...
-        </div>
+        <div v-if="isLoading" class="text-center py-16 text-[#94A3B8]" data-testid="loading-state">Cargando...</div>
 
-        <div v-else-if="isError" class="text-center py-16 text-sm" style="color: #C65A3A" data-testid="error-state">
+        <div v-else-if="isError" class="text-center py-16 text-sm" style="color: #c65a3a" data-testid="error-state">
           Error al cargar las deudas
         </div>
 
@@ -425,13 +424,16 @@ function calcularAmortizacion(deuda: Deuda): CuotaRow[] {
             @dragend="onDragEnd"
           >
             <div class="flex items-start gap-3 p-5 pb-4">
-              <div class="flex items-center pt-0.5 text-[#CBD5E1] hover:text-[#94A3B8] cursor-grab active:cursor-grabbing transition-colors shrink-0" aria-hidden="true">
+              <div
+                class="flex items-center pt-0.5 text-[#CBD5E1] hover:text-[#94A3B8] cursor-grab active:cursor-grabbing transition-colors shrink-0"
+                aria-hidden="true"
+              >
                 <GripVertical :size="16" />
               </div>
 
               <div
                 class="w-10 h-10 rounded-xl flex items-center justify-center text-sm font-black shrink-0"
-                style="background: rgba(212,160,23,0.10); color: #D4A017"
+                style="background: rgba(212, 160, 23, 0.1); color: #d4a017"
                 aria-hidden="true"
               >
                 {{ deuda.nombrePersona.charAt(0).toUpperCase() }}
@@ -466,7 +468,7 @@ function calcularAmortizacion(deuda: Deuda): CuotaRow[] {
               <div>
                 <div class="flex justify-between text-xs text-[#94A3B8] mb-1.5">
                   <span>Progreso de pago</span>
-                  <span class="font-semibold" style="color: #D4A017">{{ porcentajePagado(deuda) }}%</span>
+                  <span class="font-semibold" style="color: #d4a017">{{ porcentajePagado(deuda) }}%</span>
                 </div>
                 <div class="h-2 bg-[#F0F2F5] rounded-full overflow-hidden">
                   <div
@@ -483,9 +485,9 @@ function calcularAmortizacion(deuda: Deuda): CuotaRow[] {
                     {{ formatCurrency(deuda.totalDeuda) }}
                   </p>
                 </div>
-                <div class="rounded-xl p-2.5" style="background: rgba(198,90,58,0.08)">
-                  <p class="text-xs mb-0.5" style="color: #C65A3A">Pendiente</p>
-                  <p class="text-xs font-bold" style="color: #C65A3A" data-testid="deuda-pendiente">
+                <div class="rounded-xl p-2.5" style="background: rgba(198, 90, 58, 0.08)">
+                  <p class="text-xs mb-0.5" style="color: #c65a3a">Pendiente</p>
+                  <p class="text-xs font-bold" style="color: #c65a3a" data-testid="deuda-pendiente">
                     {{ formatCurrency(deuda.montoActualPendiente) }}
                   </p>
                 </div>
@@ -507,18 +509,31 @@ function calcularAmortizacion(deuda: Deuda): CuotaRow[] {
                 <div class="rounded-xl border border-[#EEEEF0] overflow-hidden">
                   <button
                     class="w-full flex items-center justify-between px-4 py-3 transition-colors"
-                    :class="expandedDeudaId === deuda.id
-                      ? 'bg-[#D4A017]/10 text-[#A87A0F]'
-                      : 'bg-[#F5F6FA] text-[#64748B] hover:bg-[#EEEEF0]'"
+                    :class="
+                      expandedDeudaId === deuda.id
+                        ? 'bg-[#D4A017]/10 text-[#A87A0F]'
+                        : 'bg-[#F5F6FA] text-[#64748B] hover:bg-[#EEEEF0]'
+                    "
                     data-testid="toggle-amortizacion-button"
                     @click="toggleAmortizacion(deuda.id)"
                   >
                     <div class="flex items-center gap-2">
-                      <Clock :size="14" :style="{ color: expandedDeudaId === deuda.id ? '#D4A017' : '#94A3B8' }" aria-hidden="true" />
+                      <Clock
+                        :size="14"
+                        :style="{ color: expandedDeudaId === deuda.id ? '#D4A017' : '#94A3B8' }"
+                        aria-hidden="true"
+                      />
                       <span class="text-xs font-semibold">Plan de pagos ({{ deuda.totalCuotas }} cuotas)</span>
                     </div>
                     <div class="flex items-center gap-1.5">
-                      <span class="text-[10px] font-medium px-2 py-0.5 rounded-full" :class="expandedDeudaId === deuda.id ? 'bg-[#D4A017]/20 text-[#A87A0F]' : 'bg-[#EEEEF0] text-[#94A3B8]'">
+                      <span
+                        class="text-[10px] font-medium px-2 py-0.5 rounded-full"
+                        :class="
+                          expandedDeudaId === deuda.id
+                            ? 'bg-[#D4A017]/20 text-[#A87A0F]'
+                            : 'bg-[#EEEEF0] text-[#94A3B8]'
+                        "
+                      >
                         {{ deuda.cuotasPagadas }} pagadas
                       </span>
                       <component
@@ -552,17 +567,25 @@ function calcularAmortizacion(deuda: Deuda): CuotaRow[] {
                           >
                             <td class="py-2 px-3 text-[#94A3B8]">{{ cuota.numero }}</td>
                             <td class="py-2 px-3 text-[#64748B]">{{ cuota.fecha }}</td>
-                            <td class="py-2 px-3 text-right font-medium text-[#1A1A2E]">{{ formatCurrency(cuota.pago) }}</td>
+                            <td class="py-2 px-3 text-right font-medium text-[#1A1A2E]">
+                              {{ formatCurrency(cuota.pago) }}
+                            </td>
                             <td class="py-2 px-3 text-right text-[#64748B]">{{ formatCurrency(cuota.saldo) }}</td>
                             <td class="py-2 px-3 text-center">
                               <button
                                 type="button"
                                 class="inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold cursor-pointer transition-opacity hover:opacity-70 active:scale-95"
-                                :class="cuota.cancelado
-                                  ? 'bg-emerald-50 text-emerald-600'
-                                  : 'bg-[#D4A017]/10 text-[#D4A017]'"
-                                :title="cuota.cancelado ? 'Haz clic para desmarcar como pagado' : 'Haz clic para marcar como pagado'"
-                                @click="cuota.cancelado ? despagarCuota(deuda, cuota.numero) : pagarCuota(deuda, cuota.numero)"
+                                :class="
+                                  cuota.cancelado ? 'bg-emerald-50 text-emerald-600' : 'bg-[#D4A017]/10 text-[#D4A017]'
+                                "
+                                :title="
+                                  cuota.cancelado
+                                    ? 'Haz clic para desmarcar como pagado'
+                                    : 'Haz clic para marcar como pagado'
+                                "
+                                @click="
+                                  cuota.cancelado ? despagarCuota(deuda, cuota.numero) : pagarCuota(deuda, cuota.numero)
+                                "
                               >
                                 {{ cuota.cancelado ? '✓ Cancelado' : 'Pendiente' }}
                               </button>
@@ -578,16 +601,10 @@ function calcularAmortizacion(deuda: Deuda): CuotaRow[] {
           </div>
         </div>
       </div>
-
     </div>
   </div>
 
-  <AppModal
-    :open="isModalOpen"
-    title="Agregar Deuda"
-    accent-color="#D4A017"
-    @close="isModalOpen = false"
-  >
+  <AppModal :open="isModalOpen" title="Agregar Deuda" accent-color="#D4A017" @close="isModalOpen = false">
     <form data-testid="deudas-form" novalidate @submit.prevent="handleSubmit">
       <div class="space-y-3">
         <div>
@@ -605,7 +622,10 @@ function calcularAmortizacion(deuda: Deuda): CuotaRow[] {
         </div>
 
         <div>
-          <label for="descripcion-deuda" class="block text-xs font-semibold text-[#64748B] mb-1.5 uppercase tracking-wide">
+          <label
+            for="descripcion-deuda"
+            class="block text-xs font-semibold text-[#64748B] mb-1.5 uppercase tracking-wide"
+          >
             Descripción
           </label>
           <input
@@ -631,12 +651,15 @@ function calcularAmortizacion(deuda: Deuda): CuotaRow[] {
               placeholder="0.00"
               class="w-full px-3 py-2.5 border border-[#EEEEF0] rounded-xl text-sm bg-[#F5F6FA] text-[#1A1A2E] placeholder-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#D4A017]/30 focus:border-transparent focus:bg-white transition-all"
               data-testid="total-deuda-input"
-              @input="onDecimalInput($event, v => form.totalDeuda = v)"
+              @input="onDecimalInput($event, (v) => (form.totalDeuda = v))"
               @blur="form.totalDeuda = formatMoneyDisplay(form.totalDeuda)"
             />
           </div>
           <div>
-            <label for="monto-pendiente" class="block text-xs font-semibold text-[#64748B] mb-1.5 uppercase tracking-wide">
+            <label
+              for="monto-pendiente"
+              class="block text-xs font-semibold text-[#64748B] mb-1.5 uppercase tracking-wide"
+            >
               Pendiente (S/)
             </label>
             <input
@@ -647,7 +670,7 @@ function calcularAmortizacion(deuda: Deuda): CuotaRow[] {
               placeholder="0.00"
               class="w-full px-3 py-2.5 border border-[#EEEEF0] rounded-xl text-sm bg-[#F5F6FA] text-[#1A1A2E] placeholder-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#D4A017]/30 focus:border-transparent focus:bg-white transition-all"
               data-testid="monto-pendiente-input"
-              @input="onDecimalInput($event, v => form.montoActualPendiente = v)"
+              @input="onDecimalInput($event, (v) => (form.montoActualPendiente = v))"
               @blur="form.montoActualPendiente = formatMoneyDisplay(form.montoActualPendiente)"
             />
           </div>
@@ -655,7 +678,10 @@ function calcularAmortizacion(deuda: Deuda): CuotaRow[] {
 
         <div class="grid grid-cols-2 gap-2">
           <div>
-            <label for="cuota-mensual" class="block text-xs font-semibold text-[#64748B] mb-1.5 uppercase tracking-wide">
+            <label
+              for="cuota-mensual"
+              class="block text-xs font-semibold text-[#64748B] mb-1.5 uppercase tracking-wide"
+            >
               Cuota mensual (S/)
             </label>
             <input
@@ -666,7 +692,7 @@ function calcularAmortizacion(deuda: Deuda): CuotaRow[] {
               placeholder="0.00"
               class="w-full px-3 py-2.5 border border-[#EEEEF0] rounded-xl text-sm bg-[#F5F6FA] text-[#1A1A2E] placeholder-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#D4A017]/30 focus:border-transparent focus:bg-white transition-all"
               data-testid="cuota-mensual-input"
-              @input="onDecimalInput($event, v => form.cuotaMensual = v)"
+              @input="onDecimalInput($event, (v) => (form.cuotaMensual = v))"
               @blur="form.cuotaMensual = formatMoneyDisplay(form.cuotaMensual)"
             />
           </div>
@@ -682,14 +708,17 @@ function calcularAmortizacion(deuda: Deuda): CuotaRow[] {
               placeholder="0.00"
               class="w-full px-3 py-2.5 border border-[#EEEEF0] rounded-xl text-sm bg-[#F5F6FA] text-[#1A1A2E] placeholder-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#D4A017]/30 focus:border-transparent focus:bg-white transition-all"
               data-testid="tasa-interes-input"
-              @input="onDecimalInput($event, v => form.tasaInteres = v)"
+              @input="onDecimalInput($event, (v) => (form.tasaInteres = v))"
             />
           </div>
         </div>
 
         <div class="grid grid-cols-2 gap-2">
           <div>
-            <label for="cuotas-pagadas" class="block text-xs font-semibold text-[#64748B] mb-1.5 uppercase tracking-wide">
+            <label
+              for="cuotas-pagadas"
+              class="block text-xs font-semibold text-[#64748B] mb-1.5 uppercase tracking-wide"
+            >
               Cuotas pagadas
             </label>
             <input
@@ -700,7 +729,7 @@ function calcularAmortizacion(deuda: Deuda): CuotaRow[] {
               placeholder="0"
               class="w-full px-3 py-2.5 border border-[#EEEEF0] rounded-xl text-sm bg-[#F5F6FA] text-[#1A1A2E] placeholder-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#D4A017]/30 focus:border-transparent focus:bg-white transition-all"
               data-testid="cuotas-pagadas-input"
-              @input="onIntInput($event, v => form.cuotasPagadas = v)"
+              @input="onIntInput($event, (v) => (form.cuotasPagadas = v))"
             />
           </div>
           <div>
@@ -715,7 +744,7 @@ function calcularAmortizacion(deuda: Deuda): CuotaRow[] {
               placeholder="Ej: 60"
               class="w-full px-3 py-2.5 border border-[#EEEEF0] rounded-xl text-sm bg-[#F5F6FA] text-[#1A1A2E] placeholder-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#D4A017]/30 focus:border-transparent focus:bg-white transition-all"
               data-testid="total-cuotas-input"
-              @input="onIntInput($event, v => form.totalCuotas = v)"
+              @input="onIntInput($event, (v) => (form.totalCuotas = v))"
             />
           </div>
         </div>
@@ -723,7 +752,7 @@ function calcularAmortizacion(deuda: Deuda): CuotaRow[] {
         <p
           v-if="formError"
           class="text-sm bg-[#C65A3A]/8 border border-[#C65A3A]/20 rounded-xl px-3 py-2.5"
-          style="color: #C65A3A"
+          style="color: #c65a3a"
           role="alert"
           data-testid="form-error"
         >
@@ -734,7 +763,7 @@ function calcularAmortizacion(deuda: Deuda): CuotaRow[] {
           type="submit"
           :disabled="isAdding"
           class="w-full py-3 text-white font-bold rounded-xl transition-all shadow-md hover:opacity-90 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-          style="background: linear-gradient(135deg, #D4A017 0%, #A87A0F 100%)"
+          style="background: linear-gradient(135deg, #d4a017 0%, #a87a0f 100%)"
           data-testid="submit-button"
         >
           {{ isAdding ? 'Agregando...' : '+ Agregar deuda' }}
@@ -743,16 +772,14 @@ function calcularAmortizacion(deuda: Deuda): CuotaRow[] {
     </form>
   </AppModal>
 
-  <AppModal
-    :open="isEditModalOpen"
-    title="Editar Deuda"
-    accent-color="#D4A017"
-    @close="isEditModalOpen = false"
-  >
+  <AppModal :open="isEditModalOpen" title="Editar Deuda" accent-color="#D4A017" @close="isEditModalOpen = false">
     <form data-testid="edit-deuda-form" novalidate @submit.prevent="handleEditSubmit">
       <div class="space-y-3">
         <div>
-          <label for="edit-nombre-persona" class="block text-xs font-semibold text-[#64748B] mb-1.5 uppercase tracking-wide">
+          <label
+            for="edit-nombre-persona"
+            class="block text-xs font-semibold text-[#64748B] mb-1.5 uppercase tracking-wide"
+          >
             Nombre persona
           </label>
           <input
@@ -765,7 +792,10 @@ function calcularAmortizacion(deuda: Deuda): CuotaRow[] {
         </div>
 
         <div>
-          <label for="edit-descripcion" class="block text-xs font-semibold text-[#64748B] mb-1.5 uppercase tracking-wide">
+          <label
+            for="edit-descripcion"
+            class="block text-xs font-semibold text-[#64748B] mb-1.5 uppercase tracking-wide"
+          >
             Descripción
           </label>
           <input
@@ -779,7 +809,10 @@ function calcularAmortizacion(deuda: Deuda): CuotaRow[] {
 
         <div class="grid grid-cols-2 gap-2">
           <div>
-            <label for="edit-total-deuda" class="block text-xs font-semibold text-[#64748B] mb-1.5 uppercase tracking-wide">
+            <label
+              for="edit-total-deuda"
+              class="block text-xs font-semibold text-[#64748B] mb-1.5 uppercase tracking-wide"
+            >
               Total (S/)
             </label>
             <input
@@ -789,12 +822,15 @@ function calcularAmortizacion(deuda: Deuda): CuotaRow[] {
               :value="editForm.totalDeuda"
               placeholder="0.00"
               class="w-full px-3 py-2.5 border border-[#EEEEF0] rounded-xl text-sm bg-[#F5F6FA] text-[#1A1A2E] placeholder-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#D4A017]/30 focus:border-transparent focus:bg-white transition-all"
-              @input="onDecimalInput($event, v => editForm.totalDeuda = v)"
+              @input="onDecimalInput($event, (v) => (editForm.totalDeuda = v))"
               @blur="editForm.totalDeuda = formatMoneyDisplay(editForm.totalDeuda)"
             />
           </div>
           <div>
-            <label for="edit-monto-pendiente" class="block text-xs font-semibold text-[#64748B] mb-1.5 uppercase tracking-wide">
+            <label
+              for="edit-monto-pendiente"
+              class="block text-xs font-semibold text-[#64748B] mb-1.5 uppercase tracking-wide"
+            >
               Pendiente (S/)
             </label>
             <input
@@ -804,7 +840,7 @@ function calcularAmortizacion(deuda: Deuda): CuotaRow[] {
               :value="editForm.montoActualPendiente"
               placeholder="0.00"
               class="w-full px-3 py-2.5 border border-[#EEEEF0] rounded-xl text-sm bg-[#F5F6FA] text-[#1A1A2E] placeholder-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#D4A017]/30 focus:border-transparent focus:bg-white transition-all"
-              @input="onDecimalInput($event, v => editForm.montoActualPendiente = v)"
+              @input="onDecimalInput($event, (v) => (editForm.montoActualPendiente = v))"
               @blur="editForm.montoActualPendiente = formatMoneyDisplay(editForm.montoActualPendiente)"
             />
           </div>
@@ -812,7 +848,10 @@ function calcularAmortizacion(deuda: Deuda): CuotaRow[] {
 
         <div class="grid grid-cols-2 gap-2">
           <div>
-            <label for="edit-cuota-mensual" class="block text-xs font-semibold text-[#64748B] mb-1.5 uppercase tracking-wide">
+            <label
+              for="edit-cuota-mensual"
+              class="block text-xs font-semibold text-[#64748B] mb-1.5 uppercase tracking-wide"
+            >
               Cuota mensual (S/)
             </label>
             <input
@@ -822,12 +861,15 @@ function calcularAmortizacion(deuda: Deuda): CuotaRow[] {
               :value="editForm.cuotaMensual"
               placeholder="0.00"
               class="w-full px-3 py-2.5 border border-[#EEEEF0] rounded-xl text-sm bg-[#F5F6FA] text-[#1A1A2E] placeholder-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#D4A017]/30 focus:border-transparent focus:bg-white transition-all"
-              @input="onDecimalInput($event, v => editForm.cuotaMensual = v)"
+              @input="onDecimalInput($event, (v) => (editForm.cuotaMensual = v))"
               @blur="editForm.cuotaMensual = formatMoneyDisplay(editForm.cuotaMensual)"
             />
           </div>
           <div>
-            <label for="edit-tasa-interes" class="block text-xs font-semibold text-[#64748B] mb-1.5 uppercase tracking-wide">
+            <label
+              for="edit-tasa-interes"
+              class="block text-xs font-semibold text-[#64748B] mb-1.5 uppercase tracking-wide"
+            >
               Interés (%)
             </label>
             <input
@@ -837,14 +879,17 @@ function calcularAmortizacion(deuda: Deuda): CuotaRow[] {
               :value="editForm.tasaInteres"
               placeholder="0.00"
               class="w-full px-3 py-2.5 border border-[#EEEEF0] rounded-xl text-sm bg-[#F5F6FA] text-[#1A1A2E] placeholder-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#D4A017]/30 focus:border-transparent focus:bg-white transition-all"
-              @input="onDecimalInput($event, v => editForm.tasaInteres = v)"
+              @input="onDecimalInput($event, (v) => (editForm.tasaInteres = v))"
             />
           </div>
         </div>
 
         <div class="grid grid-cols-2 gap-2">
           <div>
-            <label for="edit-cuotas-pagadas" class="block text-xs font-semibold text-[#64748B] mb-1.5 uppercase tracking-wide">
+            <label
+              for="edit-cuotas-pagadas"
+              class="block text-xs font-semibold text-[#64748B] mb-1.5 uppercase tracking-wide"
+            >
               Cuotas pagadas
             </label>
             <input
@@ -854,11 +899,14 @@ function calcularAmortizacion(deuda: Deuda): CuotaRow[] {
               :value="editForm.cuotasPagadas"
               placeholder="0"
               class="w-full px-3 py-2.5 border border-[#EEEEF0] rounded-xl text-sm bg-[#F5F6FA] text-[#1A1A2E] placeholder-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#D4A017]/30 focus:border-transparent focus:bg-white transition-all"
-              @input="onIntInput($event, v => editForm.cuotasPagadas = v)"
+              @input="onIntInput($event, (v) => (editForm.cuotasPagadas = v))"
             />
           </div>
           <div>
-            <label for="edit-total-cuotas" class="block text-xs font-semibold text-[#64748B] mb-1.5 uppercase tracking-wide">
+            <label
+              for="edit-total-cuotas"
+              class="block text-xs font-semibold text-[#64748B] mb-1.5 uppercase tracking-wide"
+            >
               Total cuotas <span class="font-normal normal-case text-[#94A3B8]">(opcional)</span>
             </label>
             <input
@@ -868,7 +916,7 @@ function calcularAmortizacion(deuda: Deuda): CuotaRow[] {
               :value="editForm.totalCuotas"
               placeholder="Ej: 60"
               class="w-full px-3 py-2.5 border border-[#EEEEF0] rounded-xl text-sm bg-[#F5F6FA] text-[#1A1A2E] placeholder-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#D4A017]/30 focus:border-transparent focus:bg-white transition-all"
-              @input="onIntInput($event, v => editForm.totalCuotas = v)"
+              @input="onIntInput($event, (v) => (editForm.totalCuotas = v))"
             />
           </div>
         </div>
@@ -876,7 +924,7 @@ function calcularAmortizacion(deuda: Deuda): CuotaRow[] {
         <p
           v-if="editFormError"
           class="text-sm bg-[#C65A3A]/8 border border-[#C65A3A]/20 rounded-xl px-3 py-2.5"
-          style="color: #C65A3A"
+          style="color: #c65a3a"
           role="alert"
         >
           {{ editFormError }}
@@ -894,7 +942,7 @@ function calcularAmortizacion(deuda: Deuda): CuotaRow[] {
             type="submit"
             :disabled="isUpdating"
             class="flex-1 py-3 text-white font-bold rounded-xl transition-all shadow-md hover:opacity-90 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-            style="background: linear-gradient(135deg, #D4A017 0%, #A87A0F 100%)"
+            style="background: linear-gradient(135deg, #d4a017 0%, #a87a0f 100%)"
             data-testid="edit-submit-button"
           >
             {{ isUpdating ? 'Guardando...' : 'Guardar cambios' }}

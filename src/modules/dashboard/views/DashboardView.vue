@@ -52,8 +52,8 @@ const todayDate = new Intl.DateTimeFormat('es-PE', {
 
 const typeConfig: Record<string, { hex: string; icon: Component }> = {
   Ingreso: { hex: '#3E6F73', icon: TrendingUp },
-  Gasto:   { hex: '#C65A3A', icon: ShoppingBag },
-  Deuda:   { hex: '#D4A017', icon: Clock },
+  Gasto: { hex: '#C65A3A', icon: ShoppingBag },
+  Deuda: { hex: '#D4A017', icon: Clock },
   Tarjeta: { hex: '#6A1E2D', icon: CreditCard },
 }
 
@@ -96,15 +96,9 @@ const statsCards = computed(() => [
   },
 ])
 
-const compromisosFijos = computed(
-  () => resumen.value.totalCuotaMensualDeudas + resumen.value.totalTarjetas,
-)
-const margenParaGastos = computed(
-  () => resumen.value.totalIngresos - compromisosFijos.value,
-)
-const diferenciaGastos = computed(
-  () => margenParaGastos.value - resumen.value.totalGastado,
-)
+const compromisosFijos = computed(() => resumen.value.totalCuotaMensualDeudas + resumen.value.totalTarjetas)
+const margenParaGastos = computed(() => resumen.value.totalIngresos - compromisosFijos.value)
+const diferenciaGastos = computed(() => margenParaGastos.value - resumen.value.totalGastado)
 const porcentajeGastos = computed(() =>
   margenParaGastos.value > 0
     ? Math.round((resumen.value.totalGastado / margenParaGastos.value) * 100)
@@ -113,37 +107,28 @@ const porcentajeGastos = computed(() =>
       : 0,
 )
 const barGastosWidth = computed(() => Math.min(porcentajeGastos.value, 100) + '%')
-const showCierreDeMes = computed(
-  () => resumen.value.totalIngresos > 0 || compromisosFijos.value > 0,
-)
+const showCierreDeMes = computed(() => resumen.value.totalIngresos > 0 || compromisosFijos.value > 0)
 
 const showForecastTarjetas = computed(() => resumen.value.totalTarjetas > 0)
-const ahorroPagoMinimo = computed(
-  () => resumen.value.totalTarjetas - totalPagoMinimo.value,
-)
-const balancePagoMinimo = computed(
-  () => resumen.value.balance + ahorroPagoMinimo.value,
-)
-const balanceSinDeudas = computed(
-  () => resumen.value.balance + resumen.value.totalCuotaMensualDeudas,
-)
-const capacidadLibreSinDeudas = computed(
-  () => resumen.value.totalIngresos - resumen.value.totalGastado,
-)
+const ahorroPagoMinimo = computed(() => resumen.value.totalTarjetas - totalPagoMinimo.value)
+const balancePagoMinimo = computed(() => resumen.value.balance + ahorroPagoMinimo.value)
+const balanceSinDeudas = computed(() => resumen.value.balance + resumen.value.totalCuotaMensualDeudas)
+const capacidadLibreSinDeudas = computed(() => resumen.value.totalIngresos - resumen.value.totalGastado)
 
-const isPositive   = computed(() => resumen.value.balance >= 0)
+const isPositive = computed(() => resumen.value.balance >= 0)
 const balanceGradient = computed(() =>
   isPositive.value
     ? 'linear-gradient(135deg, #3E6F73 0%, #2C5558 100%)'
-    : 'linear-gradient(135deg, #C65A3A 0%, #9A3D27 100%)'
+    : 'linear-gradient(135deg, #C65A3A 0%, #9A3D27 100%)',
 )
-const balanceIcon = computed(() => isPositive.value ? TrendingUp : TrendingDown)
+const balanceIcon = computed(() => (isPositive.value ? TrendingUp : TrendingDown))
 
-const hasChartData = computed(() =>
-  resumen.value.totalIngresos > 0 ||
-  resumen.value.totalGastado > 0 ||
-  resumen.value.totalPendienteDeudas > 0 ||
-  resumen.value.totalTarjetas > 0,
+const hasChartData = computed(
+  () =>
+    resumen.value.totalIngresos > 0 ||
+    resumen.value.totalGastado > 0 ||
+    resumen.value.totalPendienteDeudas > 0 ||
+    resumen.value.totalTarjetas > 0,
 )
 
 const chartLabels = computed(() => ['Ingresos', 'Gastos', 'Deudas', 'Tarjetas'])
@@ -159,7 +144,6 @@ const chartColors = ['#3E6F73', '#C65A3A', '#D4A017', '#6A1E2D']
 <template>
   <div class="min-h-screen bg-[#F0F2F5]" data-testid="dashboard-view">
     <div class="max-w-6xl mx-auto p-5 lg:p-8 space-y-5">
-
       <div class="flex items-end justify-between">
         <div>
           <p class="text-xs text-[#94A3B8] capitalize mb-1">{{ todayDate }}</p>
@@ -179,21 +163,21 @@ const chartColors = ['#3E6F73', '#C65A3A', '#D4A017', '#6A1E2D']
       </div>
 
       <template v-else>
-
         <div
           class="rounded-3xl p-6 lg:p-8 relative overflow-hidden shadow-lg"
           :style="{ background: balanceGradient }"
           data-testid="card-balance"
         >
           <div class="absolute -top-12 -right-12 w-48 h-48 rounded-full opacity-[0.08]" style="background: white"></div>
-          <div class="absolute -bottom-16 -left-8 w-56 h-56 rounded-full opacity-[0.06]" style="background: white"></div>
+          <div
+            class="absolute -bottom-16 -left-8 w-56 h-56 rounded-full opacity-[0.06]"
+            style="background: white"
+          ></div>
 
           <div class="relative z-10 flex items-start justify-between gap-4">
             <div class="flex-1 min-w-0">
               <div class="flex items-center gap-2 mb-3">
-                <span class="text-white/60 text-xs font-semibold uppercase tracking-widest">
-                  Balance Neto
-                </span>
+                <span class="text-white/60 text-xs font-semibold uppercase tracking-widest"> Balance Neto </span>
                 <span
                   class="inline-flex items-center gap-0.5 text-xs font-bold rounded-full px-2.5 py-0.5"
                   :class="isPositive ? 'bg-white/20 text-white' : 'bg-white/20 text-white'"
@@ -203,10 +187,7 @@ const chartColors = ['#3E6F73', '#C65A3A', '#D4A017', '#6A1E2D']
                 </span>
               </div>
 
-              <p
-                class="text-white text-4xl lg:text-5xl font-black tracking-tight"
-                data-testid="resumen-balance"
-              >
+              <p class="text-white text-4xl lg:text-5xl font-black tracking-tight" data-testid="resumen-balance">
                 {{ formatCurrency(resumen.balance) }}
               </p>
 
@@ -254,15 +235,14 @@ const chartColors = ['#3E6F73', '#C65A3A', '#D4A017', '#6A1E2D']
             <div class="relative z-10">
               <div class="flex items-center justify-between mb-4">
                 <component :is="card.icon" :size="22" :style="{ color: card.color }" aria-hidden="true" />
-                <p class="text-xs font-semibold text-right leading-tight max-w-[60%]" :style="{ color: card.color + 'CC' }">
+                <p
+                  class="text-xs font-semibold text-right leading-tight max-w-[60%]"
+                  :style="{ color: card.color + 'CC' }"
+                >
                   {{ card.label }}
                 </p>
               </div>
-              <p
-                class="text-xl lg:text-2xl font-black"
-                :style="{ color: card.color }"
-                :data-testid="card.valueTestid"
-              >
+              <p class="text-xl lg:text-2xl font-black" :style="{ color: card.color }" :data-testid="card.valueTestid">
                 {{ formatCurrency(card.value) }}
               </p>
             </div>
@@ -278,7 +258,11 @@ const chartColors = ['#3E6F73', '#C65A3A', '#D4A017', '#6A1E2D']
             <h2 class="text-sm font-bold text-[#1A1A2E]">Plan de cierre de mes</h2>
             <span
               class="inline-flex items-center gap-1.5 text-xs font-bold rounded-full px-3 py-1"
-              :class="diferenciaGastos >= 0 ? 'bg-[rgba(62,111,115,0.10)] text-[#3E6F73]' : 'bg-[rgba(198,90,58,0.10)] text-[#C65A3A]'"
+              :class="
+                diferenciaGastos >= 0
+                  ? 'bg-[rgba(62,111,115,0.10)] text-[#3E6F73]'
+                  : 'bg-[rgba(198,90,58,0.10)] text-[#C65A3A]'
+              "
             >
               <component :is="diferenciaGastos >= 0 ? CheckCircle2 : AlertTriangle" :size="12" aria-hidden="true" />
               {{ diferenciaGastos >= 0 ? 'En control' : 'Revisar gastos' }}
@@ -302,11 +286,12 @@ const chartColors = ['#3E6F73', '#C65A3A', '#D4A017', '#6A1E2D']
               <p
                 class="text-[10px] font-semibold uppercase tracking-wide mb-1"
                 :class="margenParaGastos >= 0 ? 'text-[#3E6F73]' : 'text-[#C65A3A]'"
-              >Margen</p>
-              <p
-                class="text-base font-black"
-                :class="margenParaGastos >= 0 ? 'text-[#3E6F73]' : 'text-[#C65A3A]'"
-              >{{ formatShort(Math.abs(margenParaGastos)) }}</p>
+              >
+                Margen
+              </p>
+              <p class="text-base font-black" :class="margenParaGastos >= 0 ? 'text-[#3E6F73]' : 'text-[#C65A3A]'">
+                {{ formatShort(Math.abs(margenParaGastos)) }}
+              </p>
               <p class="text-[10px] text-[#94A3B8] mt-0.5">para gastos</p>
             </div>
           </div>
@@ -320,10 +305,9 @@ const chartColors = ['#3E6F73', '#C65A3A', '#D4A017', '#6A1E2D']
                 <span class="font-semibold text-[#1A1A2E]">{{ formatShort(Math.max(margenParaGastos, 0)) }}</span>
                 disponibles
               </span>
-              <span
-                class="text-xs font-bold"
-                :class="porcentajeGastos > 100 ? 'text-[#C65A3A]' : 'text-[#3E6F73]'"
-              >{{ porcentajeGastos }}%</span>
+              <span class="text-xs font-bold" :class="porcentajeGastos > 100 ? 'text-[#C65A3A]' : 'text-[#3E6F73]'"
+                >{{ porcentajeGastos }}%</span
+              >
             </div>
             <div class="h-2.5 rounded-full bg-[#F0F2F5] overflow-hidden">
               <div
@@ -338,14 +322,25 @@ const chartColors = ['#3E6F73', '#C65A3A', '#D4A017', '#6A1E2D']
 
           <div
             class="flex items-center gap-2 p-3 rounded-xl text-xs font-semibold"
-            :class="diferenciaGastos >= 0 ? 'bg-[rgba(62,111,115,0.08)] text-[#3E6F73]' : 'bg-[rgba(198,90,58,0.08)] text-[#C65A3A]'"
+            :class="
+              diferenciaGastos >= 0
+                ? 'bg-[rgba(62,111,115,0.08)] text-[#3E6F73]'
+                : 'bg-[rgba(198,90,58,0.08)] text-[#C65A3A]'
+            "
           >
-            <component :is="diferenciaGastos >= 0 ? CheckCircle2 : AlertTriangle" :size="14" class="shrink-0" aria-hidden="true" />
+            <component
+              :is="diferenciaGastos >= 0 ? CheckCircle2 : AlertTriangle"
+              :size="14"
+              class="shrink-0"
+              aria-hidden="true"
+            />
             <span v-if="diferenciaGastos >= 0">
-              Te sobran <strong>{{ formatCurrency(diferenciaGastos) }}</strong> después de cubrir todos tus compromisos y gastos.
+              Te sobran <strong>{{ formatCurrency(diferenciaGastos) }}</strong> después de cubrir todos tus compromisos
+              y gastos.
             </span>
             <span v-else>
-              Necesitas reducir <strong>{{ formatCurrency(Math.abs(diferenciaGastos)) }}</strong> en gastos para llegar a fin de mes.
+              Necesitas reducir <strong>{{ formatCurrency(Math.abs(diferenciaGastos)) }}</strong> en gastos para llegar
+              a fin de mes.
             </span>
           </div>
         </div>
@@ -356,7 +351,7 @@ const chartColors = ['#3E6F73', '#C65A3A', '#D4A017', '#6A1E2D']
           data-testid="forecast-tarjetas"
         >
           <div class="flex items-center gap-2 mb-4">
-            <CreditCard :size="16" style="color: #6A1E2D" aria-hidden="true" />
+            <CreditCard :size="16" style="color: #6a1e2d" aria-hidden="true" />
             <h2 class="text-sm font-bold text-[#1A1A2E]">Pronóstico Tarjetas de Crédito</h2>
           </div>
 
@@ -370,10 +365,9 @@ const chartColors = ['#3E6F73', '#C65A3A', '#D4A017', '#6A1E2D']
               <p class="text-[10px] text-[#94A3B8] mb-3">Compromiso mensual actual</p>
               <div class="flex items-center justify-between pt-3 border-t border-[#F0F2F5]">
                 <span class="text-[10px] text-[#94A3B8]">Balance resultante</span>
-                <span
-                  class="text-xs font-bold"
-                  :class="resumen.balance >= 0 ? 'text-[#3E6F73]' : 'text-[#C65A3A]'"
-                >{{ formatCurrency(resumen.balance) }}</span>
+                <span class="text-xs font-bold" :class="resumen.balance >= 0 ? 'text-[#3E6F73]' : 'text-[#C65A3A]'">{{
+                  formatCurrency(resumen.balance)
+                }}</span>
               </div>
             </div>
 
@@ -391,7 +385,8 @@ const chartColors = ['#3E6F73', '#C65A3A', '#D4A017', '#6A1E2D']
                   <span
                     class="text-xs font-bold"
                     :class="balancePagoMinimo >= 0 ? 'text-[#3E6F73]' : 'text-[#C65A3A]'"
-                  >{{ formatCurrency(balancePagoMinimo) }}</span>
+                    >{{ formatCurrency(balancePagoMinimo) }}</span
+                  >
                 </div>
               </template>
               <template v-else>
@@ -407,7 +402,9 @@ const chartColors = ['#3E6F73', '#C65A3A', '#D4A017', '#6A1E2D']
               data-testid="forecast-sin-deudas"
             >
               <p class="text-[10px] font-semibold text-[#3E6F73] uppercase tracking-wide mb-2">Sin Deudas</p>
-              <p class="text-lg font-black text-[#3E6F73] mb-1">{{ formatCurrency(resumen.totalCuotaMensualDeudas) }}</p>
+              <p class="text-lg font-black text-[#3E6F73] mb-1">
+                {{ formatCurrency(resumen.totalCuotaMensualDeudas) }}
+              </p>
               <p class="text-[10px] text-[#94A3B8] mb-3">Cuota mensual que se libera</p>
               <div class="space-y-2 pt-3 border-t border-[#F0F2F5]">
                 <div class="flex items-center justify-between">
@@ -415,14 +412,16 @@ const chartColors = ['#3E6F73', '#C65A3A', '#D4A017', '#6A1E2D']
                   <span
                     class="text-xs font-bold"
                     :class="balanceSinDeudas >= 0 ? 'text-[#3E6F73]' : 'text-[#C65A3A]'"
-                  >{{ formatCurrency(balanceSinDeudas) }}</span>
+                    >{{ formatCurrency(balanceSinDeudas) }}</span
+                  >
                 </div>
                 <div class="flex items-center justify-between">
                   <span class="text-[10px] text-[#94A3B8]">Capacidad libre</span>
                   <span
                     class="text-xs font-bold"
                     :class="capacidadLibreSinDeudas >= 0 ? 'text-[#3E6F73]' : 'text-[#C65A3A]'"
-                  >{{ formatCurrency(capacidadLibreSinDeudas) }}</span>
+                    >{{ formatCurrency(capacidadLibreSinDeudas) }}</span
+                  >
                 </div>
               </div>
             </div>
@@ -441,11 +440,7 @@ const chartColors = ['#3E6F73', '#C65A3A', '#D4A017', '#6A1E2D']
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-5 items-start">
-
-          <div
-            v-if="hasChartData"
-            class="bg-white rounded-2xl border border-[#EEEEF0] shadow-sm p-5"
-          >
+          <div v-if="hasChartData" class="bg-white rounded-2xl border border-[#EEEEF0] shadow-sm p-5">
             <h2 class="text-sm font-bold text-[#1A1A2E] mb-5">Distribución</h2>
             <div class="w-40 mx-auto mb-5">
               <DoughnutChart
@@ -457,11 +452,7 @@ const chartColors = ['#3E6F73', '#C65A3A', '#D4A017', '#6A1E2D']
               />
             </div>
             <ul class="space-y-2.5">
-              <li
-                v-for="(label, i) in chartLabels"
-                :key="label"
-                class="flex items-center justify-between text-xs"
-              >
+              <li v-for="(label, i) in chartLabels" :key="label" class="flex items-center justify-between text-xs">
                 <div class="flex items-center gap-2">
                   <div
                     class="w-2.5 h-2.5 rounded-full shrink-0"
@@ -498,27 +489,31 @@ const chartColors = ['#3E6F73', '#C65A3A', '#D4A017', '#6A1E2D']
                 <Inbox :size="26" class="text-[#94A3B8]" aria-hidden="true" />
               </div>
               <p class="text-sm font-semibold text-[#1A1A2E]">Sin transacciones</p>
-              <p class="text-xs text-[#94A3B8] mt-1 max-w-50">
-                Registra ingresos o gastos para verlos aquí
-              </p>
+              <p class="text-xs text-[#94A3B8] mt-1 max-w-50">Registra ingresos o gastos para verlos aquí</p>
             </div>
 
             <div v-else data-testid="descriptions-list">
-
               <div v-if="ingresosItems.length > 0" class="border-b border-[#F0F2F5]">
                 <button
                   class="flex items-center justify-between w-full px-5 py-3 hover:bg-[#F8F9FB] transition-colors"
                   @click="ingresosSectionOpen = !ingresosSectionOpen"
                 >
                   <div class="flex items-center gap-2">
-                    <TrendingUp :size="14" style="color: #3E6F73" aria-hidden="true" />
-                    <span class="text-xs font-bold" style="color: #3E6F73">Ingresos</span>
+                    <TrendingUp :size="14" style="color: #3e6f73" aria-hidden="true" />
+                    <span class="text-xs font-bold" style="color: #3e6f73">Ingresos</span>
                     <span class="text-xs bg-[#F0F2F5] text-[#64748B] rounded-full px-2 py-0.5 font-semibold">
                       {{ ingresosItems.length }}
                     </span>
-                    <span class="text-xs font-bold tabular-nums" style="color: #3E6F73">{{ formatShort(resumen.totalIngresos) }}</span>
+                    <span class="text-xs font-bold tabular-nums" style="color: #3e6f73">{{
+                      formatShort(resumen.totalIngresos)
+                    }}</span>
                   </div>
-                  <component :is="ingresosSectionOpen ? ChevronUp : ChevronDown" :size="14" class="text-[#94A3B8]" aria-hidden="true" />
+                  <component
+                    :is="ingresosSectionOpen ? ChevronUp : ChevronDown"
+                    :size="14"
+                    class="text-[#94A3B8]"
+                    aria-hidden="true"
+                  />
                 </button>
                 <div v-if="ingresosSectionOpen" class="divide-y divide-[#F0F2F5]">
                   <div
@@ -531,13 +526,27 @@ const chartColors = ['#3E6F73', '#C65A3A', '#D4A017', '#6A1E2D']
                       class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
                       :style="{ backgroundColor: (typeConfig[item.tipo]?.hex ?? '#64748B') + '15' }"
                     >
-                      <component :is="typeConfig[item.tipo]?.icon" :size="18" :style="{ color: typeConfig[item.tipo]?.hex ?? '#64748B' }" aria-hidden="true" />
+                      <component
+                        :is="typeConfig[item.tipo]?.icon"
+                        :size="18"
+                        :style="{ color: typeConfig[item.tipo]?.hex ?? '#64748B' }"
+                        aria-hidden="true"
+                      />
                     </div>
                     <div class="flex-1 min-w-0">
                       <p class="text-sm font-semibold text-[#1A1A2E] truncate leading-tight">{{ item.descripcion }}</p>
-                      <span class="text-xs font-medium" :style="{ color: typeConfig[item.tipo]?.hex ?? '#64748B' }" data-testid="description-type">{{ item.tipo }}</span>
+                      <span
+                        class="text-xs font-medium"
+                        :style="{ color: typeConfig[item.tipo]?.hex ?? '#64748B' }"
+                        data-testid="description-type"
+                        >{{ item.tipo }}</span
+                      >
                     </div>
-                    <p class="text-sm font-bold shrink-0 tabular-nums" style="color: #3E6F73" data-testid="description-monto">
+                    <p
+                      class="text-sm font-bold shrink-0 tabular-nums"
+                      style="color: #3e6f73"
+                      data-testid="description-monto"
+                    >
                       +{{ formatCurrency(item.monto) }}
                     </p>
                   </div>
@@ -550,14 +559,21 @@ const chartColors = ['#3E6F73', '#C65A3A', '#D4A017', '#6A1E2D']
                   @click="gastosSectionOpen = !gastosSectionOpen"
                 >
                   <div class="flex items-center gap-2">
-                    <TrendingDown :size="14" style="color: #C65A3A" aria-hidden="true" />
-                    <span class="text-xs font-bold" style="color: #C65A3A">Gastos</span>
+                    <TrendingDown :size="14" style="color: #c65a3a" aria-hidden="true" />
+                    <span class="text-xs font-bold" style="color: #c65a3a">Gastos</span>
                     <span class="text-xs bg-[#F0F2F5] text-[#64748B] rounded-full px-2 py-0.5 font-semibold">
                       {{ gastosItems.length }}
                     </span>
-                    <span class="text-xs font-bold tabular-nums" style="color: #C65A3A">{{ formatShort(resumen.totalGastado) }}</span>
+                    <span class="text-xs font-bold tabular-nums" style="color: #c65a3a">{{
+                      formatShort(resumen.totalGastado)
+                    }}</span>
                   </div>
-                  <component :is="gastosSectionOpen ? ChevronUp : ChevronDown" :size="14" class="text-[#94A3B8]" aria-hidden="true" />
+                  <component
+                    :is="gastosSectionOpen ? ChevronUp : ChevronDown"
+                    :size="14"
+                    class="text-[#94A3B8]"
+                    aria-hidden="true"
+                  />
                 </button>
                 <div v-if="gastosSectionOpen" class="divide-y divide-[#F0F2F5]">
                   <div
@@ -570,13 +586,27 @@ const chartColors = ['#3E6F73', '#C65A3A', '#D4A017', '#6A1E2D']
                       class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
                       :style="{ backgroundColor: (typeConfig[item.tipo]?.hex ?? '#64748B') + '15' }"
                     >
-                      <component :is="typeConfig[item.tipo]?.icon" :size="18" :style="{ color: typeConfig[item.tipo]?.hex ?? '#64748B' }" aria-hidden="true" />
+                      <component
+                        :is="typeConfig[item.tipo]?.icon"
+                        :size="18"
+                        :style="{ color: typeConfig[item.tipo]?.hex ?? '#64748B' }"
+                        aria-hidden="true"
+                      />
                     </div>
                     <div class="flex-1 min-w-0">
                       <p class="text-sm font-semibold text-[#1A1A2E] truncate leading-tight">{{ item.descripcion }}</p>
-                      <span class="text-xs font-medium" :style="{ color: typeConfig[item.tipo]?.hex ?? '#64748B' }" data-testid="description-type">{{ item.tipo }}</span>
+                      <span
+                        class="text-xs font-medium"
+                        :style="{ color: typeConfig[item.tipo]?.hex ?? '#64748B' }"
+                        data-testid="description-type"
+                        >{{ item.tipo }}</span
+                      >
                     </div>
-                    <p class="text-sm font-bold shrink-0 tabular-nums" style="color: #C65A3A" data-testid="description-monto">
+                    <p
+                      class="text-sm font-bold shrink-0 tabular-nums"
+                      style="color: #c65a3a"
+                      data-testid="description-monto"
+                    >
                       −{{ formatCurrency(item.monto) }}
                     </p>
                   </div>
@@ -589,14 +619,21 @@ const chartColors = ['#3E6F73', '#C65A3A', '#D4A017', '#6A1E2D']
                   @click="deudasSectionOpen = !deudasSectionOpen"
                 >
                   <div class="flex items-center gap-2">
-                    <Clock :size="14" style="color: #D4A017" aria-hidden="true" />
-                    <span class="text-xs font-bold" style="color: #D4A017">Deudas</span>
+                    <Clock :size="14" style="color: #d4a017" aria-hidden="true" />
+                    <span class="text-xs font-bold" style="color: #d4a017">Deudas</span>
                     <span class="text-xs bg-[#F0F2F5] text-[#64748B] rounded-full px-2 py-0.5 font-semibold">
                       {{ deudasItems.length }}
                     </span>
-                    <span class="text-xs font-bold tabular-nums" style="color: #D4A017">{{ formatShort(resumen.totalCuotaMensualDeudas) }}</span>
+                    <span class="text-xs font-bold tabular-nums" style="color: #d4a017">{{
+                      formatShort(resumen.totalCuotaMensualDeudas)
+                    }}</span>
                   </div>
-                  <component :is="deudasSectionOpen ? ChevronUp : ChevronDown" :size="14" class="text-[#94A3B8]" aria-hidden="true" />
+                  <component
+                    :is="deudasSectionOpen ? ChevronUp : ChevronDown"
+                    :size="14"
+                    class="text-[#94A3B8]"
+                    aria-hidden="true"
+                  />
                 </button>
                 <div v-if="deudasSectionOpen" class="divide-y divide-[#F0F2F5]">
                   <div
@@ -607,15 +644,21 @@ const chartColors = ['#3E6F73', '#C65A3A', '#D4A017', '#6A1E2D']
                   >
                     <div
                       class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
-                      style="background-color: rgba(212,160,23,0.12)"
+                      style="background-color: rgba(212, 160, 23, 0.12)"
                     >
-                      <Clock :size="18" style="color: #D4A017" aria-hidden="true" />
+                      <Clock :size="18" style="color: #d4a017" aria-hidden="true" />
                     </div>
                     <div class="flex-1 min-w-0">
                       <p class="text-sm font-semibold text-[#1A1A2E] truncate leading-tight">{{ item.descripcion }}</p>
-                      <span class="text-xs font-medium" style="color: #D4A017" data-testid="description-type">{{ item.tipo }}</span>
+                      <span class="text-xs font-medium" style="color: #d4a017" data-testid="description-type">{{
+                        item.tipo
+                      }}</span>
                     </div>
-                    <p class="text-sm font-bold shrink-0 tabular-nums" style="color: #D4A017" data-testid="description-monto">
+                    <p
+                      class="text-sm font-bold shrink-0 tabular-nums"
+                      style="color: #d4a017"
+                      data-testid="description-monto"
+                    >
                       −{{ formatCurrency(item.monto) }}
                     </p>
                   </div>
@@ -628,14 +671,21 @@ const chartColors = ['#3E6F73', '#C65A3A', '#D4A017', '#6A1E2D']
                   @click="tarjetasSectionOpen = !tarjetasSectionOpen"
                 >
                   <div class="flex items-center gap-2">
-                    <CreditCard :size="14" style="color: #6A1E2D" aria-hidden="true" />
-                    <span class="text-xs font-bold" style="color: #6A1E2D">Tarjetas</span>
+                    <CreditCard :size="14" style="color: #6a1e2d" aria-hidden="true" />
+                    <span class="text-xs font-bold" style="color: #6a1e2d">Tarjetas</span>
                     <span class="text-xs bg-[#F0F2F5] text-[#64748B] rounded-full px-2 py-0.5 font-semibold">
                       {{ tarjetasItems.length }}
                     </span>
-                    <span class="text-xs font-bold tabular-nums" style="color: #6A1E2D">{{ formatShort(resumen.totalTarjetas) }}</span>
+                    <span class="text-xs font-bold tabular-nums" style="color: #6a1e2d">{{
+                      formatShort(resumen.totalTarjetas)
+                    }}</span>
                   </div>
-                  <component :is="tarjetasSectionOpen ? ChevronUp : ChevronDown" :size="14" class="text-[#94A3B8]" aria-hidden="true" />
+                  <component
+                    :is="tarjetasSectionOpen ? ChevronUp : ChevronDown"
+                    :size="14"
+                    class="text-[#94A3B8]"
+                    aria-hidden="true"
+                  />
                 </button>
                 <div v-if="tarjetasSectionOpen" class="divide-y divide-[#F0F2F5]">
                   <div
@@ -646,24 +696,28 @@ const chartColors = ['#3E6F73', '#C65A3A', '#D4A017', '#6A1E2D']
                   >
                     <div
                       class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
-                      style="background-color: rgba(106,30,45,0.10)"
+                      style="background-color: rgba(106, 30, 45, 0.1)"
                     >
-                      <CreditCard :size="18" style="color: #6A1E2D" aria-hidden="true" />
+                      <CreditCard :size="18" style="color: #6a1e2d" aria-hidden="true" />
                     </div>
                     <div class="flex-1 min-w-0">
                       <p class="text-sm font-semibold text-[#1A1A2E] truncate leading-tight">{{ item.descripcion }}</p>
-                      <span class="text-xs font-medium" style="color: #6A1E2D" data-testid="description-type">{{ item.tipo }}</span>
+                      <span class="text-xs font-medium" style="color: #6a1e2d" data-testid="description-type">{{
+                        item.tipo
+                      }}</span>
                     </div>
-                    <p class="text-sm font-bold shrink-0 tabular-nums" style="color: #6A1E2D" data-testid="description-monto">
+                    <p
+                      class="text-sm font-bold shrink-0 tabular-nums"
+                      style="color: #6a1e2d"
+                      data-testid="description-monto"
+                    >
                       −{{ formatCurrency(item.monto) }}
                     </p>
                   </div>
                 </div>
               </div>
-
             </div>
           </div>
-
         </div>
       </template>
     </div>

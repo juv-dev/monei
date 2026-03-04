@@ -4,8 +4,7 @@ import { useAuthStore } from '~/stores/auth'
 import { deudasApi } from '../services/api'
 import type { NuevaDeuda } from '../types'
 
-export const DEUDAS_QUERY_KEY = (userId: string) =>
-  ['finance', userId, 'deudas'] as const
+export const DEUDAS_QUERY_KEY = (userId: string) => ['finance', userId, 'deudas'] as const
 
 export function useDeudas() {
   const auth = useAuthStore()
@@ -18,13 +17,10 @@ export function useDeudas() {
     enabled: computed(() => !!userId.value),
   })
 
-  const totalDeudas = computed(
-    () => query.data.value?.reduce((sum, item) => sum + item.totalDeuda, 0) ?? 0,
-  )
+  const totalDeudas = computed(() => query.data.value?.reduce((sum, item) => sum + item.totalDeuda, 0) ?? 0)
 
   const totalPendiente = computed(
-    () =>
-      query.data.value?.reduce((sum, item) => sum + item.montoActualPendiente, 0) ?? 0,
+    () => query.data.value?.reduce((sum, item) => sum + item.montoActualPendiente, 0) ?? 0,
   )
 
   const addMutation = useMutation({
@@ -46,8 +42,7 @@ export function useDeudas() {
   })
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: Partial<NuevaDeuda> }) =>
-      deudasApi.update(userId.value, id, data),
+    mutationFn: ({ id, data }: { id: string; data: Partial<NuevaDeuda> }) => deudasApi.update(userId.value, id, data),
     onSuccess: () => {
       void queryClient.invalidateQueries({
         queryKey: DEUDAS_QUERY_KEY(userId.value),

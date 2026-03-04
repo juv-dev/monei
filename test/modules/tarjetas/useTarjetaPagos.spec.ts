@@ -2,10 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest'
 import { flushPromises } from '@vue/test-utils'
 import { withSetup } from '../../helpers/setup'
 import { useAuthStore } from '~/stores/auth'
-import {
-  useTarjetaPagos,
-  PAGOS_QUERY_KEY,
-} from '~/modules/tarjetas/composables/useTarjetaPagos'
+import { useTarjetaPagos, PAGOS_QUERY_KEY } from '~/modules/tarjetas/composables/useTarjetaPagos'
 import { pagosApi } from '~/modules/tarjetas/services/pagosApi'
 import { tarjetasApi } from '~/modules/tarjetas/services/api'
 
@@ -126,8 +123,22 @@ describe('should useTarjetaPagos', () => {
   it('should return pagos sorted by createdAt descending via pagosDeTarjeta', async () => {
     // Manually insert pagos with explicit createdAt to guarantee order
     const all = [
-      { id: 'p1', tarjetaId: 'tarjeta-1', monto: 100, fecha: '2026-02-25', userId: 'jugaz', createdAt: '2026-02-25T10:00:00.000Z' },
-      { id: 'p2', tarjetaId: 'tarjeta-1', monto: 200, fecha: '2026-02-27', userId: 'jugaz', createdAt: '2026-02-27T10:00:00.000Z' },
+      {
+        id: 'p1',
+        tarjetaId: 'tarjeta-1',
+        monto: 100,
+        fecha: '2026-02-25',
+        userId: 'jugaz',
+        createdAt: '2026-02-25T10:00:00.000Z',
+      },
+      {
+        id: 'p2',
+        tarjetaId: 'tarjeta-1',
+        monto: 200,
+        fecha: '2026-02-27',
+        userId: 'jugaz',
+        createdAt: '2026-02-27T10:00:00.000Z',
+      },
     ]
     localStorage.setItem('finance_jugaz_tarjeta_pagos', JSON.stringify(all))
 

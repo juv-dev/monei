@@ -24,12 +24,10 @@ function normalizeNumericString(s: string): string {
   if (dotCount > 1) {
     // Multiple dots: all but last may be thousands separators
     const parts = s.split('.')
-    const lastPart = parts[parts.length - 1]
+    const lastPart = parts[parts.length - 1]!
     // If last segment is 3 digits, all dots are thousands: 1.000.000
     // Otherwise last dot is decimal: 17.999.58
-    return lastPart.length === 3
-      ? parts.join('')
-      : parts.slice(0, -1).join('') + '.' + lastPart
+    return lastPart.length === 3 ? parts.join('') : parts.slice(0, -1).join('') + '.' + lastPart
   }
 
   if (dotCount === 1) {
@@ -64,7 +62,9 @@ function normalizeNumericString(s: string): string {
  * Examples: "21.988" → "21,988" | "17.999.58" → "17,999.58" | "40000.50" → "40,000.50"
  */
 export function formatMoneyDisplay(value: string | number): string {
-  const raw = String(value).trim().replace(/[^\d.,]/g, '')
+  const raw = String(value)
+    .trim()
+    .replace(/[^\d.,]/g, '')
   if (!raw) return ''
 
   const normalized = normalizeNumericString(raw)
@@ -80,7 +80,9 @@ export function formatMoneyDisplay(value: string | number): string {
  * Examples: "21.988" → 21988 | "17.999.58" → 17999.58 | "40,000.50" → 40000.5
  */
 export function parseMoneyInput(value: string | number): number {
-  const s = String(value).trim().replace(/[^\d.,]/g, '')
+  const s = String(value)
+    .trim()
+    .replace(/[^\d.,]/g, '')
   return parseFloat(normalizeNumericString(s))
 }
 

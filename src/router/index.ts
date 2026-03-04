@@ -64,8 +64,7 @@ const router = createRouter({
         {
           path: 'configuracion',
           name: ROUTE_NAMES.CONFIGURACION,
-          component: () =>
-            import('~/modules/configuracion/views/ConfiguracionView.vue'),
+          component: () => import('~/modules/configuracion/views/ConfiguracionView.vue'),
         },
       ],
     },
@@ -84,7 +83,10 @@ router.beforeEach(async (to) => {
       const unwatch = watch(
         () => auth.isLoading,
         (loading) => {
-          if (!loading) { unwatch(); resolve() }
+          if (!loading) {
+            unwatch()
+            resolve()
+          }
         },
         { immediate: true },
       )

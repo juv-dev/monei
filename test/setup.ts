@@ -58,8 +58,7 @@ const sessionStorageMock = {
   get length() {
     return Object.keys(sessionStorageStore).length
   },
-  key: (index: number): string | null =>
-    Object.keys(sessionStorageStore)[index] ?? null,
+  key: (index: number): string | null => Object.keys(sessionStorageStore)[index] ?? null,
 }
 
 Object.defineProperty(globalThis, 'localStorage', {

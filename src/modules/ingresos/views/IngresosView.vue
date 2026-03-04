@@ -9,17 +9,8 @@ import PageHeader from '~/shared/components/layout/PageHeader.vue'
 import { formatMoneyDisplay, parseMoneyInput, onDecimalInput } from '~/shared/utils/format'
 import type { Ingreso } from '../types'
 
-const {
-  ingresos,
-  isLoading,
-  isError,
-  totalIngresos,
-  addIngreso,
-  updateIngreso,
-  removeIngreso,
-  isAdding,
-  isUpdating,
-} = useIngresos()
+const { ingresos, isLoading, isError, totalIngresos, addIngreso, updateIngreso, removeIngreso, isAdding, isUpdating } =
+  useIngresos()
 
 const { startLoading, finishLoading, showToast } = useAppFeedback()
 
@@ -97,7 +88,6 @@ function handleDelete(id: string): void {
 <template>
   <div class="min-h-screen bg-[#F0F2F5]" data-testid="ingresos-view">
     <div class="max-w-5xl mx-auto p-5 lg:p-8 space-y-5">
-
       <PageHeader
         title="Ingresos"
         subtitle="Registra y gestiona tus fuentes de ingreso"
@@ -109,7 +99,7 @@ function handleDelete(id: string): void {
 
       <div
         class="rounded-3xl p-6 lg:p-8 relative overflow-hidden shadow-lg"
-        style="background: linear-gradient(135deg, #3E6F73 0%, #2C5558 100%)"
+        style="background: linear-gradient(135deg, #3e6f73 0%, #2c5558 100%)"
         data-testid="summary-card"
       >
         <div class="absolute -top-10 -right-10 w-44 h-44 rounded-full opacity-[0.08]" style="background: white"></div>
@@ -143,16 +133,23 @@ function handleDelete(id: string): void {
       <div class="bg-white rounded-2xl shadow-sm border border-[#EEEEF0] overflow-hidden">
         <div class="flex items-center justify-between px-6 py-4 border-b border-[#F0F2F5]">
           <h2 class="text-sm font-bold text-[#1A1A2E]">Lista de Ingresos</h2>
-          <span v-if="ingresos.length > 0" class="bg-[#F0F2F5] text-[#64748B] text-xs font-semibold rounded-full px-2.5 py-0.5">
+          <span
+            v-if="ingresos.length > 0"
+            class="bg-[#F0F2F5] text-[#64748B] text-xs font-semibold rounded-full px-2.5 py-0.5"
+          >
             {{ ingresos.length }}
           </span>
         </div>
 
-        <div v-if="isLoading" class="flex items-center justify-center gap-2 py-16 text-[#94A3B8]" data-testid="loading-state">
+        <div
+          v-if="isLoading"
+          class="flex items-center justify-center gap-2 py-16 text-[#94A3B8]"
+          data-testid="loading-state"
+        >
           <span class="text-sm">Cargando...</span>
         </div>
 
-        <div v-else-if="isError" class="text-center py-16 text-sm" style="color: #C65A3A" data-testid="error-state">
+        <div v-else-if="isError" class="text-center py-16 text-sm" style="color: #c65a3a" data-testid="error-state">
           Error al cargar los ingresos
         </div>
 
@@ -173,13 +170,10 @@ function handleDelete(id: string): void {
             class="hover:bg-[#F8F9FB] transition-colors group"
             data-testid="ingreso-item"
           >
-            <div
-              v-if="editingId !== ingreso.id"
-              class="flex items-center gap-3 px-6 py-3.5"
-            >
+            <div v-if="editingId !== ingreso.id" class="flex items-center gap-3 px-6 py-3.5">
               <div
                 class="w-10 h-10 rounded-xl bg-[#3E6F73]/10 flex items-center justify-center text-sm font-bold shrink-0"
-                style="color: #3E6F73"
+                style="color: #3e6f73"
                 aria-hidden="true"
               >
                 {{ ingreso.descripcion.charAt(0).toUpperCase() }}
@@ -195,7 +189,7 @@ function handleDelete(id: string): void {
               </div>
 
               <div class="flex items-center gap-2 shrink-0">
-                <span class="text-sm font-bold tabular-nums" style="color: #3E6F73" data-testid="ingreso-monto">
+                <span class="text-sm font-bold tabular-nums" style="color: #3e6f73" data-testid="ingreso-monto">
                   +{{ formatCurrency(ingreso.monto) }}
                 </span>
                 <button
@@ -217,10 +211,7 @@ function handleDelete(id: string): void {
               </div>
             </div>
 
-            <div
-              v-else
-              class="flex items-center gap-2 px-6 py-3"
-            >
+            <div v-else class="flex items-center gap-2 px-6 py-3">
               <input
                 v-model="editForm.descripcion"
                 type="text"
@@ -237,7 +228,7 @@ function handleDelete(id: string): void {
                 placeholder="0.00"
                 class="w-28 px-3 py-2 border border-[#EEEEF0] rounded-xl text-sm bg-white text-[#1A1A2E] focus:outline-none focus:ring-2 focus:ring-[#3E6F73]/30"
                 data-testid="edit-monto-input"
-                @input="onDecimalInput($event, v => editForm.monto = v)"
+                @input="onDecimalInput($event, (v) => (editForm.monto = v))"
                 @blur="editForm.monto = formatMoneyDisplay(editForm.monto)"
                 @keydown.enter.prevent="saveEdit(ingreso.id)"
                 @keydown.esc.prevent="cancelEdit"
@@ -263,20 +254,17 @@ function handleDelete(id: string): void {
           </div>
         </div>
       </div>
-
     </div>
   </div>
 
-  <AppModal
-    :open="isModalOpen"
-    title="Agregar Ingreso"
-    accent-color="#3E6F73"
-    @close="isModalOpen = false"
-  >
+  <AppModal :open="isModalOpen" title="Agregar Ingreso" accent-color="#3E6F73" @close="isModalOpen = false">
     <form data-testid="ingresos-form" novalidate @submit.prevent="handleSubmit">
       <div class="space-y-4">
         <div>
-          <label for="descripcion-ingreso" class="block text-xs font-semibold text-[#64748B] mb-1.5 uppercase tracking-wide">
+          <label
+            for="descripcion-ingreso"
+            class="block text-xs font-semibold text-[#64748B] mb-1.5 uppercase tracking-wide"
+          >
             Descripción
           </label>
           <input
@@ -301,7 +289,7 @@ function handleDelete(id: string): void {
             placeholder="0.00"
             class="w-full px-4 py-3 border border-[#EEEEF0] rounded-xl text-sm bg-[#F5F6FA] text-[#1A1A2E] placeholder-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#3E6F73]/30 focus:border-transparent focus:bg-white transition-all"
             data-testid="monto-input"
-            @input="onDecimalInput($event, v => form.monto = v)"
+            @input="onDecimalInput($event, (v) => (form.monto = v))"
             @blur="form.monto = formatMoneyDisplay(form.monto)"
           />
         </div>
@@ -309,7 +297,7 @@ function handleDelete(id: string): void {
         <p
           v-if="formError"
           class="text-sm bg-[#C65A3A]/8 border border-[#C65A3A]/20 rounded-xl px-3 py-2.5"
-          style="color: #C65A3A"
+          style="color: #c65a3a"
           role="alert"
           data-testid="form-error"
         >
@@ -320,7 +308,7 @@ function handleDelete(id: string): void {
           type="submit"
           :disabled="isAdding"
           class="w-full py-3 text-white font-bold rounded-xl transition-all shadow-md hover:opacity-90 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-          style="background: linear-gradient(135deg, #3E6F73 0%, #2C5558 100%)"
+          style="background: linear-gradient(135deg, #3e6f73 0%, #2c5558 100%)"
           data-testid="submit-button"
         >
           {{ isAdding ? 'Agregando...' : '+ Agregar ingreso' }}
