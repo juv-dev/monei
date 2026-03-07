@@ -4,7 +4,7 @@ export interface User {
   username: string
   displayName: string
   avatarUrl?: string
-  provider: 'google' | 'github' | 'demo'
+  provider: 'google' | 'github' | 'email' | 'demo'
 }
 
 // ─── Ingresos ─────────────────────────────────────────────────────────────────
