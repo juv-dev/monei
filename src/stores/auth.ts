@@ -21,10 +21,7 @@ export const useAuthStore = defineStore('auth', () => {
 
   function mapSessionToUser(session: Session): User {
     const meta = session.user.user_metadata
-    const provider = (session.user.app_metadata.provider ?? 'email') as
-      | 'google'
-      | 'github'
-      | 'email'
+    const provider = (session.user.app_metadata.provider ?? 'email') as 'google' | 'github' | 'email'
     return {
       id: session.user.id,
       username: session.user.email ?? '',
@@ -77,10 +74,7 @@ export const useAuthStore = defineStore('auth', () => {
     return {}
   }
 
-  async function signUpWithEmail(
-    email: string,
-    password: string,
-  ): Promise<{ error?: string }> {
+  async function signUpWithEmail(email: string, password: string): Promise<{ error?: string }> {
     const { error } = await supabase.auth.signUp({
       email,
       password,
@@ -90,10 +84,7 @@ export const useAuthStore = defineStore('auth', () => {
     return {}
   }
 
-  async function signInWithEmail(
-    email: string,
-    password: string,
-  ): Promise<{ error?: string }> {
+  async function signInWithEmail(email: string, password: string): Promise<{ error?: string }> {
     const { error } = await supabase.auth.signInWithPassword({ email, password })
     if (error) return { error: error.message }
     return {}

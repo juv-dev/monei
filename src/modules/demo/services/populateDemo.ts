@@ -2,12 +2,7 @@ import { ingresosApi } from '~/modules/ingresos/services/api'
 import { presupuestoApi } from '~/modules/presupuesto/services/api'
 import { deudasApi } from '~/modules/deudas/services/api'
 import { tarjetasApi } from '~/modules/tarjetas/services/api'
-import {
-  sampleIngresos,
-  sampleGastos,
-  sampleDeudas,
-  sampleTarjetas,
-} from '../data/sampleData'
+import { sampleIngresos, sampleGastos, sampleDeudas, sampleTarjetas } from '../data/sampleData'
 
 const DEMO_USER_ID = 'demo'
 const POPULATED_KEY = `finance_${DEMO_USER_ID}_demo_populated`

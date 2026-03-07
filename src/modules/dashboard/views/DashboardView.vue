@@ -22,9 +22,7 @@ import OnboardingModal from '~/modules/demo/components/OnboardingModal.vue'
 import { useAuthStore } from '~/stores/auth'
 
 const auth = useAuthStore()
-const showOnboarding = ref(
-  auth.currentUser?.provider === 'demo' && !localStorage.getItem('monei_demo_onboarding_done'),
-)
+const showOnboarding = ref(auth.currentUser?.provider === 'demo' && !localStorage.getItem('monei_demo_onboarding_done'))
 const { resumen, todasLasDescripciones, totalPagoMinimo, lineaTotalCombinada, isLoading } = useDashboard()
 
 const ingresosSectionOpen = ref(true)

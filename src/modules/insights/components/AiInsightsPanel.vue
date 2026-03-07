@@ -83,17 +83,17 @@ const loadingMessages = [
   'Preparando tu plan de acción...',
 ]
 const loadingMessageIndex = ref(0)
-let loadingInterval: ReturnType<typeof setInterval> | null = null
+let loadingInterval: ReturnType<typeof window.setInterval> | null = null
 
 watch(isLoadingAi, (loading) => {
   if (loading) {
     loadingMessageIndex.value = 0
-    loadingInterval = setInterval(() => {
+    loadingInterval = window.setInterval(() => {
       loadingMessageIndex.value = (loadingMessageIndex.value + 1) % loadingMessages.length
     }, 2500)
   } else {
     if (loadingInterval) {
-      clearInterval(loadingInterval)
+      window.clearInterval(loadingInterval)
       loadingInterval = null
     }
   }
@@ -122,7 +122,7 @@ function handleSendChat() {
   sendMessage(msg)
 }
 
-function handleKeydown(e: KeyboardEvent) {
+function handleKeydown(e: globalThis.KeyboardEvent) {
   if (e.key === 'Enter' && !e.shiftKey) {
     e.preventDefault()
     handleSendChat()
@@ -151,10 +151,7 @@ onMounted(() => {
       :class="aiAnalysis ? 'bg-white' : 'bg-white'"
     >
       <!-- Gradient Header -->
-      <div
-        class="px-6 py-5"
-        style="background: linear-gradient(135deg, #8B5CF6 0%, #6D28D9 50%, #4C1D95 100%)"
-      >
+      <div class="px-6 py-5" style="background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 50%, #4c1d95 100%)">
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-3">
             <div class="w-10 h-10 rounded-xl flex items-center justify-center bg-white/20 backdrop-blur-sm">
@@ -180,16 +177,15 @@ onMounted(() => {
       </div>
 
       <!-- Not available for demo -->
-      <div
-        v-if="!isAiAvailable"
-        class="flex flex-col items-center gap-3 p-8 text-center"
-      >
+      <div v-if="!isAiAvailable" class="flex flex-col items-center gap-3 p-8 text-center">
         <div class="w-14 h-14 rounded-2xl flex items-center justify-center bg-[#F5F6FA]">
           <Lock :size="24" class="text-[#94A3B8]" />
         </div>
         <div>
           <p class="text-sm font-semibold text-[#1A1A2E]">Analisis con IA no disponible</p>
-          <p class="text-xs text-[#94A3B8] mt-1">Inicia sesion con tu cuenta para acceder al asesor financiero con IA.</p>
+          <p class="text-xs text-[#94A3B8] mt-1">
+            Inicia sesion con tu cuenta para acceder al asesor financiero con IA.
+          </p>
         </div>
       </div>
 
@@ -198,7 +194,9 @@ onMounted(() => {
         <div class="flex flex-col items-center gap-4">
           <!-- Animated brain -->
           <div class="relative">
-            <div class="w-16 h-16 rounded-2xl flex items-center justify-center bg-gradient-to-br from-purple-100 to-violet-100 animate-pulse">
+            <div
+              class="w-16 h-16 rounded-2xl flex items-center justify-center bg-gradient-to-br from-purple-100 to-violet-100 animate-pulse"
+            >
               <BrainCircuit :size="28" class="text-purple-600" />
             </div>
             <div class="absolute -top-1 -right-1 w-4 h-4 bg-purple-500 rounded-full animate-ping" />
@@ -222,10 +220,7 @@ onMounted(() => {
       </div>
 
       <!-- Error -->
-      <div
-        v-else-if="isAiError"
-        class="p-6"
-      >
+      <div v-else-if="isAiError" class="p-6">
         <div class="flex items-start gap-3 p-4 rounded-xl bg-red-50 border border-red-200">
           <AlertCircle :size="16" style="color: #dc2626" class="shrink-0 mt-0.5" />
           <div>
@@ -254,10 +249,7 @@ onMounted(() => {
                 borderColor: gradeConfig[aiAnalysis.calificacion].color + '40',
               }"
             >
-              <span
-                class="text-3xl font-black"
-                :style="{ color: gradeConfig[aiAnalysis.calificacion].color }"
-              >
+              <span class="text-3xl font-black" :style="{ color: gradeConfig[aiAnalysis.calificacion].color }">
                 {{ aiAnalysis.calificacion }}
               </span>
               <span
@@ -272,7 +264,8 @@ onMounted(() => {
           <div class="flex-1 min-w-0">
             <p class="text-xs font-bold text-[#8B5CF6] uppercase tracking-wide mb-1.5">Diagnostico</p>
             <p class="text-sm text-[#1A1A2E] leading-relaxed">
-              {{ displayText }}<span v-if="isTyping" class="inline-block w-0.5 h-4 bg-purple-500 ml-0.5 animate-pulse align-middle" />
+              {{ displayText
+              }}<span v-if="isTyping" class="inline-block w-0.5 h-4 bg-purple-500 ml-0.5 animate-pulse align-middle" />
             </p>
             <button
               v-if="isTyping"
@@ -383,8 +376,7 @@ onMounted(() => {
               <div
                 class="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 text-xs font-bold text-white"
                 :style="{
-                  backgroundColor:
-                    action.prioridad <= 2 ? '#8B5CF6' : action.prioridad <= 4 ? '#A78BFA' : '#C4B5FD',
+                  backgroundColor: action.prioridad <= 2 ? '#8B5CF6' : action.prioridad <= 4 ? '#A78BFA' : '#C4B5FD',
                 }"
               >
                 {{ action.prioridad }}
@@ -405,7 +397,10 @@ onMounted(() => {
                   </span>
                 </div>
               </div>
-              <ChevronRight :size="14" class="text-[#D1D5DB] shrink-0 mt-1 group-hover:text-purple-400 transition-colors" />
+              <ChevronRight
+                :size="14"
+                class="text-[#D1D5DB] shrink-0 mt-1 group-hover:text-purple-400 transition-colors"
+              />
             </div>
           </div>
         </div>
