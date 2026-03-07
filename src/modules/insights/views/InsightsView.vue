@@ -14,6 +14,7 @@ import { formatMoneyDisplay } from '~/shared/utils/format'
 import PageHeader from '~/shared/components/layout/PageHeader.vue'
 import EmptyState from '~/shared/components/ui/EmptyState.vue'
 import LoadingBar from '~/shared/components/ui/LoadingBar.vue'
+import AiInsightsPanel from '../components/AiInsightsPanel.vue'
 
 const {
   isLoading,
@@ -360,6 +361,8 @@ function formatMonth(iso: string): string {
             </div>
           </div>
         </div>
+        <!-- Análisis con IA -->
+        <AiInsightsPanel />
       </template>
     </div>
   </div>

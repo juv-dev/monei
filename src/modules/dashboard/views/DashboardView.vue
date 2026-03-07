@@ -18,9 +18,13 @@ import {
 import type { Component } from 'vue'
 import { useDashboard } from '../composables/useDashboard'
 import DoughnutChart from '~/shared/components/charts/DoughnutChart.vue'
+import OnboardingModal from '~/modules/demo/components/OnboardingModal.vue'
 import { useAuthStore } from '~/stores/auth'
 
 const auth = useAuthStore()
+const showOnboarding = ref(
+  auth.currentUser?.provider === 'demo' && !localStorage.getItem('monei_demo_onboarding_done'),
+)
 const { resumen, todasLasDescripciones, totalPagoMinimo, lineaTotalCombinada, isLoading } = useDashboard()
 
 const ingresosSectionOpen = ref(true)
@@ -143,6 +147,7 @@ const chartColors = ['#3E6F73', '#C65A3A', '#D4A017', '#6A1E2D']
 
 <template>
   <div class="min-h-screen bg-[#F0F2F5]" data-testid="dashboard-view">
+    <OnboardingModal v-if="showOnboarding" @close="showOnboarding = false" />
     <div class="max-w-6xl mx-auto p-5 lg:p-8 space-y-5">
       <div class="flex items-end justify-between">
         <div>

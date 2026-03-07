@@ -3,6 +3,7 @@ import { ref, computed } from 'vue'
 import { supabase } from '~/config/supabase'
 import type { User } from '~/shared/types'
 import type { Session } from '@supabase/supabase-js'
+import { populateDemoData } from '~/modules/demo/services/populateDemo'
 
 const DEMO_USER: User = {
   id: 'demo',
@@ -20,7 +21,10 @@ export const useAuthStore = defineStore('auth', () => {
 
   function mapSessionToUser(session: Session): User {
     const meta = session.user.user_metadata
-    const provider = (session.user.app_metadata.provider ?? 'google') as 'google' | 'github'
+    const provider = (session.user.app_metadata.provider ?? 'email') as
+      | 'google'
+      | 'github'
+      | 'email'
     return {
       id: session.user.id,
       username: session.user.email ?? '',
@@ -73,9 +77,32 @@ export const useAuthStore = defineStore('auth', () => {
     return {}
   }
 
-  function signInAsDemo(): void {
+  async function signUpWithEmail(
+    email: string,
+    password: string,
+  ): Promise<{ error?: string }> {
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { emailRedirectTo: `${window.location.origin}/` },
+    })
+    if (error) return { error: error.message }
+    return {}
+  }
+
+  async function signInWithEmail(
+    email: string,
+    password: string,
+  ): Promise<{ error?: string }> {
+    const { error } = await supabase.auth.signInWithPassword({ email, password })
+    if (error) return { error: error.message }
+    return {}
+  }
+
+  async function signInAsDemo(): Promise<void> {
     sessionStorage.setItem(DEMO_SESSION_KEY, '1')
     setUser(DEMO_USER)
+    await populateDemoData()
   }
 
   async function changePassword(
@@ -127,6 +154,8 @@ export const useAuthStore = defineStore('auth', () => {
     initialize,
     signInWithGoogle,
     signInWithGitHub,
+    signUpWithEmail,
+    signInWithEmail,
     signInAsDemo,
     changePassword,
     logout,
