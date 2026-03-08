@@ -14,6 +14,7 @@ export const presupuestoApi = {
     const { data, error } = await supabase
       .from('gastos_presupuesto')
       .select('*')
+      .eq('user_id', userId)
       .order('created_at', { ascending: false })
     if (error) throw error
     return (data ?? []).map(mapDbGasto)
@@ -64,7 +65,7 @@ export const presupuestoApi = {
       .eq('id', id)
       .select()
       .single()
-    if (error) throw error
+    if (error) throw new Error('Gasto not found')
     return mapDbGasto(row)
   },
 

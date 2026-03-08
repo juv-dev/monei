@@ -16,7 +16,7 @@ describe('should InsightsView', () => {
     const { wrapper, pinia, router } = mountWithPlugins(InsightsView)
     const auth = useAuthStore(pinia)
     auth.$patch({
-      user: { id: 'test-user', username: 'test@monei.app', displayName: 'Test', provider: 'demo' },
+      user: { id: 'demo', username: 'test@monei.app', displayName: 'Test', provider: 'demo' },
       isAuthenticated: true,
     })
     return { wrapper, auth, router }
@@ -40,7 +40,7 @@ describe('should InsightsView', () => {
     }[]
     tarjetas?: { lineaTotal: number; montoDeudaActual: number; pagoMinimo?: number; descripcion: string }[]
   }) {
-    const userId = 'test-user'
+    const userId = 'demo'
     const now = new Date().toISOString()
     if (data.ingresos) {
       const items = data.ingresos.map((i) => ({ id: nextId(), userId, createdAt: now, ...i }))

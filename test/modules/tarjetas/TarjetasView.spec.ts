@@ -18,7 +18,7 @@ describe('should TarjetasView', () => {
     descripcion: 'Visa BCP',
   }
 
-  function mountAuthenticated(username = 'jugaz') {
+  function mountAuthenticated(username = 'demo') {
     const { wrapper, pinia } = mountWithPlugins(TarjetasView)
     const auth = useAuthStore(pinia)
     auth.$patch({ user: { id: username, username, displayName: 'Test', provider: 'demo' }, isAuthenticated: true })
@@ -71,8 +71,8 @@ describe('should TarjetasView', () => {
 
   // ─── Datos existentes ────────────────────────────────────────────────────
   it('should display existing tarjetas', async () => {
-    await tarjetasApi.create('jugaz', sampleTarjeta)
-    await tarjetasApi.create('jugaz', { ...sampleTarjeta, descripcion: 'MasterCard' })
+    await tarjetasApi.create('demo', sampleTarjeta)
+    await tarjetasApi.create('demo', { ...sampleTarjeta, descripcion: 'MasterCard' })
 
     const { wrapper } = mountAuthenticated()
     await flushPromises()
@@ -82,8 +82,8 @@ describe('should TarjetasView', () => {
   })
 
   it('should display correct total tarjetas deuda', async () => {
-    await tarjetasApi.create('jugaz', { ...sampleTarjeta, montoDeudaActual: 2000 })
-    await tarjetasApi.create('jugaz', { ...sampleTarjeta, montoDeudaActual: 1000 })
+    await tarjetasApi.create('demo', { ...sampleTarjeta, montoDeudaActual: 2000 })
+    await tarjetasApi.create('demo', { ...sampleTarjeta, montoDeudaActual: 1000 })
 
     const { wrapper } = mountAuthenticated()
     await flushPromises()
@@ -92,8 +92,8 @@ describe('should TarjetasView', () => {
   })
 
   it('should display correct linea total combinada', async () => {
-    await tarjetasApi.create('jugaz', { ...sampleTarjeta, lineaTotal: 8000 })
-    await tarjetasApi.create('jugaz', { ...sampleTarjeta, lineaTotal: 5000 })
+    await tarjetasApi.create('demo', { ...sampleTarjeta, lineaTotal: 8000 })
+    await tarjetasApi.create('demo', { ...sampleTarjeta, lineaTotal: 5000 })
 
     const { wrapper } = mountAuthenticated()
     await flushPromises()
@@ -102,7 +102,7 @@ describe('should TarjetasView', () => {
   })
 
   it('should display tarjeta descripcion correctly', async () => {
-    await tarjetasApi.create('jugaz', { ...sampleTarjeta, descripcion: 'Amex Gold' })
+    await tarjetasApi.create('demo', { ...sampleTarjeta, descripcion: 'Amex Gold' })
 
     const { wrapper } = mountAuthenticated()
     await flushPromises()
@@ -186,13 +186,13 @@ describe('should TarjetasView', () => {
     await wrapper.find('[data-testid="tarjetas-form"]').trigger('submit')
     await flushPromises()
 
-    const stored = await tarjetasApi.getAll('jugaz')
+    const stored = await tarjetasApi.getAll('demo')
     expect(stored[0].pagoMinimo).toBe(500)
     expect(stored[0].saldoTotal).toBe(4000)
   })
 
   it('should save edit with empty optional fields', async () => {
-    await tarjetasApi.create('jugaz', { ...sampleTarjeta, pagoMinimo: 200, saldoTotal: 5000 })
+    await tarjetasApi.create('demo', { ...sampleTarjeta, pagoMinimo: 200, saldoTotal: 5000 })
 
     const { wrapper } = mountAuthenticated()
     await flushPromises()
@@ -212,13 +212,13 @@ describe('should TarjetasView', () => {
     await wrapper.find('[data-testid="save-edit-button"]').trigger('click')
     await flushPromises()
 
-    const stored = await tarjetasApi.getAll('jugaz')
+    const stored = await tarjetasApi.getAll('demo')
     expect(stored[0].pagoMinimo).toBeUndefined()
     expect(stored[0].saldoTotal).toBeUndefined()
   })
 
   it('should save edit with empty descripcion and invalid numbers', async () => {
-    await tarjetasApi.create('jugaz', sampleTarjeta)
+    await tarjetasApi.create('demo', sampleTarjeta)
 
     const { wrapper } = mountAuthenticated()
     await flushPromises()
@@ -244,7 +244,7 @@ describe('should TarjetasView', () => {
     await wrapper.find('[data-testid="save-edit-button"]').trigger('click')
     await flushPromises()
 
-    const stored = await tarjetasApi.getAll('jugaz')
+    const stored = await tarjetasApi.getAll('demo')
     expect(stored[0].descripcion).toBeUndefined()
   })
 
@@ -258,13 +258,13 @@ describe('should TarjetasView', () => {
     await wrapper.find('[data-testid="tarjetas-form"]').trigger('submit')
     await flushPromises()
 
-    const stored = await tarjetasApi.getAll('jugaz')
+    const stored = await tarjetasApi.getAll('demo')
     expect(stored[0].montoDeudaActual).toBe(0)
   })
 
   // ─── Eliminar ────────────────────────────────────────────────────────────
   it('should remove tarjeta when delete button is clicked', async () => {
-    await tarjetasApi.create('jugaz', sampleTarjeta)
+    await tarjetasApi.create('demo', sampleTarjeta)
 
     const { wrapper } = mountAuthenticated()
     await flushPromises()
@@ -272,13 +272,13 @@ describe('should TarjetasView', () => {
     await wrapper.find('[data-testid="delete-button"]').trigger('click')
     await flushPromises()
 
-    const stored = await tarjetasApi.getAll('jugaz')
+    const stored = await tarjetasApi.getAll('demo')
     expect(stored).toHaveLength(0)
   })
 
   it('should render delete button for each tarjeta', async () => {
-    await tarjetasApi.create('jugaz', sampleTarjeta)
-    await tarjetasApi.create('jugaz', { ...sampleTarjeta, descripcion: 'Otra' })
+    await tarjetasApi.create('demo', sampleTarjeta)
+    await tarjetasApi.create('demo', { ...sampleTarjeta, descripcion: 'Otra' })
 
     const { wrapper } = mountAuthenticated()
     await flushPromises()
@@ -288,7 +288,7 @@ describe('should TarjetasView', () => {
 
   // ─── Editar tarjeta ─────────────────────────────────────────────────────
   it('should show edit form when edit button is clicked', async () => {
-    await tarjetasApi.create('jugaz', sampleTarjeta)
+    await tarjetasApi.create('demo', sampleTarjeta)
 
     const { wrapper } = mountAuthenticated()
     await flushPromises()
@@ -302,7 +302,7 @@ describe('should TarjetasView', () => {
   })
 
   it('should populate edit form with current values', async () => {
-    await tarjetasApi.create('jugaz', {
+    await tarjetasApi.create('demo', {
       ...sampleTarjeta,
       pagoMinimo: 200,
       saldoTotal: 5000,
@@ -319,7 +319,7 @@ describe('should TarjetasView', () => {
   })
 
   it('should cancel edit and return to display mode', async () => {
-    await tarjetasApi.create('jugaz', sampleTarjeta)
+    await tarjetasApi.create('demo', sampleTarjeta)
 
     const { wrapper } = mountAuthenticated()
     await flushPromises()
@@ -335,7 +335,7 @@ describe('should TarjetasView', () => {
   })
 
   it('should save edit and update tarjeta', async () => {
-    await tarjetasApi.create('jugaz', sampleTarjeta)
+    await tarjetasApi.create('demo', sampleTarjeta)
 
     const { wrapper } = mountAuthenticated()
     await flushPromises()
@@ -347,13 +347,13 @@ describe('should TarjetasView', () => {
     await wrapper.find('[data-testid="save-edit-button"]').trigger('click')
     await flushPromises()
 
-    const stored = await tarjetasApi.getAll('jugaz')
+    const stored = await tarjetasApi.getAll('demo')
     expect(stored[0].descripcion).toBe('Visa Editada')
   })
 
   // ─── Pagar tarjeta ─────────────────────────────────────────────────────
   it('should render pay button for each tarjeta', async () => {
-    await tarjetasApi.create('jugaz', sampleTarjeta)
+    await tarjetasApi.create('demo', sampleTarjeta)
 
     const { wrapper } = mountAuthenticated()
     await flushPromises()
@@ -362,7 +362,7 @@ describe('should TarjetasView', () => {
   })
 
   it('should show pay form when pay button is clicked', async () => {
-    await tarjetasApi.create('jugaz', sampleTarjeta)
+    await tarjetasApi.create('demo', sampleTarjeta)
 
     const { wrapper } = mountAuthenticated()
     await flushPromises()
@@ -378,7 +378,7 @@ describe('should TarjetasView', () => {
   })
 
   it('should cancel pay and hide form', async () => {
-    await tarjetasApi.create('jugaz', sampleTarjeta)
+    await tarjetasApi.create('demo', sampleTarjeta)
 
     const { wrapper } = mountAuthenticated()
     await flushPromises()
@@ -393,7 +393,7 @@ describe('should TarjetasView', () => {
   })
 
   it('should confirm pay and create pago record', async () => {
-    const tarjeta = await tarjetasApi.create('jugaz', {
+    const tarjeta = await tarjetasApi.create('demo', {
       ...sampleTarjeta,
       saldoTotal: 5000,
     })
@@ -407,18 +407,18 @@ describe('should TarjetasView', () => {
     await wrapper.find('[data-testid="confirm-pay-button"]').trigger('click')
     await flushPromises()
 
-    const pagos = await pagosApi.getAll('jugaz')
+    const pagos = await pagosApi.getAll('demo')
     expect(pagos).toHaveLength(1)
     expect(pagos[0].monto).toBe(3500)
     expect(pagos[0].tarjetaId).toBe(tarjeta.id)
 
     // montoDeudaActual should be reduced
-    const updated = await tarjetasApi.getAll('jugaz')
+    const updated = await tarjetasApi.getAll('demo')
     expect(updated[0].montoDeudaActual).toBe(0)
   })
 
   it('should hide pay form after successful payment', async () => {
-    await tarjetasApi.create('jugaz', sampleTarjeta)
+    await tarjetasApi.create('demo', sampleTarjeta)
 
     const { wrapper } = mountAuthenticated()
     await flushPromises()
@@ -433,7 +433,7 @@ describe('should TarjetasView', () => {
   })
 
   it('should close pay form when edit button is clicked', async () => {
-    await tarjetasApi.create('jugaz', sampleTarjeta)
+    await tarjetasApi.create('demo', sampleTarjeta)
 
     const { wrapper } = mountAuthenticated()
     await flushPromises()
@@ -450,8 +450,8 @@ describe('should TarjetasView', () => {
 
   // ─── Historial de pagos ────────────────────────────────────────────────
   it('should show historial section when pagos exist', async () => {
-    const tarjeta = await tarjetasApi.create('jugaz', sampleTarjeta)
-    await pagosApi.create('jugaz', { tarjetaId: tarjeta.id, monto: 500, fecha: '2026-02-27' })
+    const tarjeta = await tarjetasApi.create('demo', sampleTarjeta)
+    await pagosApi.create('demo', { tarjetaId: tarjeta.id, monto: 500, fecha: '2026-02-27' })
 
     const { wrapper } = mountAuthenticated()
     await flushPromises()
@@ -461,7 +461,7 @@ describe('should TarjetasView', () => {
   })
 
   it('should not show historial when no pagos exist', async () => {
-    await tarjetasApi.create('jugaz', sampleTarjeta)
+    await tarjetasApi.create('demo', sampleTarjeta)
 
     const { wrapper } = mountAuthenticated()
     await flushPromises()
@@ -470,8 +470,8 @@ describe('should TarjetasView', () => {
   })
 
   it('should toggle historial list visibility', async () => {
-    const tarjeta = await tarjetasApi.create('jugaz', sampleTarjeta)
-    await pagosApi.create('jugaz', { tarjetaId: tarjeta.id, monto: 500, fecha: '2026-02-27' })
+    const tarjeta = await tarjetasApi.create('demo', sampleTarjeta)
+    await pagosApi.create('demo', { tarjetaId: tarjeta.id, monto: 500, fecha: '2026-02-27' })
 
     const { wrapper } = mountAuthenticated()
     await flushPromises()
@@ -486,8 +486,8 @@ describe('should TarjetasView', () => {
   })
 
   it('should display pago amount in historial', async () => {
-    const tarjeta = await tarjetasApi.create('jugaz', sampleTarjeta)
-    await pagosApi.create('jugaz', { tarjetaId: tarjeta.id, monto: 1500, fecha: '2026-02-27' })
+    const tarjeta = await tarjetasApi.create('demo', sampleTarjeta)
+    await pagosApi.create('demo', { tarjetaId: tarjeta.id, monto: 1500, fecha: '2026-02-27' })
 
     const { wrapper } = mountAuthenticated()
     await flushPromises()
@@ -499,8 +499,8 @@ describe('should TarjetasView', () => {
   })
 
   it('should remove pago when remove button is clicked', async () => {
-    const tarjeta = await tarjetasApi.create('jugaz', sampleTarjeta)
-    await pagosApi.create('jugaz', { tarjetaId: tarjeta.id, monto: 500, fecha: '2026-02-27' })
+    const tarjeta = await tarjetasApi.create('demo', sampleTarjeta)
+    await pagosApi.create('demo', { tarjetaId: tarjeta.id, monto: 500, fecha: '2026-02-27' })
 
     const { wrapper } = mountAuthenticated()
     await flushPromises()
@@ -511,13 +511,13 @@ describe('should TarjetasView', () => {
     await wrapper.find('[data-testid="remove-pago-button"]').trigger('click')
     await flushPromises()
 
-    const stored = await pagosApi.getAll('jugaz')
+    const stored = await pagosApi.getAll('demo')
     expect(stored).toHaveLength(0)
   })
 
   // ─── TarjetaCard display details ───────────────────────────────────────
   it('should display tarjeta deuda amount', async () => {
-    await tarjetasApi.create('jugaz', { ...sampleTarjeta, montoDeudaActual: 2500 })
+    await tarjetasApi.create('demo', { ...sampleTarjeta, montoDeudaActual: 2500 })
 
     const { wrapper } = mountAuthenticated()
     await flushPromises()
@@ -526,7 +526,7 @@ describe('should TarjetasView', () => {
   })
 
   it('should display saldo total when present', async () => {
-    await tarjetasApi.create('jugaz', { ...sampleTarjeta, saldoTotal: 8000 })
+    await tarjetasApi.create('demo', { ...sampleTarjeta, saldoTotal: 8000 })
 
     const { wrapper } = mountAuthenticated()
     await flushPromises()
@@ -535,7 +535,7 @@ describe('should TarjetasView', () => {
   })
 
   it('should display dash when saldo total is not set', async () => {
-    await tarjetasApi.create('jugaz', sampleTarjeta)
+    await tarjetasApi.create('demo', sampleTarjeta)
 
     const { wrapper } = mountAuthenticated()
     await flushPromises()
@@ -544,7 +544,7 @@ describe('should TarjetasView', () => {
   })
 
   it('should display pago minimo when present', async () => {
-    await tarjetasApi.create('jugaz', { ...sampleTarjeta, pagoMinimo: 350 })
+    await tarjetasApi.create('demo', { ...sampleTarjeta, pagoMinimo: 350 })
 
     const { wrapper } = mountAuthenticated()
     await flushPromises()
@@ -553,7 +553,7 @@ describe('should TarjetasView', () => {
   })
 
   it('should display dash when pago minimo is not set', async () => {
-    await tarjetasApi.create('jugaz', sampleTarjeta)
+    await tarjetasApi.create('demo', sampleTarjeta)
 
     const { wrapper } = mountAuthenticated()
     await flushPromises()
@@ -562,7 +562,7 @@ describe('should TarjetasView', () => {
   })
 
   it('should display linea total for tarjeta', async () => {
-    await tarjetasApi.create('jugaz', sampleTarjeta)
+    await tarjetasApi.create('demo', sampleTarjeta)
 
     const { wrapper } = mountAuthenticated()
     await flushPromises()
@@ -646,7 +646,7 @@ describe('should TarjetasView', () => {
 
   // ─── TarjetaCard edit CurrencyInput handlers ─────────────────────────
   it('should handle CurrencyInput update in edit form', async () => {
-    await tarjetasApi.create('jugaz', { ...sampleTarjeta, pagoMinimo: 200, saldoTotal: 5000 })
+    await tarjetasApi.create('demo', { ...sampleTarjeta, pagoMinimo: 200, saldoTotal: 5000 })
 
     const { wrapper } = mountAuthenticated()
     await flushPromises()
@@ -685,7 +685,7 @@ describe('should TarjetasView', () => {
 
   // ─── Pay form CurrencyInput handler ──────────────────────────────────
   it('should handle CurrencyInput update in pay form', async () => {
-    await tarjetasApi.create('jugaz', sampleTarjeta)
+    await tarjetasApi.create('demo', sampleTarjeta)
 
     const { wrapper } = mountAuthenticated()
     await flushPromises()
@@ -703,14 +703,14 @@ describe('should TarjetasView', () => {
     await wrapper.find('[data-testid="confirm-pay-button"]').trigger('click')
     await flushPromises()
 
-    const pagos = await pagosApi.getAll('jugaz')
+    const pagos = await pagosApi.getAll('demo')
     expect(pagos).toHaveLength(1)
   })
 
   // ─── TarjetaCard utilizacion color branches ──────────────────────────
   it('should show red utilization bar for high usage (>=80%)', async () => {
     // 90% utilization
-    await tarjetasApi.create('jugaz', { lineaTotal: 10000, montoDeudaActual: 9000, descripcion: 'Alto' })
+    await tarjetasApi.create('demo', { lineaTotal: 10000, montoDeudaActual: 9000, descripcion: 'Alto' })
 
     const { wrapper } = mountAuthenticated()
     await flushPromises()
@@ -723,7 +723,7 @@ describe('should TarjetasView', () => {
 
   it('should show yellow utilization bar for medium usage (50-79%)', async () => {
     // 60% utilization
-    await tarjetasApi.create('jugaz', { lineaTotal: 10000, montoDeudaActual: 6000, descripcion: 'Medio' })
+    await tarjetasApi.create('demo', { lineaTotal: 10000, montoDeudaActual: 6000, descripcion: 'Medio' })
 
     const { wrapper } = mountAuthenticated()
     await flushPromises()
@@ -736,7 +736,7 @@ describe('should TarjetasView', () => {
 
   it('should show blue utilization bar for low usage (<50%)', async () => {
     // 20% utilization
-    await tarjetasApi.create('jugaz', { lineaTotal: 10000, montoDeudaActual: 2000, descripcion: 'Bajo' })
+    await tarjetasApi.create('demo', { lineaTotal: 10000, montoDeudaActual: 2000, descripcion: 'Bajo' })
 
     const { wrapper } = mountAuthenticated()
     await flushPromises()
@@ -748,7 +748,7 @@ describe('should TarjetasView', () => {
   })
 
   it('should handle zero lineaTotal (0% utilization)', async () => {
-    await tarjetasApi.create('jugaz', { lineaTotal: 0, montoDeudaActual: 0, descripcion: 'Cero' })
+    await tarjetasApi.create('demo', { lineaTotal: 0, montoDeudaActual: 0, descripcion: 'Cero' })
 
     const { wrapper } = mountAuthenticated()
     await flushPromises()
@@ -775,7 +775,7 @@ describe('should TarjetasView', () => {
 
   // ─── confirmPay early return on invalid monto ──────────────────────
   it('should not add pago when monto is invalid', async () => {
-    await tarjetasApi.create('jugaz', { lineaTotal: 5000, montoDeudaActual: 1000, descripcion: 'Visa' })
+    await tarjetasApi.create('demo', { lineaTotal: 5000, montoDeudaActual: 1000, descripcion: 'Visa' })
 
     const { wrapper } = mountAuthenticated()
     await flushPromises()
@@ -787,7 +787,7 @@ describe('should TarjetasView', () => {
     await flushPromises()
 
     // No pago should be added
-    const pagos = await pagosApi.getAll('jugaz')
+    const pagos = await pagosApi.getAll('demo')
     expect(pagos).toHaveLength(0)
   })
 

@@ -104,4 +104,34 @@ describe('should deudasApi', () => {
     const all = await deudasApi.getAll(userId)
     expect(all[0].totalDeuda).toBe(9999)
   })
+
+  // ─── Demo user (localStorage path) ─────────────────────────────────────
+  it('should create and retrieve via localStorage for demo user', async () => {
+    const created = await deudasApi.create('demo', sampleDeuda)
+
+    expect(created.nombrePersona).toBe('María García')
+
+    const all = await deudasApi.getAll('demo')
+    expect(all).toHaveLength(1)
+  })
+
+  it('should update via localStorage for demo user', async () => {
+    const created = await deudasApi.create('demo', sampleDeuda)
+    const updated = await deudasApi.update('demo', created.id, { nombrePersona: 'Updated', montoActualPendiente: 1000 })
+
+    expect(updated.nombrePersona).toBe('Updated')
+    expect(updated.montoActualPendiente).toBe(1000)
+  })
+
+  it('should throw when updating non-existent demo deuda', async () => {
+    await expect(deudasApi.update('demo', 'fake-id', { nombrePersona: 'X' })).rejects.toThrow('Deuda not found')
+  })
+
+  it('should remove via localStorage for demo user', async () => {
+    const created = await deudasApi.create('demo', sampleDeuda)
+    await deudasApi.remove('demo', created.id)
+
+    const all = await deudasApi.getAll('demo')
+    expect(all).toHaveLength(0)
+  })
 })

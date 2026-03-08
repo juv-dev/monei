@@ -10,7 +10,7 @@ describe('should usePresupuesto', () => {
     localStorage.clear()
   })
 
-  function setupWithUser(username = 'jugaz') {
+  function setupWithUser(username = 'demo') {
     return withSetup(() => {
       const auth = useAuthStore()
       auth.$patch({ user: { id: username, username, displayName: 'Test', provider: 'demo' }, isAuthenticated: true })
@@ -28,8 +28,8 @@ describe('should usePresupuesto', () => {
   })
 
   it('should load existing gastos from localStorage', async () => {
-    await presupuestoApi.create('jugaz', { monto: 200, descripcion: 'Comida', categoria: 'Casa' })
-    await presupuestoApi.create('jugaz', { monto: 100, descripcion: 'Transporte', categoria: 'Personal' })
+    await presupuestoApi.create('demo', { monto: 200, descripcion: 'Comida', categoria: 'Casa' })
+    await presupuestoApi.create('demo', { monto: 100, descripcion: 'Transporte', categoria: 'Personal' })
 
     const { result, unmount } = setupWithUser()
     await flushPromises()
@@ -40,9 +40,9 @@ describe('should usePresupuesto', () => {
   })
 
   it('should calculate totalGastado correctly', async () => {
-    await presupuestoApi.create('jugaz', { monto: 500, descripcion: 'Renta', categoria: 'Casa' })
-    await presupuestoApi.create('jugaz', { monto: 300, descripcion: 'Servicios', categoria: 'Casa' })
-    await presupuestoApi.create('jugaz', { monto: 200, descripcion: 'Comida', categoria: 'Alimentación' })
+    await presupuestoApi.create('demo', { monto: 500, descripcion: 'Renta', categoria: 'Casa' })
+    await presupuestoApi.create('demo', { monto: 300, descripcion: 'Servicios', categoria: 'Casa' })
+    await presupuestoApi.create('demo', { monto: 200, descripcion: 'Comida', categoria: 'Alimentación' })
 
     const { result, unmount } = setupWithUser()
     await flushPromises()
@@ -58,14 +58,14 @@ describe('should usePresupuesto', () => {
     result.addGasto({ monto: 450, descripcion: 'Supermercado', categoria: 'Alimentación' })
     await flushPromises()
 
-    const stored = await presupuestoApi.getAll('jugaz')
+    const stored = await presupuestoApi.getAll('demo')
     expect(stored).toHaveLength(1)
     expect(stored[0].monto).toBe(450)
     unmount()
   })
 
   it('should remove gasto via mutation', async () => {
-    const item = await presupuestoApi.create('jugaz', {
+    const item = await presupuestoApi.create('demo', {
       monto: 150,
       descripcion: 'Farmacia',
       categoria: 'Salud',
@@ -77,7 +77,7 @@ describe('should usePresupuesto', () => {
     result.removeGasto(item.id)
     await flushPromises()
 
-    const stored = await presupuestoApi.getAll('jugaz')
+    const stored = await presupuestoApi.getAll('demo')
     expect(stored).toHaveLength(0)
     unmount()
   })
@@ -101,7 +101,7 @@ describe('should usePresupuesto', () => {
   })
 
   it('should isolate gastos between users', async () => {
-    await presupuestoApi.create('jugaz', { monto: 100, descripcion: 'Gas jugaz', categoria: 'Casa' })
+    await presupuestoApi.create('demo', { monto: 100, descripcion: 'Gas jugaz', categoria: 'Casa' })
     await presupuestoApi.create('fio', { monto: 200, descripcion: 'Gas fio', categoria: 'Casa' })
 
     const { result, unmount } = setupWithUser('fio')
@@ -123,9 +123,9 @@ describe('should usePresupuesto', () => {
   })
 
   it('should group gastos por categoria', async () => {
-    await presupuestoApi.create('jugaz', { monto: 100, descripcion: 'Luz', categoria: 'Casa' })
-    await presupuestoApi.create('jugaz', { monto: 200, descripcion: 'Gas', categoria: 'Casa' })
-    await presupuestoApi.create('jugaz', { monto: 50, descripcion: 'Bus', categoria: 'Transporte' })
+    await presupuestoApi.create('demo', { monto: 100, descripcion: 'Luz', categoria: 'Casa' })
+    await presupuestoApi.create('demo', { monto: 200, descripcion: 'Gas', categoria: 'Casa' })
+    await presupuestoApi.create('demo', { monto: 50, descripcion: 'Bus', categoria: 'Transporte' })
 
     const { result, unmount } = setupWithUser()
     await flushPromises()
@@ -139,9 +139,9 @@ describe('should usePresupuesto', () => {
   })
 
   it('should expose unique categorias list', async () => {
-    await presupuestoApi.create('jugaz', { monto: 100, descripcion: 'A', categoria: 'Casa' })
-    await presupuestoApi.create('jugaz', { monto: 100, descripcion: 'B', categoria: 'Casa' })
-    await presupuestoApi.create('jugaz', { monto: 50, descripcion: 'C', categoria: 'Salud' })
+    await presupuestoApi.create('demo', { monto: 100, descripcion: 'A', categoria: 'Casa' })
+    await presupuestoApi.create('demo', { monto: 100, descripcion: 'B', categoria: 'Casa' })
+    await presupuestoApi.create('demo', { monto: 50, descripcion: 'C', categoria: 'Salud' })
 
     const { result, unmount } = setupWithUser()
     await flushPromises()
@@ -157,13 +157,13 @@ describe('should usePresupuesto', () => {
     const legacyData = JSON.stringify([
       {
         id: 'legacy-1',
-        userId: 'jugaz',
+        userId: 'demo',
         monto: 75,
         descripcion: 'Old item',
         createdAt: new Date().toISOString(),
       },
     ])
-    localStorage.setItem('finance_jugaz_presupuesto', legacyData)
+    localStorage.setItem('finance_demo_presupuesto', legacyData)
 
     const { result, unmount } = setupWithUser()
     await flushPromises()

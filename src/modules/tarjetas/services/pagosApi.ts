@@ -11,7 +11,7 @@ export const pagosApi = {
       const raw = localStorage.getItem(storageKey(userId))
       return raw ? (JSON.parse(raw) as TarjetaPago[]) : []
     }
-    const { data, error } = await supabase.from('tarjeta_pagos').select('*').order('created_at', { ascending: false })
+    const { data, error } = await supabase.from('tarjeta_pagos').select('*').eq('user_id', userId).order('created_at', { ascending: false })
     if (error) throw error
     return (data ?? []).map(mapDbPago)
   },
@@ -24,6 +24,7 @@ export const pagosApi = {
     const { data, error } = await supabase
       .from('tarjeta_pagos')
       .select('*')
+      .eq('user_id', userId)
       .eq('tarjeta_id', tarjetaId)
       .order('created_at', { ascending: false })
     if (error) throw error

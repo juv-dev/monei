@@ -11,7 +11,7 @@ export const deudasApi = {
       const raw = localStorage.getItem(storageKey(userId))
       return raw ? (JSON.parse(raw) as Deuda[]) : []
     }
-    const { data, error } = await supabase.from('deudas').select('*').order('created_at', { ascending: false })
+    const { data, error } = await supabase.from('deudas').select('*').eq('user_id', userId).order('created_at', { ascending: false })
     if (error) throw error
     return (data ?? []).map(mapDbDeuda)
   },
@@ -53,7 +53,7 @@ export const deudasApi = {
     if (data.montoActualPendiente !== undefined) updateData.monto_actual_pendiente = data.montoActualPendiente
     if (data.descripcion !== undefined) updateData.descripcion = data.descripcion
     const { data: row, error } = await supabase.from('deudas').update(updateData).eq('id', id).select().single()
-    if (error) throw error
+    if (error) throw new Error('Deuda not found')
     return mapDbDeuda(row)
   },
 

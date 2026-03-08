@@ -14,6 +14,7 @@ export const tarjetasApi = {
     const { data, error } = await supabase
       .from('tarjetas_credito')
       .select('*')
+      .eq('user_id', userId)
       .order('created_at', { ascending: false })
     if (error) throw error
     return (data ?? []).map(mapDbTarjeta)
@@ -62,7 +63,7 @@ export const tarjetasApi = {
       .eq('id', id)
       .select()
       .single()
-    if (error) throw error
+    if (error) throw new Error('Tarjeta not found')
     return mapDbTarjeta(row)
   },
 

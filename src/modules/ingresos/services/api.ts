@@ -11,7 +11,7 @@ export const ingresosApi = {
       const raw = localStorage.getItem(storageKey(userId))
       return raw ? (JSON.parse(raw) as Ingreso[]) : []
     }
-    const { data, error } = await supabase.from('ingresos').select('*').order('created_at', { ascending: false })
+    const { data, error } = await supabase.from('ingresos').select('*').eq('user_id', userId).order('created_at', { ascending: false })
     if (error) throw error
     return (data ?? []).map(mapDbIngreso)
   },
@@ -47,7 +47,7 @@ export const ingresosApi = {
     if (data.monto !== undefined) updateData.monto = data.monto
     if (data.descripcion !== undefined) updateData.descripcion = data.descripcion
     const { data: row, error } = await supabase.from('ingresos').update(updateData).eq('id', id).select().single()
-    if (error) throw error
+    if (error) throw new Error('Ingreso not found')
     return mapDbIngreso(row)
   },
 

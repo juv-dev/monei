@@ -13,11 +13,13 @@ const DEMO_USER: User = {
 }
 
 const DEMO_SESSION_KEY = 'monei_demo_session'
+const INACTIVITY_TIMEOUT_MS = 30 * 60 * 1000 // 30 minutes for financial apps
 
 export const useAuthStore = defineStore('auth', () => {
   const user = ref<User | null>(null)
   const isAuthenticated = ref(false)
   const isLoading = ref(true)
+  let inactivityTimer: ReturnType<typeof setTimeout> | null = null
 
   function mapSessionToUser(session: Session): User {
     const meta = session.user.user_metadata
@@ -34,6 +36,11 @@ export const useAuthStore = defineStore('auth', () => {
   function setUser(u: User | null): void {
     user.value = u
     isAuthenticated.value = u !== null
+    if (u && u.provider !== 'demo') {
+      startInactivityTimer()
+    } else {
+      stopInactivityTimer()
+    }
   }
 
   async function initialize(): Promise<void> {
@@ -112,7 +119,37 @@ export const useAuthStore = defineStore('auth', () => {
     return { success: true }
   }
 
+  function startInactivityTimer(): void {
+    stopInactivityTimer()
+    if (!isAuthenticated.value || user.value?.provider === 'demo') return
+    inactivityTimer = setTimeout(() => {
+      logout()
+    }, INACTIVITY_TIMEOUT_MS)
+  }
+
+  function stopInactivityTimer(): void {
+    if (inactivityTimer) {
+      clearTimeout(inactivityTimer)
+      inactivityTimer = null
+    }
+  }
+
+  function resetInactivityTimer(): void {
+    if (isAuthenticated.value && user.value?.provider !== 'demo') {
+      startInactivityTimer()
+    }
+  }
+
+  // Listen for user activity to reset the timer
+  if (typeof window !== 'undefined') {
+    const activityEvents = ['mousedown', 'keydown', 'touchstart', 'scroll']
+    activityEvents.forEach((event) => {
+      window.addEventListener(event, resetInactivityTimer, { passive: true })
+    })
+  }
+
   async function logout(): Promise<void> {
+    stopInactivityTimer()
     const wasDemo = user.value?.provider === 'demo'
     setUser(null)
     if (wasDemo) {
@@ -120,6 +157,8 @@ export const useAuthStore = defineStore('auth', () => {
     } else {
       await supabase.auth.signOut()
     }
+    // Clean up query cache on logout
+    sessionStorage.clear()
   }
 
   supabase.auth.onAuthStateChange((_event, session) => {

@@ -133,6 +133,186 @@ describe('should LoginView', () => {
     expect(wrapper.find('[data-testid="error-message"]').text()).toContain('GitHub error')
   })
 
+  // ─── Email flow ──────────────────────────────────────────────────────────
+  it('should show email button initially, not the form', () => {
+    const { wrapper } = mountView()
+    expect(wrapper.find('[data-testid="email-button"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="email-input"]').exists()).toBe(false)
+  })
+
+  it('should show email form after clicking email button', async () => {
+    const { wrapper } = mountView()
+    await wrapper.find('[data-testid="email-button"]').trigger('click')
+    await flushPromises()
+
+    expect(wrapper.find('[data-testid="email-input"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="password-input"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="email-submit-button"]').exists()).toBe(true)
+  })
+
+  it('should not show confirm password in login mode', async () => {
+    const { wrapper } = mountView()
+    await wrapper.find('[data-testid="email-button"]').trigger('click')
+    await flushPromises()
+
+    expect(wrapper.find('[data-testid="confirm-password-input"]').exists()).toBe(false)
+  })
+
+  it('should toggle to register mode and show confirm password', async () => {
+    const { wrapper } = mountView()
+    await wrapper.find('[data-testid="email-button"]').trigger('click')
+    await flushPromises()
+
+    const toggleBtn = wrapper.findAll('button').find((b) => b.text().includes('Crear cuenta nueva'))
+    await toggleBtn!.trigger('click')
+    await flushPromises()
+
+    expect(wrapper.find('[data-testid="confirm-password-input"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="email-submit-button"]').text()).toContain('Crear cuenta')
+  })
+
+  it('should show error when submitting empty email form', async () => {
+    const { wrapper } = mountView()
+    await wrapper.find('[data-testid="email-button"]').trigger('click')
+    await flushPromises()
+
+    await wrapper.find('form').trigger('submit')
+    await flushPromises()
+
+    expect(wrapper.find('[data-testid="error-message"]').text()).toContain('Completa todos los campos')
+  })
+
+  it('should show error when register passwords do not match', async () => {
+    const { wrapper } = mountView()
+    await wrapper.find('[data-testid="email-button"]').trigger('click')
+    await flushPromises()
+
+    const toggleBtn = wrapper.findAll('button').find((b) => b.text().includes('Crear cuenta nueva'))
+    await toggleBtn!.trigger('click')
+    await flushPromises()
+
+    await wrapper.find('[data-testid="email-input"]').setValue('test@test.com')
+    await wrapper.find('[data-testid="password-input"]').setValue('password123')
+    await wrapper.find('[data-testid="confirm-password-input"]').setValue('different')
+    await wrapper.find('form').trigger('submit')
+    await flushPromises()
+
+    expect(wrapper.find('[data-testid="error-message"]').text()).toContain('Las contraseñas no coinciden')
+  })
+
+  it('should show error when register password is too short', async () => {
+    const { wrapper } = mountView()
+    await wrapper.find('[data-testid="email-button"]').trigger('click')
+    await flushPromises()
+
+    const toggleBtn = wrapper.findAll('button').find((b) => b.text().includes('Crear cuenta nueva'))
+    await toggleBtn!.trigger('click')
+    await flushPromises()
+
+    await wrapper.find('[data-testid="email-input"]').setValue('test@test.com')
+    await wrapper.find('[data-testid="password-input"]').setValue('12345')
+    await wrapper.find('[data-testid="confirm-password-input"]').setValue('12345')
+    await wrapper.find('form').trigger('submit')
+    await flushPromises()
+
+    expect(wrapper.find('[data-testid="error-message"]').text()).toContain('al menos 6 caracteres')
+  })
+
+  it('should call signUpWithEmail on valid registration', async () => {
+    const { wrapper } = mountView()
+    const auth = useAuthStore()
+    const spy = vi.spyOn(auth, 'signUpWithEmail').mockResolvedValue({})
+
+    await wrapper.find('[data-testid="email-button"]').trigger('click')
+    await flushPromises()
+
+    const toggleBtn = wrapper.findAll('button').find((b) => b.text().includes('Crear cuenta nueva'))
+    await toggleBtn!.trigger('click')
+    await flushPromises()
+
+    await wrapper.find('[data-testid="email-input"]').setValue('new@test.com')
+    await wrapper.find('[data-testid="password-input"]').setValue('password123')
+    await wrapper.find('[data-testid="confirm-password-input"]').setValue('password123')
+    await wrapper.find('form').trigger('submit')
+    await flushPromises()
+
+    expect(spy).toHaveBeenCalledWith('new@test.com', 'password123')
+    expect(wrapper.find('[data-testid="success-message"]').exists()).toBe(true)
+  })
+
+  it('should show error when signUpWithEmail fails', async () => {
+    const { wrapper } = mountView()
+    const auth = useAuthStore()
+    vi.spyOn(auth, 'signUpWithEmail').mockResolvedValue({ error: 'Email taken' })
+
+    await wrapper.find('[data-testid="email-button"]').trigger('click')
+    await flushPromises()
+
+    const toggleBtn = wrapper.findAll('button').find((b) => b.text().includes('Crear cuenta nueva'))
+    await toggleBtn!.trigger('click')
+    await flushPromises()
+
+    await wrapper.find('[data-testid="email-input"]').setValue('dup@test.com')
+    await wrapper.find('[data-testid="password-input"]').setValue('password123')
+    await wrapper.find('[data-testid="confirm-password-input"]').setValue('password123')
+    await wrapper.find('form').trigger('submit')
+    await flushPromises()
+
+    expect(wrapper.find('[data-testid="error-message"]').text()).toContain('Email taken')
+  })
+
+  it('should call signInWithEmail on login form submit', async () => {
+    const { wrapper } = mountView()
+    const auth = useAuthStore()
+    const spy = vi.spyOn(auth, 'signInWithEmail').mockResolvedValue({})
+
+    await wrapper.find('[data-testid="email-button"]').trigger('click')
+    await flushPromises()
+
+    await wrapper.find('[data-testid="email-input"]').setValue('user@test.com')
+    await wrapper.find('[data-testid="password-input"]').setValue('password123')
+    await wrapper.find('form').trigger('submit')
+    await flushPromises()
+
+    expect(spy).toHaveBeenCalledWith('user@test.com', 'password123')
+  })
+
+  it('should show error when signInWithEmail fails', async () => {
+    const { wrapper } = mountView()
+    const auth = useAuthStore()
+    vi.spyOn(auth, 'signInWithEmail').mockResolvedValue({ error: 'Wrong password' })
+
+    await wrapper.find('[data-testid="email-button"]').trigger('click')
+    await flushPromises()
+
+    await wrapper.find('[data-testid="email-input"]').setValue('user@test.com')
+    await wrapper.find('[data-testid="password-input"]').setValue('wrong')
+    await wrapper.find('form').trigger('submit')
+    await flushPromises()
+
+    expect(wrapper.find('[data-testid="error-message"]').text()).toContain('Wrong password')
+  })
+
+  it('should toggle between login and register modes', async () => {
+    const { wrapper } = mountView()
+    await wrapper.find('[data-testid="email-button"]').trigger('click')
+    await flushPromises()
+
+    expect(wrapper.find('[data-testid="email-submit-button"]').text()).toContain('Iniciar sesión')
+
+    let toggleBtn = wrapper.findAll('button').find((b) => b.text().includes('Crear cuenta nueva'))
+    await toggleBtn!.trigger('click')
+    await flushPromises()
+
+    expect(wrapper.find('[data-testid="email-submit-button"]').text()).toContain('Crear cuenta')
+
+    toggleBtn = wrapper.findAll('button').find((b) => b.text().includes('Ya tengo cuenta'))
+    await toggleBtn!.trigger('click')
+    await flushPromises()
+
+    expect(wrapper.find('[data-testid="email-submit-button"]').text()).toContain('Iniciar sesión')
+  })
+
   // ─── Logo y branding ──────────────────────────────────────────────────────
   it('should show Monei branding', () => {
     const { wrapper } = mountView()
