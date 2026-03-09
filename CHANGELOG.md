@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.2.0 (2026-03-09)
+
+### Features
+- feat: worflows bump (106c8e9)
+
+### Bug Fixes
+- fix: worflows bump (62ebbd9)
+
+### Other
+- chore: bump version to 1.1.0 [skip ci] (8d34fda)
+
+
+
 ## 1.1.0 (2026-03-09)
 
 ### Features
