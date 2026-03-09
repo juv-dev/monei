@@ -1,9 +1,8 @@
 name: PR / semgrep-check
 
 on:
-  workflow_run:
-    workflows: ["PR / unit-test"]
-    types: [completed]
+  pull_request:
+    branches: [main, develop]
 
 permissions:
   contents: read
@@ -12,12 +11,10 @@ jobs:
   semgrep-check:
     name: semgrep-check
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
 
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.workflow_run.head_sha }}
           fetch-depth: 0
 
       - name: Semgrep code quality scan

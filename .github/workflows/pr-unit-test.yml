@@ -1,9 +1,8 @@
 name: PR / unit-test
 
 on:
-  workflow_run:
-    workflows: ["PR / vulnerability-scan"]
-    types: [completed]
+  pull_request:
+    branches: [main, develop]
 
 permissions:
   contents: read
@@ -13,12 +12,9 @@ jobs:
   unit-test:
     name: unit-test
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
 
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.workflow_run.head_sha }}
 
       - uses: pnpm/action-setup@v4
         with:
@@ -63,14 +59,10 @@ jobs:
               body += 'Coverage summary not available.';
             }
 
-            const prs = context.payload.workflow_run?.pull_requests || [];
-            if (prs.length === 0) return;
-            const prNumber = prs[0].number;
-
             const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              issue_number: prNumber,
+              issue_number: context.issue.number,
             });
             const existing = comments.find(c => c.body?.startsWith('## Test Results'));
             if (existing) {
@@ -84,7 +76,7 @@ jobs:
               await github.rest.issues.createComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                issue_number: prNumber,
+                issue_number: context.issue.number,
                 body,
               });
             }
