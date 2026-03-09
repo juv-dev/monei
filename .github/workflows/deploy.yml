@@ -12,12 +12,16 @@ jobs:
   validate-permissions:
     name: validate-permissions
     runs-on: ubuntu-latest
+    if: >-
+      ${{ !contains(github.event.head_commit.message, 'release-please') &&
+      !contains(github.event.head_commit.message, 'chore(main): release') }}
     steps:
       - name: Validate deployment permissions
         run: |
           echo "Validating deployment permissions..."
           echo "Branch: ${{ github.ref_name }}"
           echo "Actor: ${{ github.actor }}"
+          echo "Commit: ${{ github.event.head_commit.message }}"
 
           if [ "${{ github.ref_name }}" != "main" ]; then
             echo "::error::Deployments only allowed from main branch"
