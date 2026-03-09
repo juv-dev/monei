@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.1.0](https://github.com/juv-dev/monei/compare/v1.0.0...v1.1.0) (2026-03-09)
+
+
+### Features
+
+* IA feacture ([494c439](https://github.com/juv-dev/monei/commit/494c4396f939271a8f2626a579d9a76f24c183ee))
+* IA feacture ([a8fc3c0](https://github.com/juv-dev/monei/commit/a8fc3c0ac183c1ac1b2035360420917bd27b5bb5))
+* IA feacture ([d6bfe59](https://github.com/juv-dev/monei/commit/d6bfe59612daf292e593e8be9476e2aa3dbc2fb7))
+* IA feacture ([6c4d412](https://github.com/juv-dev/monei/commit/6c4d41244403894827caa17f27f3df1c2acf121b))
+* IA feacture ([dfcc484](https://github.com/juv-dev/monei/commit/dfcc484fd1a85a887e1c2e6e150e94a50f145fe4))
+* IA feacture ([b93387c](https://github.com/juv-dev/monei/commit/b93387c33e7b646c24f44f136655cfeadeaeef46))
+* worflows ([146b75a](https://github.com/juv-dev/monei/commit/146b75af6da751b6cf67dd995fc12b5dfad3c27f))
+* worflows ([2ebd6c6](https://github.com/juv-dev/monei/commit/2ebd6c602116ea9b40e0489589cde99571e40984))
+
 ## 1.0.0 (2026-03-04)
 
 
