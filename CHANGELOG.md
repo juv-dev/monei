@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.1.0 (2026-03-09)
+
+### Features
+- feat: worflows bump (106c8e9)
+
+
+
 ## 1.0.0 (2026-03-04)
 
 
