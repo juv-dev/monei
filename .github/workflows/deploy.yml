@@ -17,13 +17,17 @@ jobs:
       !contains(github.event.head_commit.message, 'chore(main): release') }}
     steps:
       - name: Validate deployment permissions
+        env:
+          BRANCH: ${{ github.ref_name }}
+          ACTOR: ${{ github.actor }}
+          COMMIT_MSG: ${{ github.event.head_commit.message }}
         run: |
           echo "Validating deployment permissions..."
-          echo "Branch: ${{ github.ref_name }}"
-          echo "Actor: ${{ github.actor }}"
-          echo "Commit: ${{ github.event.head_commit.message }}"
+          echo "Branch: $BRANCH"
+          echo "Actor: $ACTOR"
+          echo "Commit: $COMMIT_MSG"
 
-          if [ "${{ github.ref_name }}" != "main" ]; then
+          if [ "$BRANCH" != "main" ]; then
             echo "::error::Deployments only allowed from main branch"
             exit 1
           fi
