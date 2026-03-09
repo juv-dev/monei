@@ -3,6 +3,7 @@ import { ref, computed } from 'vue'
 import { supabase } from '~/config/supabase'
 import type { User } from '~/shared/types'
 import type { Session } from '@supabase/supabase-js'
+import { populateDemoData } from '~/modules/demo/services/populateDemo'
 
 const DEMO_USER: User = {
   id: 'demo',
@@ -12,15 +13,17 @@ const DEMO_USER: User = {
 }
 
 const DEMO_SESSION_KEY = 'monei_demo_session'
+const INACTIVITY_TIMEOUT_MS = 30 * 60 * 1000 // 30 minutes for financial apps
 
 export const useAuthStore = defineStore('auth', () => {
   const user = ref<User | null>(null)
   const isAuthenticated = ref(false)
   const isLoading = ref(true)
+  let inactivityTimer: ReturnType<typeof setTimeout> | null = null
 
   function mapSessionToUser(session: Session): User {
     const meta = session.user.user_metadata
-    const provider = (session.user.app_metadata.provider ?? 'google') as 'google' | 'github'
+    const provider = (session.user.app_metadata.provider ?? 'email') as 'google' | 'github' | 'email'
     return {
       id: session.user.id,
       username: session.user.email ?? '',
@@ -33,6 +36,11 @@ export const useAuthStore = defineStore('auth', () => {
   function setUser(u: User | null): void {
     user.value = u
     isAuthenticated.value = u !== null
+    if (u && u.provider !== 'demo') {
+      startInactivityTimer()
+    } else {
+      stopInactivityTimer()
+    }
   }
 
   async function initialize(): Promise<void> {
@@ -73,9 +81,26 @@ export const useAuthStore = defineStore('auth', () => {
     return {}
   }
 
-  function signInAsDemo(): void {
+  async function signUpWithEmail(email: string, password: string): Promise<{ error?: string }> {
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { emailRedirectTo: `${window.location.origin}/` },
+    })
+    if (error) return { error: error.message }
+    return {}
+  }
+
+  async function signInWithEmail(email: string, password: string): Promise<{ error?: string }> {
+    const { error } = await supabase.auth.signInWithPassword({ email, password })
+    if (error) return { error: error.message }
+    return {}
+  }
+
+  async function signInAsDemo(): Promise<void> {
     sessionStorage.setItem(DEMO_SESSION_KEY, '1')
     setUser(DEMO_USER)
+    await populateDemoData()
   }
 
   async function changePassword(
@@ -94,7 +119,37 @@ export const useAuthStore = defineStore('auth', () => {
     return { success: true }
   }
 
+  function startInactivityTimer(): void {
+    stopInactivityTimer()
+    if (!isAuthenticated.value || user.value?.provider === 'demo') return
+    inactivityTimer = setTimeout(() => {
+      logout()
+    }, INACTIVITY_TIMEOUT_MS)
+  }
+
+  function stopInactivityTimer(): void {
+    if (inactivityTimer) {
+      clearTimeout(inactivityTimer)
+      inactivityTimer = null
+    }
+  }
+
+  function resetInactivityTimer(): void {
+    if (isAuthenticated.value && user.value?.provider !== 'demo') {
+      startInactivityTimer()
+    }
+  }
+
+  // Listen for user activity to reset the timer
+  if (typeof window !== 'undefined') {
+    const activityEvents = ['mousedown', 'keydown', 'touchstart', 'scroll']
+    activityEvents.forEach((event) => {
+      window.addEventListener(event, resetInactivityTimer, { passive: true })
+    })
+  }
+
   async function logout(): Promise<void> {
+    stopInactivityTimer()
     const wasDemo = user.value?.provider === 'demo'
     setUser(null)
     if (wasDemo) {
@@ -102,6 +157,8 @@ export const useAuthStore = defineStore('auth', () => {
     } else {
       await supabase.auth.signOut()
     }
+    // Clean up query cache on logout
+    sessionStorage.clear()
   }
 
   supabase.auth.onAuthStateChange((_event, session) => {
@@ -127,6 +184,8 @@ export const useAuthStore = defineStore('auth', () => {
     initialize,
     signInWithGoogle,
     signInWithGitHub,
+    signUpWithEmail,
+    signInWithEmail,
     signInAsDemo,
     changePassword,
     logout,

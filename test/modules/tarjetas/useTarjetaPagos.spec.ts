@@ -17,7 +17,7 @@ describe('should useTarjetaPagos', () => {
     fecha: '2026-02-27',
   }
 
-  function setupWithUser(username = 'jugaz') {
+  function setupWithUser(username = 'demo') {
     return withSetup(() => {
       const auth = useAuthStore()
       auth.$patch({ user: { id: username, username, displayName: 'Test', provider: 'demo' }, isAuthenticated: true })
@@ -34,7 +34,7 @@ describe('should useTarjetaPagos', () => {
   })
 
   it('should load existing pagos from localStorage', async () => {
-    await pagosApi.create('jugaz', samplePago)
+    await pagosApi.create('demo', samplePago)
 
     const { result, unmount } = setupWithUser()
     await flushPromises()
@@ -49,18 +49,18 @@ describe('should useTarjetaPagos', () => {
     await flushPromises()
 
     // Create a tarjeta first so addPago can update it
-    await tarjetasApi.create('jugaz', {
+    await tarjetasApi.create('demo', {
       lineaTotal: 10000,
       montoDeudaActual: 3500,
       descripcion: 'Visa',
     })
-    const tarjetas = await tarjetasApi.getAll('jugaz')
+    const tarjetas = await tarjetasApi.getAll('demo')
     const tarjetaId = tarjetas[0].id
 
     result.addPago({ tarjetaId, monto: 500, fecha: '2026-02-27' })
     await flushPromises()
 
-    const stored = await pagosApi.getAll('jugaz')
+    const stored = await pagosApi.getAll('demo')
     expect(stored).toHaveLength(1)
     expect(stored[0].monto).toBe(500)
     unmount()
@@ -70,7 +70,7 @@ describe('should useTarjetaPagos', () => {
     const { result, unmount } = setupWithUser()
     await flushPromises()
 
-    const tarjeta = await tarjetasApi.create('jugaz', {
+    const tarjeta = await tarjetasApi.create('demo', {
       lineaTotal: 10000,
       montoDeudaActual: 3500,
       saldoTotal: 5000,
@@ -80,7 +80,7 @@ describe('should useTarjetaPagos', () => {
     result.addPago({ tarjetaId: tarjeta.id, monto: 1000, fecha: '2026-02-27' })
     await flushPromises()
 
-    const updated = await tarjetasApi.getAll('jugaz')
+    const updated = await tarjetasApi.getAll('demo')
     expect(updated[0].montoDeudaActual).toBe(2500)
     expect(updated[0].saldoTotal).toBe(4000)
     unmount()
@@ -90,7 +90,7 @@ describe('should useTarjetaPagos', () => {
     const { result, unmount } = setupWithUser()
     await flushPromises()
 
-    const tarjeta = await tarjetasApi.create('jugaz', {
+    const tarjeta = await tarjetasApi.create('demo', {
       lineaTotal: 10000,
       montoDeudaActual: 500,
       saldoTotal: 500,
@@ -100,14 +100,14 @@ describe('should useTarjetaPagos', () => {
     result.addPago({ tarjetaId: tarjeta.id, monto: 1000, fecha: '2026-02-27' })
     await flushPromises()
 
-    const updated = await tarjetasApi.getAll('jugaz')
+    const updated = await tarjetasApi.getAll('demo')
     expect(updated[0].montoDeudaActual).toBe(0)
     expect(updated[0].saldoTotal).toBe(0)
     unmount()
   })
 
   it('should remove pago via mutation', async () => {
-    const pago = await pagosApi.create('jugaz', samplePago)
+    const pago = await pagosApi.create('demo', samplePago)
 
     const { result, unmount } = setupWithUser()
     await flushPromises()
@@ -115,7 +115,7 @@ describe('should useTarjetaPagos', () => {
     result.removePago(pago.id)
     await flushPromises()
 
-    const stored = await pagosApi.getAll('jugaz')
+    const stored = await pagosApi.getAll('demo')
     expect(stored).toHaveLength(0)
     unmount()
   })
@@ -128,7 +128,7 @@ describe('should useTarjetaPagos', () => {
         tarjetaId: 'tarjeta-1',
         monto: 100,
         fecha: '2026-02-25',
-        userId: 'jugaz',
+        userId: 'demo',
         createdAt: '2026-02-25T10:00:00.000Z',
       },
       {
@@ -136,11 +136,11 @@ describe('should useTarjetaPagos', () => {
         tarjetaId: 'tarjeta-1',
         monto: 200,
         fecha: '2026-02-27',
-        userId: 'jugaz',
+        userId: 'demo',
         createdAt: '2026-02-27T10:00:00.000Z',
       },
     ]
-    localStorage.setItem('finance_jugaz_tarjeta_pagos', JSON.stringify(all))
+    localStorage.setItem('finance_demo_tarjeta_pagos', JSON.stringify(all))
 
     const { result, unmount } = setupWithUser()
     await flushPromises()
@@ -154,8 +154,8 @@ describe('should useTarjetaPagos', () => {
   })
 
   it('should filter pagosDeTarjeta by tarjetaId', async () => {
-    await pagosApi.create('jugaz', samplePago)
-    await pagosApi.create('jugaz', { ...samplePago, tarjetaId: 'tarjeta-2', monto: 300 })
+    await pagosApi.create('demo', samplePago)
+    await pagosApi.create('demo', { ...samplePago, tarjetaId: 'tarjeta-2', monto: 300 })
 
     const { result, unmount } = setupWithUser()
     await flushPromises()
@@ -182,7 +182,7 @@ describe('should useTarjetaPagos', () => {
     const { result, unmount } = setupWithUser()
     await flushPromises()
 
-    const tarjeta = await tarjetasApi.create('jugaz', {
+    const tarjeta = await tarjetasApi.create('demo', {
       lineaTotal: 10000,
       montoDeudaActual: 3500,
       descripcion: 'Visa sin saldo',
@@ -191,7 +191,7 @@ describe('should useTarjetaPagos', () => {
     result.addPago({ tarjetaId: tarjeta.id, monto: 500, fecha: '2026-02-27' })
     await flushPromises()
 
-    const updated = await tarjetasApi.getAll('jugaz')
+    const updated = await tarjetasApi.getAll('demo')
     expect(updated[0].montoDeudaActual).toBe(3000)
     // saldoTotal should remain undefined
     expect(updated[0].saldoTotal).toBeUndefined()
@@ -207,7 +207,7 @@ describe('should useTarjetaPagos', () => {
     await flushPromises()
 
     // Pago should still be created
-    const stored = await pagosApi.getAll('jugaz')
+    const stored = await pagosApi.getAll('demo')
     expect(stored).toHaveLength(1)
     expect(stored[0].tarjetaId).toBe('non-existent-id')
     unmount()

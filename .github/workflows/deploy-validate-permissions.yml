@@ -1,0 +1,25 @@
+name: Deploy / validate-permissions
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  validate-permissions:
+    name: validate-permissions
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Validate deployment permissions
+        run: |
+          echo "Validating deployment permissions..."
+          echo "Branch: ${{ github.ref_name }}"
+          echo "Actor: ${{ github.actor }}"
+          echo "Event: ${{ github.event_name }}"
+
+          if [ "${{ github.ref_name }}" != "main" ]; then
+            echo "::error::Deployments only allowed from main branch"
+            exit 1
+          fi
+
+          echo "Permissions validated successfully"

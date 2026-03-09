@@ -19,6 +19,7 @@ import AppModal from '~/shared/components/ui/AppModal.vue'
 import EmptyState from '~/shared/components/ui/EmptyState.vue'
 import PageHeader from '~/shared/components/layout/PageHeader.vue'
 import { formatMoneyDisplay, parseMoneyInput, onDecimalInput } from '~/shared/utils/format'
+import { validateMonto, validateDescripcion, sanitize } from '~/shared/utils/validation'
 import type { GastoPresupuesto } from '~/shared/types'
 
 const {
@@ -140,16 +141,20 @@ function cancelAddItem() {
 function saveNewItem(categoriaNombre: string) {
   addInlineError.value = null
   const monto = parseMoneyInput(addInlineForm.monto)
-  if (!addInlineForm.descripcion.trim()) {
-    addInlineError.value = 'La descripción es requerida'
+  const descripcion = sanitize(addInlineForm.descripcion)
+
+  const descResult = validateDescripcion(descripcion)
+  if (!descResult.valid) {
+    addInlineError.value = descResult.error!
     return
   }
-  if (isNaN(monto) || monto <= 0) {
-    addInlineError.value = 'El monto debe ser un número positivo'
+  const montoResult = validateMonto(monto)
+  if (!montoResult.valid) {
+    addInlineError.value = montoResult.error!
     return
   }
   startLoading('#C65A3A')
-  addGasto({ monto, descripcion: addInlineForm.descripcion.trim(), categoria: categoriaNombre })
+  addGasto({ monto, descripcion, categoria: categoriaNombre })
 }
 
 const editingCategoria = ref<string | null>(null)

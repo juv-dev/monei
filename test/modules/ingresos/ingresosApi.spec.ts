@@ -34,8 +34,8 @@ describe('should ingresosApi', () => {
     const all = await ingresosApi.getAll(userId)
 
     expect(all).toHaveLength(2)
-    expect(all[0].descripcion).toBe('Trabajo')
-    expect(all[1].descripcion).toBe('Freelance')
+    expect(all[0].descripcion).toBe('Freelance')
+    expect(all[1].descripcion).toBe('Trabajo')
   })
 
   it('should remove ingreso by id', async () => {
@@ -108,5 +108,39 @@ describe('should ingresosApi', () => {
 
     const all = await ingresosApi.getAll(userId)
     expect(all[0].descripcion).toBe('B')
+  })
+
+  // ─── Demo user (localStorage path) ─────────────────────────────────────
+  it('should create and retrieve via localStorage for demo user', async () => {
+    const created = await ingresosApi.create('demo', { monto: 3000, descripcion: 'Demo salary' })
+
+    expect(created.monto).toBe(3000)
+
+    const all = await ingresosApi.getAll('demo')
+    expect(all).toHaveLength(1)
+    expect(all[0].descripcion).toBe('Demo salary')
+  })
+
+  it('should update via localStorage for demo user', async () => {
+    const created = await ingresosApi.create('demo', { monto: 1000, descripcion: 'Original' })
+    const updated = await ingresosApi.update('demo', created.id, { monto: 2000, descripcion: 'Updated' })
+
+    expect(updated.monto).toBe(2000)
+    expect(updated.descripcion).toBe('Updated')
+
+    const all = await ingresosApi.getAll('demo')
+    expect(all[0].descripcion).toBe('Updated')
+  })
+
+  it('should throw when updating non-existent demo ingreso', async () => {
+    await expect(ingresosApi.update('demo', 'fake-id', { monto: 500 })).rejects.toThrow('Ingreso not found')
+  })
+
+  it('should remove via localStorage for demo user', async () => {
+    const created = await ingresosApi.create('demo', { monto: 500, descripcion: 'ToRemove' })
+    await ingresosApi.remove('demo', created.id)
+
+    const all = await ingresosApi.getAll('demo')
+    expect(all).toHaveLength(0)
   })
 })

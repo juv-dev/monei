@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { AlertCircle } from 'lucide-vue-next'
+import { AlertCircle, Mail, Eye, EyeOff } from 'lucide-vue-next'
 import { useAuthStore } from '~/stores/auth'
 import { ROUTE_NAMES } from '~/router'
 
@@ -9,6 +9,15 @@ const auth = useAuthStore()
 const router = useRouter()
 const error = ref<string | null>(null)
 const isLoading = ref(false)
+const successMessage = ref<string | null>(null)
+
+// Email form state
+const showEmailForm = ref(false)
+const isRegisterMode = ref(false)
+const email = ref('')
+const password = ref('')
+const confirmPassword = ref('')
+const showPassword = ref(false)
 
 async function handleGoogle(): Promise<void> {
   error.value = null
@@ -30,9 +39,58 @@ async function handleGitHub(): Promise<void> {
   }
 }
 
-function handleDemo(): void {
-  auth.signInAsDemo()
+async function handleEmailSubmit(): Promise<void> {
+  error.value = null
+  successMessage.value = null
+
+  if (!email.value || !password.value) {
+    error.value = 'Completa todos los campos'
+    return
+  }
+
+  if (isRegisterMode.value) {
+    if (password.value !== confirmPassword.value) {
+      error.value = 'Las contraseñas no coinciden'
+      return
+    }
+    if (password.value.length < 6) {
+      error.value = 'La contraseña debe tener al menos 6 caracteres'
+      return
+    }
+    isLoading.value = true
+    const result = await auth.signUpWithEmail(email.value, password.value)
+    isLoading.value = false
+    if (result.error) {
+      error.value = result.error
+    } else {
+      successMessage.value = 'Te hemos enviado un correo de verificación. Revisa tu bandeja de entrada.'
+      isRegisterMode.value = false
+      password.value = ''
+      confirmPassword.value = ''
+    }
+  } else {
+    isLoading.value = true
+    const result = await auth.signInWithEmail(email.value, password.value)
+    isLoading.value = false
+    if (result.error) {
+      error.value = result.error
+    }
+  }
+}
+
+async function handleDemo(): Promise<void> {
+  isLoading.value = true
+  await auth.signInAsDemo()
+  isLoading.value = false
   router.push({ name: ROUTE_NAMES.DASHBOARD })
+}
+
+function toggleMode(): void {
+  isRegisterMode.value = !isRegisterMode.value
+  error.value = null
+  successMessage.value = null
+  password.value = ''
+  confirmPassword.value = ''
 }
 </script>
 
@@ -56,7 +114,9 @@ function handleDemo(): void {
       </div>
 
       <div class="bg-white rounded-2xl border border-[#EEEEF0] p-8">
-        <h2 class="text-base font-semibold text-[#1A1A2E] mb-6">Iniciar sesión</h2>
+        <h2 class="text-base font-semibold text-[#1A1A2E] mb-6">
+          {{ isRegisterMode ? 'Crear cuenta' : 'Iniciar sesión' }}
+        </h2>
 
         <div
           v-if="error"
@@ -66,6 +126,16 @@ function handleDemo(): void {
         >
           <AlertCircle :size="15" class="shrink-0" />
           {{ error }}
+        </div>
+
+        <div
+          v-if="successMessage"
+          class="flex items-center gap-2 text-sm text-green-600 bg-green-50 border border-green-100 rounded-xl px-3 py-2.5 mb-4"
+          role="status"
+          data-testid="success-message"
+        >
+          <Mail :size="15" class="shrink-0" />
+          {{ successMessage }}
         </div>
 
         <div class="space-y-3">
@@ -112,6 +182,81 @@ function handleDemo(): void {
             Continuar con GitHub
           </button>
         </div>
+
+        <div class="flex items-center gap-3 my-6">
+          <div class="flex-1 h-px bg-[#EEEEF0]"></div>
+          <span class="text-xs text-[#94A3B8]">o</span>
+          <div class="flex-1 h-px bg-[#EEEEF0]"></div>
+        </div>
+
+        <!-- Email form -->
+        <div v-if="showEmailForm">
+          <form class="space-y-3" @submit.prevent="handleEmailSubmit">
+            <div>
+              <input
+                v-model="email"
+                type="email"
+                placeholder="Correo electrónico"
+                autocomplete="email"
+                class="w-full py-2.5 px-4 border border-[#EEEEF0] rounded-xl text-sm text-[#1A1A2E] bg-white focus:outline-none focus:ring-2 focus:ring-[#2D9F8F]/30 focus:border-[#2D9F8F] transition-all"
+                data-testid="email-input"
+              />
+            </div>
+            <div class="relative">
+              <input
+                v-model="password"
+                :type="showPassword ? 'text' : 'password'"
+                placeholder="Contraseña"
+                autocomplete="current-password"
+                class="w-full py-2.5 px-4 pr-10 border border-[#EEEEF0] rounded-xl text-sm text-[#1A1A2E] bg-white focus:outline-none focus:ring-2 focus:ring-[#2D9F8F]/30 focus:border-[#2D9F8F] transition-all"
+                data-testid="password-input"
+              />
+              <button
+                type="button"
+                class="absolute right-3 top-1/2 -translate-y-1/2 text-[#94A3B8] hover:text-[#64748B]"
+                @click="showPassword = !showPassword"
+              >
+                <EyeOff v-if="showPassword" :size="16" />
+                <Eye v-else :size="16" />
+              </button>
+            </div>
+            <div v-if="isRegisterMode">
+              <input
+                v-model="confirmPassword"
+                type="password"
+                placeholder="Confirmar contraseña"
+                autocomplete="new-password"
+                class="w-full py-2.5 px-4 border border-[#EEEEF0] rounded-xl text-sm text-[#1A1A2E] bg-white focus:outline-none focus:ring-2 focus:ring-[#2D9F8F]/30 focus:border-[#2D9F8F] transition-all"
+                data-testid="confirm-password-input"
+              />
+            </div>
+            <button
+              type="submit"
+              :disabled="isLoading"
+              class="w-full py-2.5 px-4 bg-[#2D9F8F] hover:bg-[#268F80] text-white font-medium rounded-xl transition-all text-sm disabled:opacity-50"
+              data-testid="email-submit-button"
+            >
+              {{ isRegisterMode ? 'Crear cuenta' : 'Iniciar sesión' }}
+            </button>
+          </form>
+          <p class="text-xs text-center mt-3">
+            <button type="button" class="text-[#2D9F8F] hover:underline" @click="toggleMode">
+              {{ isRegisterMode ? 'Ya tengo cuenta' : 'Crear cuenta nueva' }}
+            </button>
+          </p>
+        </div>
+
+        <button
+          v-else
+          type="button"
+          :disabled="isLoading"
+          class="w-full flex items-center justify-center gap-3 py-2.5 px-4 border border-[#EEEEF0] rounded-xl text-sm font-medium text-[#1A1A2E] bg-white hover:bg-[#F5F6FA] transition-all disabled:opacity-50"
+          data-testid="email-button"
+          @click="showEmailForm = true"
+        >
+          <Mail :size="18" />
+          Continuar con correo
+        </button>
 
         <div class="flex items-center gap-3 my-6">
           <div class="flex-1 h-px bg-[#EEEEF0]"></div>

@@ -11,7 +11,7 @@ describe('should PresupuestoView', () => {
     localStorage.clear()
   })
 
-  function mountAuthenticated(username = 'jugaz') {
+  function mountAuthenticated(username = 'demo') {
     const { wrapper, pinia } = mountWithPlugins(PresupuestoView)
     const auth = useAuthStore(pinia)
     auth.$patch({ user: { id: username, username, displayName: 'Test', provider: 'demo' }, isAuthenticated: true })
@@ -58,8 +58,8 @@ describe('should PresupuestoView', () => {
 
   // ─── Datos existentes ────────────────────────────────────────────────────
   it('should display existing gastos from localStorage', async () => {
-    await presupuestoApi.create('jugaz', { monto: 200, descripcion: 'Luz', categoria: 'Casa' })
-    await presupuestoApi.create('jugaz', { monto: 300, descripcion: 'Agua', categoria: 'Casa' })
+    await presupuestoApi.create('demo', { monto: 200, descripcion: 'Luz', categoria: 'Casa' })
+    await presupuestoApi.create('demo', { monto: 300, descripcion: 'Agua', categoria: 'Casa' })
 
     const { wrapper } = mountAuthenticated()
     await flushPromises()
@@ -73,8 +73,8 @@ describe('should PresupuestoView', () => {
   })
 
   it('should display correct total when there are gastos', async () => {
-    await presupuestoApi.create('jugaz', { monto: 400, descripcion: 'A', categoria: 'General' })
-    await presupuestoApi.create('jugaz', { monto: 600, descripcion: 'B', categoria: 'General' })
+    await presupuestoApi.create('demo', { monto: 400, descripcion: 'A', categoria: 'General' })
+    await presupuestoApi.create('demo', { monto: 600, descripcion: 'B', categoria: 'General' })
 
     const { wrapper } = mountAuthenticated()
     await flushPromises()
@@ -83,7 +83,7 @@ describe('should PresupuestoView', () => {
   })
 
   it('should display correct description for each gasto', async () => {
-    await presupuestoApi.create('jugaz', { monto: 150, descripcion: 'Farmacia', categoria: 'Salud' })
+    await presupuestoApi.create('demo', { monto: 150, descripcion: 'Farmacia', categoria: 'Salud' })
 
     const { wrapper } = mountAuthenticated()
     await flushPromises()
@@ -96,8 +96,8 @@ describe('should PresupuestoView', () => {
   })
 
   it('should show categoria-grupo for each category', async () => {
-    await presupuestoApi.create('jugaz', { monto: 100, descripcion: 'X', categoria: 'Trabajo' })
-    await presupuestoApi.create('jugaz', { monto: 50, descripcion: 'Y', categoria: 'Casa' })
+    await presupuestoApi.create('demo', { monto: 100, descripcion: 'X', categoria: 'Trabajo' })
+    await presupuestoApi.create('demo', { monto: 50, descripcion: 'Y', categoria: 'Casa' })
 
     const { wrapper } = mountAuthenticated()
     await flushPromises()
@@ -142,7 +142,7 @@ describe('should PresupuestoView', () => {
 
   // ─── Eliminar gasto ──────────────────────────────────────────────────────
   it('should remove gasto when delete button is clicked', async () => {
-    await presupuestoApi.create('jugaz', { monto: 250, descripcion: 'Renta', categoria: 'Casa' })
+    await presupuestoApi.create('demo', { monto: 250, descripcion: 'Renta', categoria: 'Casa' })
 
     const { wrapper } = mountAuthenticated()
     await flushPromises()
@@ -154,13 +154,13 @@ describe('should PresupuestoView', () => {
     await wrapper.find('[data-testid="delete-button"]').trigger('click')
     await flushPromises()
 
-    const stored = await presupuestoApi.getAll('jugaz')
+    const stored = await presupuestoApi.getAll('demo')
     expect(stored).toHaveLength(0)
   })
 
   it('should render delete button for each gasto', async () => {
-    await presupuestoApi.create('jugaz', { monto: 100, descripcion: 'X', categoria: 'General' })
-    await presupuestoApi.create('jugaz', { monto: 200, descripcion: 'Y', categoria: 'General' })
+    await presupuestoApi.create('demo', { monto: 100, descripcion: 'X', categoria: 'General' })
+    await presupuestoApi.create('demo', { monto: 200, descripcion: 'Y', categoria: 'General' })
 
     const { wrapper } = mountAuthenticated()
     await flushPromises()
@@ -174,7 +174,7 @@ describe('should PresupuestoView', () => {
 
   // ─── Toggle categoria ──────────────────────────────────────────────────
   it('should expand and collapse category accordion', async () => {
-    await presupuestoApi.create('jugaz', { monto: 100, descripcion: 'Luz', categoria: 'Casa' })
+    await presupuestoApi.create('demo', { monto: 100, descripcion: 'Luz', categoria: 'Casa' })
 
     const { wrapper } = mountAuthenticated()
     await flushPromises()
@@ -192,8 +192,8 @@ describe('should PresupuestoView', () => {
 
   // ─── Categoria subtotal ────────────────────────────────────────────────
   it('should display correct subtotal per category', async () => {
-    await presupuestoApi.create('jugaz', { monto: 100, descripcion: 'Gas', categoria: 'Casa' })
-    await presupuestoApi.create('jugaz', { monto: 200, descripcion: 'Agua', categoria: 'Casa' })
+    await presupuestoApi.create('demo', { monto: 100, descripcion: 'Gas', categoria: 'Casa' })
+    await presupuestoApi.create('demo', { monto: 200, descripcion: 'Agua', categoria: 'Casa' })
 
     const { wrapper } = mountAuthenticated()
     await flushPromises()
@@ -202,7 +202,7 @@ describe('should PresupuestoView', () => {
   })
 
   it('should display categoria name', async () => {
-    await presupuestoApi.create('jugaz', { monto: 50, descripcion: 'X', categoria: 'Trabajo' })
+    await presupuestoApi.create('demo', { monto: 50, descripcion: 'X', categoria: 'Trabajo' })
 
     const { wrapper } = mountAuthenticated()
     await flushPromises()
@@ -212,7 +212,7 @@ describe('should PresupuestoView', () => {
 
   // ─── Inline add item ──────────────────────────────────────────────────
   it('should show inline add form when add item button is clicked', async () => {
-    await presupuestoApi.create('jugaz', { monto: 100, descripcion: 'X', categoria: 'Casa' })
+    await presupuestoApi.create('demo', { monto: 100, descripcion: 'X', categoria: 'Casa' })
 
     const { wrapper } = mountAuthenticated()
     await flushPromises()
@@ -229,7 +229,7 @@ describe('should PresupuestoView', () => {
   })
 
   it('should cancel inline add form', async () => {
-    await presupuestoApi.create('jugaz', { monto: 100, descripcion: 'X', categoria: 'Casa' })
+    await presupuestoApi.create('demo', { monto: 100, descripcion: 'X', categoria: 'Casa' })
 
     const { wrapper } = mountAuthenticated()
     await flushPromises()
@@ -247,7 +247,7 @@ describe('should PresupuestoView', () => {
   })
 
   it('should save inline add item', async () => {
-    await presupuestoApi.create('jugaz', { monto: 100, descripcion: 'Gas', categoria: 'Casa' })
+    await presupuestoApi.create('demo', { monto: 100, descripcion: 'Gas', categoria: 'Casa' })
 
     const { wrapper } = mountAuthenticated()
     await flushPromises()
@@ -263,14 +263,14 @@ describe('should PresupuestoView', () => {
     await wrapper.find('[data-testid="inline-save-button"]').trigger('click')
     await flushPromises()
 
-    const stored = await presupuestoApi.getAll('jugaz')
+    const stored = await presupuestoApi.getAll('demo')
     expect(stored).toHaveLength(2)
     expect(stored[1].descripcion).toBe('Agua')
     expect(stored[1].monto).toBe(150)
   })
 
   it('should show inline error when descripcion is empty', async () => {
-    await presupuestoApi.create('jugaz', { monto: 100, descripcion: 'X', categoria: 'Casa' })
+    await presupuestoApi.create('demo', { monto: 100, descripcion: 'X', categoria: 'Casa' })
 
     const { wrapper } = mountAuthenticated()
     await flushPromises()
@@ -289,7 +289,7 @@ describe('should PresupuestoView', () => {
   })
 
   it('should show inline error when monto is invalid', async () => {
-    await presupuestoApi.create('jugaz', { monto: 100, descripcion: 'X', categoria: 'Casa' })
+    await presupuestoApi.create('demo', { monto: 100, descripcion: 'X', categoria: 'Casa' })
 
     const { wrapper } = mountAuthenticated()
     await flushPromises()
@@ -310,7 +310,7 @@ describe('should PresupuestoView', () => {
 
   // ─── Inline edit item ──────────────────────────────────────────────────
   it('should show edit form when edit button is clicked', async () => {
-    await presupuestoApi.create('jugaz', { monto: 200, descripcion: 'Luz', categoria: 'Casa' })
+    await presupuestoApi.create('demo', { monto: 200, descripcion: 'Luz', categoria: 'Casa' })
 
     const { wrapper } = mountAuthenticated()
     await flushPromises()
@@ -328,7 +328,7 @@ describe('should PresupuestoView', () => {
   })
 
   it('should cancel inline edit', async () => {
-    await presupuestoApi.create('jugaz', { monto: 200, descripcion: 'Luz', categoria: 'Casa' })
+    await presupuestoApi.create('demo', { monto: 200, descripcion: 'Luz', categoria: 'Casa' })
 
     const { wrapper } = mountAuthenticated()
     await flushPromises()
@@ -346,7 +346,7 @@ describe('should PresupuestoView', () => {
   })
 
   it('should save inline edit', async () => {
-    await presupuestoApi.create('jugaz', { monto: 200, descripcion: 'Luz', categoria: 'Casa' })
+    await presupuestoApi.create('demo', { monto: 200, descripcion: 'Luz', categoria: 'Casa' })
 
     const { wrapper } = mountAuthenticated()
     await flushPromises()
@@ -362,13 +362,13 @@ describe('should PresupuestoView', () => {
     await wrapper.find('[data-testid="save-edit-button"]').trigger('click')
     await flushPromises()
 
-    const stored = await presupuestoApi.getAll('jugaz')
+    const stored = await presupuestoApi.getAll('demo')
     expect(stored[0].descripcion).toBe('Luz editada')
     expect(stored[0].monto).toBe(300)
   })
 
   it('should not save edit when monto is invalid', async () => {
-    await presupuestoApi.create('jugaz', { monto: 200, descripcion: 'Luz', categoria: 'Casa' })
+    await presupuestoApi.create('demo', { monto: 200, descripcion: 'Luz', categoria: 'Casa' })
 
     const { wrapper } = mountAuthenticated()
     await flushPromises()
@@ -383,12 +383,12 @@ describe('should PresupuestoView', () => {
     await wrapper.find('[data-testid="save-edit-button"]').trigger('click')
     await flushPromises()
 
-    const stored = await presupuestoApi.getAll('jugaz')
+    const stored = await presupuestoApi.getAll('demo')
     expect(stored[0].monto).toBe(200)
   })
 
   it('should not save edit when descripcion is empty', async () => {
-    await presupuestoApi.create('jugaz', { monto: 200, descripcion: 'Luz', categoria: 'Casa' })
+    await presupuestoApi.create('demo', { monto: 200, descripcion: 'Luz', categoria: 'Casa' })
 
     const { wrapper } = mountAuthenticated()
     await flushPromises()
@@ -403,13 +403,13 @@ describe('should PresupuestoView', () => {
     await wrapper.find('[data-testid="save-edit-button"]').trigger('click')
     await flushPromises()
 
-    const stored = await presupuestoApi.getAll('jugaz')
+    const stored = await presupuestoApi.getAll('demo')
     expect(stored[0].descripcion).toBe('Luz')
   })
 
   // ─── Category rename ──────────────────────────────────────────────────
   it('should show category edit input when edit button is clicked', async () => {
-    await presupuestoApi.create('jugaz', { monto: 100, descripcion: 'X', categoria: 'Casa' })
+    await presupuestoApi.create('demo', { monto: 100, descripcion: 'X', categoria: 'Casa' })
 
     const { wrapper } = mountAuthenticated()
     await flushPromises()
@@ -423,7 +423,7 @@ describe('should PresupuestoView', () => {
   })
 
   it('should cancel category rename', async () => {
-    await presupuestoApi.create('jugaz', { monto: 100, descripcion: 'X', categoria: 'Casa' })
+    await presupuestoApi.create('demo', { monto: 100, descripcion: 'X', categoria: 'Casa' })
 
     const { wrapper } = mountAuthenticated()
     await flushPromises()
@@ -439,7 +439,7 @@ describe('should PresupuestoView', () => {
   })
 
   it('should save category rename and update all gastos', async () => {
-    await presupuestoApi.create('jugaz', { monto: 100, descripcion: 'Gas', categoria: 'Casa' })
+    await presupuestoApi.create('demo', { monto: 100, descripcion: 'Gas', categoria: 'Casa' })
 
     const { wrapper } = mountAuthenticated()
     await flushPromises()
@@ -453,12 +453,12 @@ describe('should PresupuestoView', () => {
     await flushPromises()
     await flushPromises()
 
-    const stored = await presupuestoApi.getAll('jugaz')
+    const stored = await presupuestoApi.getAll('demo')
     expect(stored[0].categoria).toBe('Hogar')
   })
 
   it('should not rename if new name is same as old', async () => {
-    await presupuestoApi.create('jugaz', { monto: 100, descripcion: 'X', categoria: 'Casa' })
+    await presupuestoApi.create('demo', { monto: 100, descripcion: 'X', categoria: 'Casa' })
 
     const { wrapper } = mountAuthenticated()
     await flushPromises()
@@ -475,7 +475,7 @@ describe('should PresupuestoView', () => {
 
   // ─── Delete category ──────────────────────────────────────────────────
   it('should delete category and remove its gasto', async () => {
-    await presupuestoApi.create('jugaz', { monto: 100, descripcion: 'Gas', categoria: 'Casa' })
+    await presupuestoApi.create('demo', { monto: 100, descripcion: 'Gas', categoria: 'Casa' })
 
     const { wrapper } = mountAuthenticated()
     await flushPromises()
@@ -485,13 +485,13 @@ describe('should PresupuestoView', () => {
     await flushPromises()
     await flushPromises()
 
-    const stored = await presupuestoApi.getAll('jugaz')
+    const stored = await presupuestoApi.getAll('demo')
     expect(stored).toHaveLength(0)
   })
 
   // ─── Drag and drop categories ──────────────────────────────────────────
   it('should have draggable category groups', async () => {
-    await presupuestoApi.create('jugaz', { monto: 100, descripcion: 'X', categoria: 'Casa' })
+    await presupuestoApi.create('demo', { monto: 100, descripcion: 'X', categoria: 'Casa' })
 
     const { wrapper } = mountAuthenticated()
     await flushPromises()
@@ -501,8 +501,8 @@ describe('should PresupuestoView', () => {
   })
 
   it('should reorder categories via drag and drop', async () => {
-    await presupuestoApi.create('jugaz', { monto: 100, descripcion: 'X', categoria: 'Alpha' })
-    await presupuestoApi.create('jugaz', { monto: 200, descripcion: 'Y', categoria: 'Beta' })
+    await presupuestoApi.create('demo', { monto: 100, descripcion: 'X', categoria: 'Alpha' })
+    await presupuestoApi.create('demo', { monto: 200, descripcion: 'Y', categoria: 'Beta' })
 
     const { wrapper } = mountAuthenticated()
     await flushPromises()
@@ -518,7 +518,7 @@ describe('should PresupuestoView', () => {
     })
     await flushPromises()
 
-    const orderRaw = localStorage.getItem('finance_jugaz_presupuesto_cat_order')
+    const orderRaw = localStorage.getItem('finance_demo_presupuesto_cat_order')
     expect(orderRaw).toBeTruthy()
     const order = JSON.parse(orderRaw!)
     expect(order[0]).toBe('Beta')
@@ -526,10 +526,10 @@ describe('should PresupuestoView', () => {
   })
 
   it('should persist category order on remount', async () => {
-    await presupuestoApi.create('jugaz', { monto: 100, descripcion: 'X', categoria: 'Alpha' })
-    await presupuestoApi.create('jugaz', { monto: 200, descripcion: 'Y', categoria: 'Beta' })
+    await presupuestoApi.create('demo', { monto: 100, descripcion: 'X', categoria: 'Alpha' })
+    await presupuestoApi.create('demo', { monto: 200, descripcion: 'Y', categoria: 'Beta' })
 
-    localStorage.setItem('finance_jugaz_presupuesto_cat_order', JSON.stringify(['Beta', 'Alpha']))
+    localStorage.setItem('finance_demo_presupuesto_cat_order', JSON.stringify(['Beta', 'Alpha']))
 
     const { wrapper } = mountAuthenticated()
     await flushPromises()
@@ -541,7 +541,7 @@ describe('should PresupuestoView', () => {
 
   // ─── Submit existing categoria (falsy branch of includes check) ──────
   it('should handle submitting existing categoria name without duplicating order', async () => {
-    await presupuestoApi.create('jugaz', { monto: 100, descripcion: 'X', categoria: 'Casa' })
+    await presupuestoApi.create('demo', { monto: 100, descripcion: 'X', categoria: 'Casa' })
 
     const { wrapper } = mountAuthenticated()
     await flushPromises()
@@ -556,7 +556,7 @@ describe('should PresupuestoView', () => {
     await flushPromises()
 
     // Should not duplicate in order
-    const orderRaw = localStorage.getItem(`presupuesto_order_jugaz_cats`)
+    const orderRaw = localStorage.getItem(`presupuesto_order_demo_cats`)
     if (orderRaw) {
       const order = JSON.parse(orderRaw)
       const count = order.filter((c: string) => c === 'Casa').length
@@ -582,8 +582,8 @@ describe('should PresupuestoView', () => {
 
   // ─── Summary details ──────────────────────────────────────────────────
   it('should display mayor seccion in summary', async () => {
-    await presupuestoApi.create('jugaz', { monto: 100, descripcion: 'X', categoria: 'Casa' })
-    await presupuestoApi.create('jugaz', { monto: 500, descripcion: 'Y', categoria: 'Trabajo' })
+    await presupuestoApi.create('demo', { monto: 100, descripcion: 'X', categoria: 'Casa' })
+    await presupuestoApi.create('demo', { monto: 500, descripcion: 'Y', categoria: 'Trabajo' })
 
     const { wrapper } = mountAuthenticated()
     await flushPromises()
@@ -592,8 +592,8 @@ describe('should PresupuestoView', () => {
   })
 
   it('should display secciones count in summary', async () => {
-    await presupuestoApi.create('jugaz', { monto: 100, descripcion: 'X', categoria: 'Casa' })
-    await presupuestoApi.create('jugaz', { monto: 200, descripcion: 'Y', categoria: 'Trabajo' })
+    await presupuestoApi.create('demo', { monto: 100, descripcion: 'X', categoria: 'Casa' })
+    await presupuestoApi.create('demo', { monto: 200, descripcion: 'Y', categoria: 'Trabajo' })
 
     const { wrapper } = mountAuthenticated()
     await flushPromises()
@@ -602,7 +602,7 @@ describe('should PresupuestoView', () => {
   })
 
   it('should display gasto monto', async () => {
-    await presupuestoApi.create('jugaz', { monto: 750, descripcion: 'Renta', categoria: 'Casa' })
+    await presupuestoApi.create('demo', { monto: 750, descripcion: 'Renta', categoria: 'Casa' })
 
     const { wrapper } = mountAuthenticated()
     await flushPromises()
@@ -614,8 +614,8 @@ describe('should PresupuestoView', () => {
   })
 
   it('should display items count in categoria header', async () => {
-    await presupuestoApi.create('jugaz', { monto: 100, descripcion: 'A', categoria: 'Casa' })
-    await presupuestoApi.create('jugaz', { monto: 200, descripcion: 'B', categoria: 'Casa' })
+    await presupuestoApi.create('demo', { monto: 100, descripcion: 'A', categoria: 'Casa' })
+    await presupuestoApi.create('demo', { monto: 200, descripcion: 'B', categoria: 'Casa' })
 
     const { wrapper } = mountAuthenticated()
     await flushPromises()
@@ -625,7 +625,7 @@ describe('should PresupuestoView', () => {
 
   // ─── @input/@blur handlers ─────────────────────────────────────────────
   it('should handle inline add monto input and blur events', async () => {
-    await presupuestoApi.create('jugaz', { monto: 100, descripcion: 'X', categoria: 'Casa' })
+    await presupuestoApi.create('demo', { monto: 100, descripcion: 'X', categoria: 'Casa' })
 
     const { wrapper } = mountAuthenticated()
     await flushPromises()
@@ -648,7 +648,7 @@ describe('should PresupuestoView', () => {
   })
 
   it('should handle inline add keydown.enter on descripcion', async () => {
-    await presupuestoApi.create('jugaz', { monto: 100, descripcion: 'X', categoria: 'Casa' })
+    await presupuestoApi.create('demo', { monto: 100, descripcion: 'X', categoria: 'Casa' })
 
     const { wrapper } = mountAuthenticated()
     await flushPromises()
@@ -664,12 +664,12 @@ describe('should PresupuestoView', () => {
     await wrapper.find('[data-testid="inline-descripcion-input"]').trigger('keydown', { key: 'Enter' })
     await flushPromises()
 
-    const stored = await presupuestoApi.getAll('jugaz')
+    const stored = await presupuestoApi.getAll('demo')
     expect(stored).toHaveLength(2)
   })
 
   it('should handle inline add keydown.esc on descripcion', async () => {
-    await presupuestoApi.create('jugaz', { monto: 100, descripcion: 'X', categoria: 'Casa' })
+    await presupuestoApi.create('demo', { monto: 100, descripcion: 'X', categoria: 'Casa' })
 
     const { wrapper } = mountAuthenticated()
     await flushPromises()
@@ -688,7 +688,7 @@ describe('should PresupuestoView', () => {
   })
 
   it('should handle edit form input/blur and keydown events', async () => {
-    await presupuestoApi.create('jugaz', { monto: 200, descripcion: 'Luz', categoria: 'Casa' })
+    await presupuestoApi.create('demo', { monto: 200, descripcion: 'Luz', categoria: 'Casa' })
 
     const { wrapper } = mountAuthenticated()
     await flushPromises()
@@ -711,12 +711,12 @@ describe('should PresupuestoView', () => {
     await wrapper.find('[data-testid="edit-descripcion-input"]').trigger('keydown', { key: 'Enter' })
     await flushPromises()
 
-    const stored = await presupuestoApi.getAll('jugaz')
+    const stored = await presupuestoApi.getAll('demo')
     expect(stored[0].descripcion).toBe('Luz editada')
   })
 
   it('should handle edit form keydown.esc to cancel', async () => {
-    await presupuestoApi.create('jugaz', { monto: 200, descripcion: 'Luz', categoria: 'Casa' })
+    await presupuestoApi.create('demo', { monto: 200, descripcion: 'Luz', categoria: 'Casa' })
 
     const { wrapper } = mountAuthenticated()
     await flushPromises()
@@ -735,7 +735,7 @@ describe('should PresupuestoView', () => {
   })
 
   it('should handle categoria edit keydown events', async () => {
-    await presupuestoApi.create('jugaz', { monto: 100, descripcion: 'X', categoria: 'Casa' })
+    await presupuestoApi.create('demo', { monto: 100, descripcion: 'X', categoria: 'Casa' })
 
     const { wrapper } = mountAuthenticated()
     await flushPromises()
@@ -750,12 +750,12 @@ describe('should PresupuestoView', () => {
     await flushPromises()
     await flushPromises()
 
-    const stored = await presupuestoApi.getAll('jugaz')
+    const stored = await presupuestoApi.getAll('demo')
     expect(stored[0].categoria).toBe('Hogar')
   })
 
   it('should handle categoria edit escape keydown', async () => {
-    await presupuestoApi.create('jugaz', { monto: 100, descripcion: 'X', categoria: 'Casa' })
+    await presupuestoApi.create('demo', { monto: 100, descripcion: 'X', categoria: 'Casa' })
 
     const { wrapper } = mountAuthenticated()
     await flushPromises()
@@ -772,7 +772,7 @@ describe('should PresupuestoView', () => {
 
   // ─── Item edit form categoria keydown handlers ──────────────────────
   it('should handle keydown.enter on edit-categoria-input inside item edit', async () => {
-    await presupuestoApi.create('jugaz', { monto: 200, descripcion: 'Luz', categoria: 'Casa' })
+    await presupuestoApi.create('demo', { monto: 200, descripcion: 'Luz', categoria: 'Casa' })
 
     const { wrapper } = mountAuthenticated()
     await flushPromises()
@@ -789,12 +789,12 @@ describe('should PresupuestoView', () => {
     await catInput.trigger('keydown', { key: 'Enter' })
     await flushPromises()
 
-    const stored = await presupuestoApi.getAll('jugaz')
+    const stored = await presupuestoApi.getAll('demo')
     expect(stored[0].categoria).toBe('Hogar')
   })
 
   it('should handle keydown.esc on edit-categoria-input inside item edit', async () => {
-    await presupuestoApi.create('jugaz', { monto: 200, descripcion: 'Luz', categoria: 'Casa' })
+    await presupuestoApi.create('demo', { monto: 200, descripcion: 'Luz', categoria: 'Casa' })
 
     const { wrapper } = mountAuthenticated()
     await flushPromises()
@@ -815,7 +815,7 @@ describe('should PresupuestoView', () => {
   })
 
   it('should handle inline monto keydown.enter to submit', async () => {
-    await presupuestoApi.create('jugaz', { monto: 100, descripcion: 'X', categoria: 'Casa' })
+    await presupuestoApi.create('demo', { monto: 100, descripcion: 'X', categoria: 'Casa' })
 
     const { wrapper } = mountAuthenticated()
     await flushPromises()
@@ -834,12 +834,12 @@ describe('should PresupuestoView', () => {
     await montoInput.trigger('keydown', { key: 'Enter' })
     await flushPromises()
 
-    const stored = await presupuestoApi.getAll('jugaz')
+    const stored = await presupuestoApi.getAll('demo')
     expect(stored).toHaveLength(2)
   })
 
   it('should handle inline monto keydown.esc to cancel', async () => {
-    await presupuestoApi.create('jugaz', { monto: 100, descripcion: 'X', categoria: 'Casa' })
+    await presupuestoApi.create('demo', { monto: 100, descripcion: 'X', categoria: 'Casa' })
 
     const { wrapper } = mountAuthenticated()
     await flushPromises()
@@ -858,7 +858,7 @@ describe('should PresupuestoView', () => {
   })
 
   it('should handle keydown.enter on edit-monto-input to save', async () => {
-    await presupuestoApi.create('jugaz', { monto: 200, descripcion: 'Luz', categoria: 'Casa' })
+    await presupuestoApi.create('demo', { monto: 200, descripcion: 'Luz', categoria: 'Casa' })
 
     const { wrapper } = mountAuthenticated()
     await flushPromises()
@@ -876,12 +876,12 @@ describe('should PresupuestoView', () => {
     await montoInput.trigger('keydown', { key: 'Enter' })
     await flushPromises()
 
-    const stored = await presupuestoApi.getAll('jugaz')
+    const stored = await presupuestoApi.getAll('demo')
     expect(stored[0].monto).toBe(350)
   })
 
   it('should handle keydown.esc on edit-monto-input to cancel', async () => {
-    await presupuestoApi.create('jugaz', { monto: 200, descripcion: 'Luz', categoria: 'Casa' })
+    await presupuestoApi.create('demo', { monto: 200, descripcion: 'Luz', categoria: 'Casa' })
 
     const { wrapper } = mountAuthenticated()
     await flushPromises()
@@ -901,7 +901,7 @@ describe('should PresupuestoView', () => {
 
   // ─── Drag end handler ──────────────────────────────────────────────────
   it('should reset drag state on dragend', async () => {
-    await presupuestoApi.create('jugaz', { monto: 100, descripcion: 'X', categoria: 'Casa' })
+    await presupuestoApi.create('demo', { monto: 100, descripcion: 'X', categoria: 'Casa' })
 
     const { wrapper } = mountAuthenticated()
     await flushPromises()
@@ -946,7 +946,7 @@ describe('should PresupuestoView', () => {
 
   // ─── Rename edge case: categoria not found ──────────────────────────
   it('should handle rename when original categoria no longer exists', async () => {
-    await presupuestoApi.create('jugaz', { monto: 100, descripcion: 'Gas', categoria: 'Casa' })
+    await presupuestoApi.create('demo', { monto: 100, descripcion: 'Gas', categoria: 'Casa' })
 
     const { wrapper } = mountAuthenticated()
     await flushPromises()
@@ -967,7 +967,7 @@ describe('should PresupuestoView', () => {
 
   // ─── Rename expanded categoria ─────────────────────────────────────
   it('should rename expanded categoria and keep it expanded', async () => {
-    await presupuestoApi.create('jugaz', { monto: 100, descripcion: 'Gas', categoria: 'Casa' })
+    await presupuestoApi.create('demo', { monto: 100, descripcion: 'Gas', categoria: 'Casa' })
 
     const { wrapper } = mountAuthenticated()
     await flushPromises()
@@ -986,7 +986,7 @@ describe('should PresupuestoView', () => {
     await flushPromises()
 
     // The renamed categoria should still be expanded (items visible)
-    const stored = await presupuestoApi.getAll('jugaz')
+    const stored = await presupuestoApi.getAll('demo')
     expect(stored[0].categoria).toBe('Hogar')
   })
 })

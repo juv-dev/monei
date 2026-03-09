@@ -585,6 +585,7 @@ describe('should DeudasView', () => {
     const { wrapper } = mountAuthenticated()
     await flushPromises()
 
+    // With created_at desc ordering: items[0]=Beta(b), items[1]=Alpha(a)
     const items = wrapper.findAll('[data-testid="deuda-item"]')
 
     await items[0].trigger('dragstart', {
@@ -592,15 +593,15 @@ describe('should DeudasView', () => {
     })
     await items[1].trigger('dragover')
     await items[1].trigger('drop', {
-      dataTransfer: { getData: () => a.id },
+      dataTransfer: { getData: () => b.id },
     })
     await flushPromises()
 
     const orderRaw = localStorage.getItem('finance_jugaz_deudas_order')
     expect(orderRaw).toBeTruthy()
     const order = JSON.parse(orderRaw!)
-    expect(order[0]).toBe(b.id)
-    expect(order[1]).toBe(a.id)
+    expect(order[0]).toBe(a.id)
+    expect(order[1]).toBe(b.id)
   })
 
   it('should persist drag order and show sorted deudas on remount', async () => {

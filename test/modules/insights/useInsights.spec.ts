@@ -12,7 +12,7 @@ describe('should useInsights', () => {
     uid = 0
   })
 
-  function setupWithUser(username = 'jugaz') {
+  function setupWithUser(username = 'demo') {
     return withSetup(() => {
       const auth = useAuthStore()
       auth.$patch({ user: { id: username, username, displayName: 'Test', provider: 'demo' }, isAuthenticated: true })
@@ -71,7 +71,7 @@ describe('should useInsights', () => {
   })
 
   it('should return hasData true when ingresos exist', async () => {
-    seedData('jugaz', { ingresos: [{ monto: 1000, descripcion: 'Sueldo' }] })
+    seedData('demo', { ingresos: [{ monto: 1000, descripcion: 'Sueldo' }] })
     const { result, unmount } = setupWithUser()
     await flushPromises()
 
@@ -96,7 +96,7 @@ describe('should useInsights', () => {
   })
 
   it('should return Excelente score with healthy finances', async () => {
-    seedData('jugaz', {
+    seedData('demo', {
       ingresos: [{ monto: 5000, descripcion: 'Sueldo' }],
       gastos: [{ monto: 1000, descripcion: 'Comida', categoria: 'Alimentación' }],
       tarjetas: [{ lineaTotal: 10000, montoDeudaActual: 1000, descripcion: 'Visa' }],
@@ -110,7 +110,7 @@ describe('should useInsights', () => {
   })
 
   it('should return Crítico score with overspending', async () => {
-    seedData('jugaz', {
+    seedData('demo', {
       ingresos: [{ monto: 1000, descripcion: 'Sueldo' }],
       gastos: [{ monto: 2000, descripcion: 'Exceso', categoria: 'General' }],
       deudas: [
@@ -135,7 +135,7 @@ describe('should useInsights', () => {
   })
 
   it('should give full savings points with 20%+ savings rate', async () => {
-    seedData('jugaz', {
+    seedData('demo', {
       ingresos: [{ monto: 5000, descripcion: 'Sueldo' }],
       gastos: [{ monto: 3000, descripcion: 'Gastos', categoria: 'General' }],
     })
@@ -148,7 +148,7 @@ describe('should useInsights', () => {
   })
 
   it('should give partial savings points with 10-20% savings rate', async () => {
-    seedData('jugaz', {
+    seedData('demo', {
       ingresos: [{ monto: 5000, descripcion: 'Sueldo' }],
       gastos: [{ monto: 4200, descripcion: 'Gastos', categoria: 'General' }],
     })
@@ -161,7 +161,7 @@ describe('should useInsights', () => {
   })
 
   it('should give full credit score with low utilization', async () => {
-    seedData('jugaz', {
+    seedData('demo', {
       tarjetas: [{ lineaTotal: 10000, montoDeudaActual: 2000, descripcion: 'Visa' }],
     })
     const { result, unmount } = setupWithUser()
@@ -173,7 +173,7 @@ describe('should useInsights', () => {
   })
 
   it('should penalize high credit utilization', async () => {
-    seedData('jugaz', {
+    seedData('demo', {
       tarjetas: [{ lineaTotal: 10000, montoDeudaActual: 8000, descripcion: 'Visa' }],
     })
     const { result, unmount } = setupWithUser()
@@ -197,7 +197,7 @@ describe('should useInsights', () => {
   })
 
   it('should show negative balance alert when overspending', async () => {
-    seedData('jugaz', {
+    seedData('demo', {
       ingresos: [{ monto: 1000, descripcion: 'Sueldo' }],
       gastos: [{ monto: 1500, descripcion: 'Exceso', categoria: 'General' }],
     })
@@ -211,7 +211,7 @@ describe('should useInsights', () => {
   })
 
   it('should show high credit alert when utilization > 30%', async () => {
-    seedData('jugaz', {
+    seedData('demo', {
       tarjetas: [{ lineaTotal: 10000, montoDeudaActual: 5000, descripcion: 'Visa' }],
     })
     const { result, unmount } = setupWithUser()
@@ -224,7 +224,7 @@ describe('should useInsights', () => {
   })
 
   it('should show critical credit alert when utilization > 75%', async () => {
-    seedData('jugaz', {
+    seedData('demo', {
       tarjetas: [{ lineaTotal: 10000, montoDeudaActual: 8000, descripcion: 'Visa' }],
     })
     const { result, unmount } = setupWithUser()
@@ -237,7 +237,7 @@ describe('should useInsights', () => {
   })
 
   it('should show high commitments alert', async () => {
-    seedData('jugaz', {
+    seedData('demo', {
       ingresos: [{ monto: 2000, descripcion: 'Sueldo' }],
       deudas: [
         {
@@ -261,7 +261,7 @@ describe('should useInsights', () => {
   })
 
   it('should not show alerts for healthy finances', async () => {
-    seedData('jugaz', {
+    seedData('demo', {
       ingresos: [{ monto: 10000, descripcion: 'Sueldo' }],
       gastos: [{ monto: 2000, descripcion: 'Comida', categoria: 'Alimentación' }],
       tarjetas: [{ lineaTotal: 10000, montoDeudaActual: 1000, descripcion: 'Visa' }],
@@ -285,7 +285,7 @@ describe('should useInsights', () => {
   })
 
   it('should sort categories by amount descending', async () => {
-    seedData('jugaz', {
+    seedData('demo', {
       gastos: [
         { monto: 500, descripcion: 'Alquiler', categoria: 'Casa' },
         { monto: 1000, descripcion: 'Comida', categoria: 'Alimentación' },
@@ -304,7 +304,7 @@ describe('should useInsights', () => {
   })
 
   it('should calculate correct percentages', async () => {
-    seedData('jugaz', {
+    seedData('demo', {
       gastos: [
         { monto: 750, descripcion: 'Comida', categoria: 'Alimentación' },
         { monto: 250, descripcion: 'Bus', categoria: 'Transporte' },
@@ -329,7 +329,7 @@ describe('should useInsights', () => {
   })
 
   it('should project debt without interest', async () => {
-    seedData('jugaz', {
+    seedData('demo', {
       deudas: [
         {
           nombrePersona: 'Amigo',
@@ -352,7 +352,7 @@ describe('should useInsights', () => {
   })
 
   it('should project debt with interest', async () => {
-    seedData('jugaz', {
+    seedData('demo', {
       deudas: [
         {
           nombrePersona: 'Banco',
@@ -376,7 +376,7 @@ describe('should useInsights', () => {
   })
 
   it('should skip debts with no cuotaMensual', async () => {
-    seedData('jugaz', {
+    seedData('demo', {
       deudas: [
         {
           nombrePersona: 'Amigo',
@@ -409,7 +409,7 @@ describe('should useInsights', () => {
   })
 
   it('should calculate credit utilization per card', async () => {
-    seedData('jugaz', {
+    seedData('demo', {
       tarjetas: [
         { lineaTotal: 10000, montoDeudaActual: 2000, descripcion: 'Visa' },
         { lineaTotal: 5000, montoDeudaActual: 4000, descripcion: 'Mastercard' },
@@ -432,7 +432,7 @@ describe('should useInsights', () => {
   })
 
   it('should calculate combined credit utilization', async () => {
-    seedData('jugaz', {
+    seedData('demo', {
       tarjetas: [
         { lineaTotal: 10000, montoDeudaActual: 3000, descripcion: 'Visa' },
         { lineaTotal: 10000, montoDeudaActual: 3000, descripcion: 'MC' },
@@ -449,7 +449,7 @@ describe('should useInsights', () => {
   // ─── Tips ─────────────────────────────────────────────────────────────────
 
   it('should return savings tip when savings rate below 20%', async () => {
-    seedData('jugaz', {
+    seedData('demo', {
       ingresos: [{ monto: 5000, descripcion: 'Sueldo' }],
       gastos: [{ monto: 4200, descripcion: 'Gastos', categoria: 'General' }],
     })
@@ -463,7 +463,7 @@ describe('should useInsights', () => {
   })
 
   it('should return top category tip when one category > 40%', async () => {
-    seedData('jugaz', {
+    seedData('demo', {
       gastos: [
         { monto: 900, descripcion: 'Comida', categoria: 'Alimentación' },
         { monto: 100, descripcion: 'Bus', categoria: 'Transporte' },
@@ -479,7 +479,7 @@ describe('should useInsights', () => {
   })
 
   it('should return high interest tip for expensive debts', async () => {
-    seedData('jugaz', {
+    seedData('demo', {
       deudas: [
         {
           nombrePersona: 'Banco Caro',
@@ -503,7 +503,7 @@ describe('should useInsights', () => {
   })
 
   it('should return credit tip when utilization > 30%', async () => {
-    seedData('jugaz', {
+    seedData('demo', {
       tarjetas: [{ lineaTotal: 10000, montoDeudaActual: 5000, descripcion: 'Visa' }],
     })
     const { result, unmount } = setupWithUser()
@@ -516,7 +516,7 @@ describe('should useInsights', () => {
   })
 
   it('should return good control tip when spending is well controlled', async () => {
-    seedData('jugaz', {
+    seedData('demo', {
       ingresos: [{ monto: 10000, descripcion: 'Sueldo' }],
       gastos: [{ monto: 2000, descripcion: 'Comida', categoria: 'Alimentación' }],
     })

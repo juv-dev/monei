@@ -417,9 +417,10 @@ describe('should DashboardView', () => {
     // Deudas section should be visible with items (deudasSectionOpen=true by default)
     const items = wrapper.findAll('[data-testid="description-item"]')
     expect(items.length).toBe(2)
-    // Verify deuda description format
-    expect(items[0].text()).toContain('Test')
-    expect(items[0].text()).toContain('Deuda')
+    // Verify deuda description format (ordered by created_at desc)
+    const texts = items.map((i) => i.text())
+    expect(texts.some((t) => t.includes('Test'))).toBe(true)
+    expect(texts.some((t) => t.includes('Deuda'))).toBe(true)
   })
 
   it('should render tarjetas section items when tarjetas exist', async () => {

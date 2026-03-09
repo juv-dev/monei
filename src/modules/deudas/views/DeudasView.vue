@@ -9,6 +9,7 @@ import EmptyState from '~/shared/components/ui/EmptyState.vue'
 import PageHeader from '~/shared/components/layout/PageHeader.vue'
 import type { Deuda } from '~/shared/types'
 import { formatMoneyDisplay, parseMoneyInput, onDecimalInput, onIntInput } from '~/shared/utils/format'
+import { validateMonto, validateDescripcion, validateTasaInteres, sanitize } from '~/shared/utils/validation'
 
 const {
   deudas,
@@ -63,37 +64,34 @@ function handleSubmit(): void {
   const totalCuotasRaw = parseInt(String(form.totalCuotas), 10)
   const totalCuotasNum = !isNaN(totalCuotasRaw) && totalCuotasRaw > 0 ? totalCuotasRaw : undefined
 
-  if (!form.nombrePersona.trim()) {
-    formError.value = 'El nombre de la persona es requerido'
-    return
-  }
-  if (!form.descripcion.trim()) {
-    formError.value = 'La descripción es requerida'
-    return
-  }
-  if (isNaN(totalDeudaNum) || totalDeudaNum <= 0) {
-    formError.value = 'El total de la deuda debe ser un número positivo'
-    return
-  }
-  if (isNaN(tasaInteresNum) || tasaInteresNum < 0) {
-    formError.value = 'La tasa de interés debe ser un número mayor o igual a 0'
-    return
-  }
-  if (isNaN(montoActualNum) || montoActualNum <= 0) {
-    formError.value = 'El monto pendiente debe ser un número positivo'
-    return
-  }
+  const nombrePersona = sanitize(form.nombrePersona)
+  const descripcion = sanitize(form.descripcion)
+
+  const nombreResult = validateDescripcion(nombrePersona, 'El nombre de la persona', 'El nombre de la persona es requerido')
+  if (!nombreResult.valid) { formError.value = nombreResult.error!; return }
+
+  const descResult = validateDescripcion(descripcion)
+  if (!descResult.valid) { formError.value = descResult.error!; return }
+
+  const totalResult = validateMonto(totalDeudaNum, 'El total de la deuda')
+  if (!totalResult.valid) { formError.value = totalResult.error!; return }
+
+  const tasaResult = validateTasaInteres(tasaInteresNum)
+  if (!tasaResult.valid) { formError.value = tasaResult.error!; return }
+
+  const pendienteResult = validateMonto(montoActualNum, 'El monto pendiente')
+  if (!pendienteResult.valid) { formError.value = pendienteResult.error!; return }
 
   startLoading('#D4A017')
   addDeuda({
-    nombrePersona: form.nombrePersona.trim(),
+    nombrePersona,
     totalDeuda: totalDeudaNum,
     tasaInteres: tasaInteresNum,
     cuotasPagadas: cuotasPagadasNum,
     totalCuotas: totalCuotasNum,
     cuotaMensual: cuotaMensualNum,
     montoActualPendiente: montoActualNum,
-    descripcion: form.descripcion.trim(),
+    descripcion,
   })
 
   Object.assign(form, {
@@ -155,36 +153,33 @@ function handleEditSubmit(): void {
   const totalCuotasRaw = parseInt(String(editForm.totalCuotas), 10)
   const totalCuotasNum = !isNaN(totalCuotasRaw) && totalCuotasRaw > 0 ? totalCuotasRaw : undefined
 
-  if (!editForm.nombrePersona.trim()) {
-    editFormError.value = 'El nombre de la persona es requerido'
-    return
-  }
-  if (!editForm.descripcion.trim()) {
-    editFormError.value = 'La descripción es requerida'
-    return
-  }
-  if (isNaN(totalDeudaNum) || totalDeudaNum <= 0) {
-    editFormError.value = 'El total de la deuda debe ser un número positivo'
-    return
-  }
-  if (isNaN(tasaInteresNum) || tasaInteresNum < 0) {
-    editFormError.value = 'La tasa de interés debe ser un número mayor o igual a 0'
-    return
-  }
-  if (isNaN(montoActualNum) || montoActualNum <= 0) {
-    editFormError.value = 'El monto pendiente debe ser un número positivo'
-    return
-  }
+  const nombrePersona = sanitize(editForm.nombrePersona)
+  const descripcion = sanitize(editForm.descripcion)
+
+  const nombreResult = validateDescripcion(nombrePersona, 'El nombre de la persona', 'El nombre de la persona es requerido')
+  if (!nombreResult.valid) { editFormError.value = nombreResult.error!; return }
+
+  const descResult = validateDescripcion(descripcion)
+  if (!descResult.valid) { editFormError.value = descResult.error!; return }
+
+  const totalResult = validateMonto(totalDeudaNum, 'El total de la deuda')
+  if (!totalResult.valid) { editFormError.value = totalResult.error!; return }
+
+  const tasaResult = validateTasaInteres(tasaInteresNum)
+  if (!tasaResult.valid) { editFormError.value = tasaResult.error!; return }
+
+  const pendienteResult = validateMonto(montoActualNum, 'El monto pendiente')
+  if (!pendienteResult.valid) { editFormError.value = pendienteResult.error!; return }
 
   updateDeuda(editingDeudaId.value, {
-    nombrePersona: editForm.nombrePersona.trim(),
+    nombrePersona,
     totalDeuda: totalDeudaNum,
     tasaInteres: tasaInteresNum,
     cuotasPagadas: cuotasPagadasNum,
     totalCuotas: totalCuotasNum,
     cuotaMensual: cuotaMensualNum,
     montoActualPendiente: montoActualNum,
-    descripcion: editForm.descripcion.trim(),
+    descripcion,
   })
 }
 
