@@ -48,15 +48,14 @@ jobs:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
-          COMMITS=$(git log --pretty=format:"%s" "$BASE_SHA".."$HEAD_SHA")
-          echo "Commits in PR:"
-          echo "$COMMITS"
+          LAST_COMMIT=$(git log -1 --pretty=format:"%s" "$HEAD_SHA")
+          echo "Last commit: $LAST_COMMIT"
 
           BUMP="patch"
 
-          if echo "$COMMITS" | grep -qiE "^feat(\(.+\))?!:|BREAKING CHANGE"; then
+          if echo "$LAST_COMMIT" | grep -qiE "^feat(\(.+\))?!:|BREAKING CHANGE"; then
             BUMP="major"
-          elif echo "$COMMITS" | grep -qiE "^feat(\(.+\))?:"; then
+          elif echo "$LAST_COMMIT" | grep -qiE "^feat(\(.+\))?:"; then
             BUMP="minor"
           fi
 
