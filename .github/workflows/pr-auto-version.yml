@@ -143,5 +143,5 @@ jobs:
           NEW_VERSION: ${{ steps.version.outputs.version }}
         run: |
           git add package.json CHANGELOG.md
-          git commit -m "chore: bump version to $NEW_VERSION [skip ci]"
+          git commit -m "chore: bump version to $NEW_VERSION"
           git push
