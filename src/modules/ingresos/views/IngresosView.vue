@@ -7,6 +7,7 @@ import AppModal from '~/shared/components/ui/AppModal.vue'
 import EmptyState from '~/shared/components/ui/EmptyState.vue'
 import PageHeader from '~/shared/components/layout/PageHeader.vue'
 import { formatMoneyDisplay, parseMoneyInput, onDecimalInput } from '~/shared/utils/format'
+import { validateMonto, validateDescripcion, sanitize } from '~/shared/utils/validation'
 import type { Ingreso } from '../types'
 
 const { ingresos, isLoading, isError, totalIngresos, addIngreso, updateIngreso, removeIngreso, isAdding, isUpdating } =
@@ -64,18 +65,21 @@ watch(isAdding, (newVal, oldVal) => {
 function handleSubmit(): void {
   formError.value = null
   const monto = parseMoneyInput(form.monto)
+  const descripcion = sanitize(form.descripcion)
 
-  if (!form.descripcion.trim()) {
-    formError.value = 'La descripción es requerida'
+  const descResult = validateDescripcion(descripcion)
+  if (!descResult.valid) {
+    formError.value = descResult.error!
     return
   }
-  if (isNaN(monto) || monto <= 0) {
-    formError.value = 'El monto debe ser un número positivo'
+  const montoResult = validateMonto(monto)
+  if (!montoResult.valid) {
+    formError.value = montoResult.error!
     return
   }
 
   startLoading('#3E6F73')
-  addIngreso({ monto, descripcion: form.descripcion.trim() })
+  addIngreso({ monto, descripcion })
   form.monto = ''
   form.descripcion = ''
 }

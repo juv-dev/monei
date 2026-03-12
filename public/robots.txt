@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /login
+Disallow: /dashboard
+Disallow: /ingresos
+Disallow: /presupuesto
+Disallow: /deudas
+Disallow: /tarjetas
+Disallow: /insights
+Disallow: /configuracion
+
+Sitemap: https://monei.app/sitemap.xml

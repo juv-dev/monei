@@ -1,4 +1,4 @@
-name: PR - Tests
+name: PR / unit-test
 
 on:
   pull_request:
@@ -9,8 +9,8 @@ permissions:
   pull-requests: write
 
 jobs:
-  tests:
-    name: Unit Tests + Coverage
+  unit-test:
+    name: unit-test
     runs-on: ubuntu-latest
 
     steps:
@@ -39,7 +39,7 @@ jobs:
           retention-days: 7
 
       - name: Coverage summary comment
-        if: always() && github.event_name == 'pull_request'
+        if: always()
         uses: actions/github-script@v7
         with:
           script: |

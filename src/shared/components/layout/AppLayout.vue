@@ -183,7 +183,7 @@ async function handleLogout(): Promise<void> {
         </RouterLink>
       </header>
 
-      <main class="flex-1 overflow-y-auto pb-20 lg:pb-0" data-testid="main-content">
+      <main id="main-content" class="flex-1 overflow-y-auto pb-20 lg:pb-0" data-testid="main-content" aria-live="polite">
         <RouterView />
       </main>
     </div>

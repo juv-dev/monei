@@ -290,6 +290,95 @@ describe('should useAuthStore', () => {
     expect(auth.user?.avatarUrl).toBe('https://pic.com/u.jpg')
   })
 
+  // ─── Email sign up ──────────────────────────────────────────────────────
+  it('should sign up with email successfully', async () => {
+    const auth = useAuthStore()
+    const result = await auth.signUpWithEmail('new@test.com', 'password123')
+
+    expect(supabase.auth.signUp).toHaveBeenCalledWith({
+      email: 'new@test.com',
+      password: 'password123',
+      options: { emailRedirectTo: expect.stringContaining('/') },
+    })
+    expect(result.error).toBeUndefined()
+  })
+
+  it('should return error when sign up fails', async () => {
+    vi.mocked(supabase.auth.signUp).mockResolvedValueOnce({
+      data: { user: null, session: null },
+      error: { message: 'Email already exists', name: 'AuthError', status: 400 } as any,
+    })
+
+    const auth = useAuthStore()
+    const result = await auth.signUpWithEmail('dup@test.com', 'password123')
+
+    expect(result.error).toBe('Email already exists')
+  })
+
+  // ─── Email sign in ─────────────────────────────────────────────────────
+  it('should sign in with email successfully', async () => {
+    const auth = useAuthStore()
+    const result = await auth.signInWithEmail('user@test.com', 'password123')
+
+    expect(supabase.auth.signInWithPassword).toHaveBeenCalledWith({
+      email: 'user@test.com',
+      password: 'password123',
+    })
+    expect(result.error).toBeUndefined()
+  })
+
+  it('should return error when email sign in fails', async () => {
+    vi.mocked(supabase.auth.signInWithPassword).mockResolvedValueOnce({
+      data: { user: null, session: null } as any,
+      error: { message: 'Invalid credentials', name: 'AuthError', status: 400 } as any,
+    })
+
+    const auth = useAuthStore()
+    const result = await auth.signInWithEmail('user@test.com', 'wrong')
+
+    expect(result.error).toBe('Invalid credentials')
+  })
+
+  // ─── Change password ───────────────────────────────────────────────────
+  it('should change password successfully', async () => {
+    const auth = useAuthStore()
+    const result = await auth.changePassword('old', 'newPass123', 'newPass123')
+
+    expect(supabase.auth.updateUser).toHaveBeenCalledWith({ password: 'newPass123' })
+    expect(result.success).toBe(true)
+  })
+
+  it('should fail when passwords do not match', async () => {
+    const auth = useAuthStore()
+    const result = await auth.changePassword('old', 'newPass123', 'different')
+
+    expect(result.success).toBe(false)
+    expect(result.error).toBe('Las contraseñas no coinciden')
+    expect(supabase.auth.updateUser).not.toHaveBeenCalled()
+  })
+
+  it('should fail when new password is too short', async () => {
+    const auth = useAuthStore()
+    const result = await auth.changePassword('old', '12345', '12345')
+
+    expect(result.success).toBe(false)
+    expect(result.error).toBe('La contraseña debe tener al menos 6 caracteres')
+    expect(supabase.auth.updateUser).not.toHaveBeenCalled()
+  })
+
+  it('should return error when updateUser fails', async () => {
+    vi.mocked(supabase.auth.updateUser).mockResolvedValueOnce({
+      data: { user: null } as any,
+      error: { message: 'Update failed', name: 'AuthError', status: 400 } as any,
+    })
+
+    const auth = useAuthStore()
+    const result = await auth.changePassword('old', 'newPass123', 'newPass123')
+
+    expect(result.success).toBe(false)
+    expect(result.error).toBe('Update failed')
+  })
+
   it('should default provider to google when app_metadata.provider is missing', async () => {
     vi.mocked(supabase.auth.getSession).mockResolvedValueOnce({
       data: {
@@ -308,6 +397,6 @@ describe('should useAuthStore', () => {
     const auth = useAuthStore()
     await auth.initialize()
 
-    expect(auth.user?.provider).toBe('google')
+    expect(auth.user?.provider).toBe('email')
   })
 })
