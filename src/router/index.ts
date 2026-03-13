@@ -1,6 +1,6 @@
-import { createRouter, createWebHistory } from 'vue-router'
-import { watch } from 'vue'
-import { useAuthStore } from '~/stores/auth'
+import { createRouter, createWebHistory } from 'vue-router';
+import { watch } from 'vue';
+import { useAuthStore } from '~/stores/auth';
 
 export const ROUTE_NAMES = {
   LOGIN: 'login',
