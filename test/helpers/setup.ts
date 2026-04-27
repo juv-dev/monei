@@ -34,6 +34,8 @@ export function createTestRouter() {
       { path: '/presupuesto', name: 'presupuesto', component: stub },
       { path: '/deudas', name: 'deudas', component: stub },
       { path: '/tarjetas', name: 'tarjetas', component: stub },
+      { path: '/creditos', name: 'creditos', component: stub },
+      { path: '/reportes', name: 'reportes', component: stub },
       { path: '/configuracion', name: 'configuracion', component: stub },
     ],
   })

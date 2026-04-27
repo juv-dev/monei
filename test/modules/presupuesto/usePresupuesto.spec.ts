@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest'
 import { flushPromises } from '@vue/test-utils'
 import { withSetup } from '../../helpers/setup'
 import { useAuthStore } from '~/stores/auth'
-import { usePresupuesto, PRESUPUESTO_QUERY_KEY } from '~/modules/presupuesto/composables/usePresupuesto'
+import { usePresupuesto, PRESUPUESTO_BASE_KEY } from '~/modules/presupuesto/composables/usePresupuesto'
 import { presupuestoApi } from '~/modules/presupuesto/services/api'
 
 describe('should usePresupuesto', () => {
@@ -83,7 +83,7 @@ describe('should usePresupuesto', () => {
   })
 
   it('should expose correct query key', () => {
-    const key = PRESUPUESTO_QUERY_KEY('fio')
+    const key = PRESUPUESTO_BASE_KEY('fio')
     expect(key).toEqual(['finance', 'fio', 'presupuesto'])
   })
 

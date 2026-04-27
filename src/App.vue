@@ -5,6 +5,7 @@ import { useAuthStore } from '~/stores/auth'
 import { useAppFeedback } from '~/shared/composables/useAppFeedback'
 import LoadingBar from '~/shared/components/ui/LoadingBar.vue'
 import AppToast from '~/shared/components/ui/AppToast.vue'
+import NetworkBanner from '~/shared/components/ui/NetworkBanner.vue'
 
 const auth = useAuthStore()
 const { isLoading, loadingColor, toasts, dismissToast } = useAppFeedback()
@@ -16,6 +17,7 @@ onMounted(() => {
 
 <template>
   <RouterView />
+  <NetworkBanner />
   <LoadingBar :active="isLoading" :color="loadingColor" />
   <AppToast :toasts="toasts" @dismiss="dismissToast" />
 </template>

@@ -1,25 +1,24 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 48" fill="none">
-  <!-- Monei Full Logo: Icon + Text -->
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#C8AA72"/>
+      <stop offset="100%" stop-color="#8A6840"/>
+    </linearGradient>
+  </defs>
 
-  <!-- Icon: M as growth chart -->
-  <g>
-    <!-- Rounded square background -->
-    <rect width="40" height="40" rx="10" y="4" fill="#B6A77A"/>
+  <!-- Icon -->
+  <rect width="40" height="40" rx="10" y="4" fill="url(#bg)"/>
+  <path
+    d="M7 34 L7 20 Q7 13 14 13 Q20 13 20 20 Q20 13 27 13 Q33 13 33 20 L33 34"
+    stroke="white"
+    stroke-width="3.5"
+    fill="none"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+  <circle cx="27" cy="13" r="2.5" fill="white"/>
 
-    <!-- M shape formed by upward chart lines -->
-    <path
-      d="M10 30 L16 18 L22 24 L28 12 L34 20"
-      stroke="white"
-      stroke-width="3.5"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-      fill="none"
-    />
-    <!-- Subtle dot at the peak -->
-    <circle cx="28" cy="12" r="2" fill="white"/>
-  </g>
-
-  <!-- Text: Monei -->
+  <!-- Wordmark -->
   <text
     x="52"
     y="32"
@@ -28,5 +27,5 @@
     font-weight="800"
     fill="#1A1A2E"
     letter-spacing="-0.5"
-  >Monei</text>
+  >monei</text>
 </svg>

@@ -51,19 +51,37 @@ export const tarjetasApi = {
       localStorage.setItem(storageKey(userId), JSON.stringify(all))
       return all[idx]!
     }
-    const updateData: Record<string, unknown> = {}
-    if (data.lineaTotal !== undefined) updateData.linea_total = data.lineaTotal
-    if (data.montoDeudaActual !== undefined) updateData.monto_deuda_actual = data.montoDeudaActual
-    if (data.pagoMinimo !== undefined) updateData.pago_minimo = data.pagoMinimo
-    if (data.saldoTotal !== undefined) updateData.saldo_total = data.saldoTotal
-    if (data.descripcion !== undefined) updateData.descripcion = data.descripcion
+    const { data: current, error: fetchErr } = await supabase
+      .from('tarjetas_credito')
+      .select('*')
+      .eq('id', id)
+      .single()
+    if (fetchErr || !current) throw new Error('Tarjeta not found')
+    const payload = {
+      id,
+      user_id: userId,
+      linea_total: data.lineaTotal ?? current.linea_total,
+      monto_deuda_actual: data.montoDeudaActual ?? current.monto_deuda_actual,
+      pago_minimo: data.pagoMinimo !== undefined ? (data.pagoMinimo ?? null) : current.pago_minimo,
+      saldo_total: data.saldoTotal !== undefined ? (data.saldoTotal ?? null) : current.saldo_total,
+      linea_total_usd: data.lineaTotalUsd !== undefined ? (data.lineaTotalUsd ?? null) : current.linea_total_usd,
+      monto_deuda_actual_usd:
+        data.montoDeudaActualUsd !== undefined
+          ? (data.montoDeudaActualUsd ?? null)
+          : current.monto_deuda_actual_usd,
+      pago_minimo_usd:
+        data.pagoMinimoUsd !== undefined ? (data.pagoMinimoUsd ?? null) : current.pago_minimo_usd,
+      saldo_total_usd:
+        data.saldoTotalUsd !== undefined ? (data.saldoTotalUsd ?? null) : current.saldo_total_usd,
+      descripcion: data.descripcion ?? current.descripcion,
+      created_at: current.created_at,
+    }
     const { data: row, error } = await supabase
       .from('tarjetas_credito')
-      .update(updateData)
-      .eq('id', id)
+      .upsert(payload, { onConflict: 'id' })
       .select()
       .single()
-    if (error) throw new Error('Tarjeta not found')
+    if (error) throw error
     return mapDbTarjeta(row)
   },
 
@@ -74,7 +92,7 @@ export const tarjetasApi = {
       localStorage.setItem(storageKey(userId), JSON.stringify(filtered))
       return
     }
-    const { error } = await supabase.from('tarjetas_credito').delete().eq('id', id)
+    const { error } = await supabase.rpc('delete_tarjeta', { p_id: id })
     if (error) throw error
   },
 }

@@ -3,6 +3,7 @@ import { useIngresos } from '~/modules/ingresos/composables/useIngresos'
 import { usePresupuesto } from '~/modules/presupuesto/composables/usePresupuesto'
 import { useDeudas } from '~/modules/deudas/composables/useDeudas'
 import { useTarjetas } from '~/modules/tarjetas/composables/useTarjetas'
+import { useExchangeRate } from '~/shared/composables/useExchangeRate'
 import type { DescripcionResumen, ResumenGeneral } from '~/shared/types'
 
 export function useDashboard() {
@@ -10,6 +11,7 @@ export function useDashboard() {
   const { gastos, totalGastado, isLoading: loadingGastos } = usePresupuesto()
   const { deudas, totalDeudas, totalPendiente, isLoading: loadingDeudas } = useDeudas()
   const { tarjetas, totalTarjetas, lineaTotalCombinada, isLoading: loadingTarjetas } = useTarjetas()
+  const { usdToPen } = useExchangeRate()
 
   const isLoading = computed(
     () => loadingIngresos.value || loadingGastos.value || loadingDeudas.value || loadingTarjetas.value,
@@ -19,7 +21,21 @@ export function useDashboard() {
     deudas.value.reduce((sum, d) => sum + (d.cuotaMensual ?? d.montoActualPendiente), 0),
   )
 
-  const totalPagoMinimo = computed(() => tarjetas.value.reduce((sum, t) => sum + (t.pagoMinimo ?? 0), 0))
+  const totalPagoMes = computed(() =>
+    tarjetas.value.reduce(
+      (sum, t) => sum + (t.montoDeudaActual ?? 0) + usdToPen(t.montoDeudaActualUsd ?? 0),
+      0,
+    ),
+  )
+
+  const totalPagoMinimo = computed(() =>
+    tarjetas.value.reduce(
+      (sum, t) => sum + (t.pagoMinimo ?? 0) + usdToPen(t.pagoMinimoUsd ?? 0),
+      0,
+    ),
+  )
+
+  const totalArrastre = computed(() => Math.max(totalPagoMes.value - totalPagoMinimo.value, 0))
 
   const resumen = computed<ResumenGeneral>(() => ({
     totalIngresos: totalIngresos.value,
@@ -66,6 +82,8 @@ export function useDashboard() {
     resumen,
     todasLasDescripciones,
     totalPagoMinimo,
+    totalPagoMes,
+    totalArrastre,
     lineaTotalCombinada,
     isLoading,
   }

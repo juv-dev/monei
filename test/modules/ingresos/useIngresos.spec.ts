@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest'
 import { flushPromises } from '@vue/test-utils'
 import { withSetup } from '../../helpers/setup'
 import { useAuthStore } from '~/stores/auth'
-import { useIngresos, INGRESOS_QUERY_KEY } from '~/modules/ingresos/composables/useIngresos'
+import { useIngresos, INGRESOS_BASE_KEY } from '~/modules/ingresos/composables/useIngresos'
 import { ingresosApi } from '~/modules/ingresos/services/api'
 
 describe('should useIngresos', () => {
@@ -84,7 +84,7 @@ describe('should useIngresos', () => {
   })
 
   it('should expose correct query key based on userId', () => {
-    const key = INGRESOS_QUERY_KEY('jugaz')
+    const key = INGRESOS_BASE_KEY('jugaz')
     expect(key).toEqual(['finance', 'jugaz', 'ingresos'])
   })
 

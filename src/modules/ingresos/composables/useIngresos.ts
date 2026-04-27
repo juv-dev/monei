@@ -1,19 +1,24 @@
 import { computed } from 'vue'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
 import { useAuthStore } from '~/stores/auth'
+import { useSelectedMonth } from '~/shared/composables/useSelectedMonth'
 import { ingresosApi } from '../services/api'
 import type { NuevoIngreso } from '../types'
 
-export const INGRESOS_QUERY_KEY = (userId: string) => ['finance', userId, 'ingresos'] as const
+export const INGRESOS_BASE_KEY = (userId: string) => ['finance', userId, 'ingresos'] as const
+const INGRESOS_QUERY_KEY = (userId: string, year: number, month: number) =>
+  [...INGRESOS_BASE_KEY(userId), year, month] as const
 
 export function useIngresos() {
   const auth = useAuthStore()
   const queryClient = useQueryClient()
   const userId = computed(() => auth.userId)
+  const { selectedYear, selectedMonth } = useSelectedMonth()
 
   const query = useQuery({
-    queryKey: computed(() => INGRESOS_QUERY_KEY(userId.value)),
-    queryFn: () => ingresosApi.getAll(userId.value),
+    queryKey: computed(() => INGRESOS_QUERY_KEY(userId.value, selectedYear.value, selectedMonth.value)),
+    queryFn: () =>
+      ingresosApi.getAll(userId.value, { year: selectedYear.value, month: selectedMonth.value }),
     enabled: computed(() => !!userId.value),
   })
 
@@ -22,9 +27,7 @@ export function useIngresos() {
   const addMutation = useMutation({
     mutationFn: (data: NuevoIngreso) => ingresosApi.create(userId.value, data),
     onSuccess: () => {
-      void queryClient.invalidateQueries({
-        queryKey: INGRESOS_QUERY_KEY(userId.value),
-      })
+      void queryClient.invalidateQueries({ queryKey: INGRESOS_BASE_KEY(userId.value) })
     },
   })
 
@@ -32,18 +35,14 @@ export function useIngresos() {
     mutationFn: ({ id, data }: { id: string; data: Partial<NuevoIngreso> }) =>
       ingresosApi.update(userId.value, id, data),
     onSuccess: () => {
-      void queryClient.invalidateQueries({
-        queryKey: INGRESOS_QUERY_KEY(userId.value),
-      })
+      void queryClient.invalidateQueries({ queryKey: INGRESOS_BASE_KEY(userId.value) })
     },
   })
 
   const removeMutation = useMutation({
     mutationFn: (id: string) => ingresosApi.remove(userId.value, id),
     onSuccess: () => {
-      void queryClient.invalidateQueries({
-        queryKey: INGRESOS_QUERY_KEY(userId.value),
-      })
+      void queryClient.invalidateQueries({ queryKey: INGRESOS_BASE_KEY(userId.value) })
     },
   })
 

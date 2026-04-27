@@ -6,16 +6,23 @@ const DEMO_USER_ID = 'demo'
 const storageKey = (userId: string) => `finance_${userId}_presupuesto`
 
 export const presupuestoApi = {
-  async getAll(userId: string): Promise<GastoPresupuesto[]> {
+  async getAll(userId: string, filter?: { year: number; month: number }): Promise<GastoPresupuesto[]> {
     if (userId === DEMO_USER_ID) {
       const raw = localStorage.getItem(storageKey(userId))
-      return raw ? (JSON.parse(raw) as GastoPresupuesto[]) : []
+      const all = raw ? (JSON.parse(raw) as GastoPresupuesto[]) : []
+      if (!filter) return all
+      return all.filter((item) => {
+        const d = new Date(item.createdAt)
+        return d.getFullYear() === filter.year && d.getMonth() + 1 === filter.month
+      })
     }
-    const { data, error } = await supabase
-      .from('gastos_presupuesto')
-      .select('*')
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false })
+    let q = supabase.from('gastos_presupuesto').select('*').eq('user_id', userId)
+    if (filter) {
+      const start = new Date(filter.year, filter.month - 1, 1).toISOString()
+      const end = new Date(filter.year, filter.month, 0, 23, 59, 59, 999).toISOString()
+      q = q.gte('created_at', start).lte('created_at', end)
+    }
+    const { data, error } = await q.order('created_at', { ascending: false })
     if (error) throw error
     return (data ?? []).map(mapDbGasto)
   },
@@ -55,14 +62,23 @@ export const presupuestoApi = {
       localStorage.setItem(storageKey(userId), JSON.stringify(all))
       return all[idx]!
     }
-    const updateData: Record<string, unknown> = {}
-    if (data.monto !== undefined) updateData.monto = data.monto
-    if (data.descripcion !== undefined) updateData.descripcion = data.descripcion
-    if (data.categoria !== undefined) updateData.categoria = data.categoria
+    const { data: current, error: fetchError } = await supabase
+      .from('gastos_presupuesto')
+      .select('*')
+      .eq('id', id)
+      .single()
+    if (fetchError || !current) throw new Error('Gasto not found')
+
     const { data: row, error } = await supabase
       .from('gastos_presupuesto')
-      .update(updateData)
-      .eq('id', id)
+      .upsert({
+        id,
+        user_id: userId,
+        monto: data.monto ?? current.monto,
+        descripcion: data.descripcion ?? current.descripcion,
+        categoria: data.categoria ?? current.categoria,
+        created_at: current.created_at,
+      })
       .select()
       .single()
     if (error) throw new Error('Gasto not found')
@@ -76,7 +92,7 @@ export const presupuestoApi = {
       localStorage.setItem(storageKey(userId), JSON.stringify(filtered))
       return
     }
-    const { error } = await supabase.from('gastos_presupuesto').delete().eq('id', id)
+    const { error } = await supabase.rpc('delete_gasto_presupuesto', { p_id: id })
     if (error) throw error
   },
 }
