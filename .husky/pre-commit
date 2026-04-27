@@ -1,6 +1,6 @@
 #!/bin/bash
 
-STAGED=$(git diff --cached --name-only --diff-filter=ACM | grep -E "\.(ts|vue|tsx|jsx|js|astro)$")
+STAGED=$(git diff --cached --name-only --diff-filter=ACM | grep -E "\.(ts|vue|tsx|jsx|js|astro)$" || true)
 
 [ -z "$STAGED" ] && exit 0
 

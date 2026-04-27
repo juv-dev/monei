@@ -1,7 +1,8 @@
 {
   "name": "monei",
   "private": true,
-  "version": "1.0.1",
+  "version": "1.0.2",
+  "packageManager": "pnpm@10.12.1",
   "scripts": {
     "dev": "vite",
     "build": "vue-tsc -b && vite build",
