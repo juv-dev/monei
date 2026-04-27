@@ -15,23 +15,9 @@ if (!PUBLISHABLE_KEY) {
   throw new Error('VITE_CLERK_PUBLISHABLE_KEY is not defined in environment variables')
 }
 
-// Suppress Clerk's internal network error logs — they surface via reportAuthNetworkError() instead.
-const _originalConsoleError = console.error.bind(console)
-console.error = (...args: unknown[]) => {
-  const msg = String(args[0] ?? '')
-  if (msg.startsWith('ClerkJS:') && msg.includes('Network error')) return
-  _originalConsoleError(...args)
-}
-
 const app = createApp(App)
 
-// Global error handler — catches unhandled errors in components
-app.config.errorHandler = (err, instance, info) => {
-  console.error(`[Monei Error] ${info}:`, err)
-  if (import.meta.env.DEV) {
-    console.warn('Component:', instance)
-  }
-}
+app.config.errorHandler = (_err, _instance, _info) => {}
 
 function isClerkNetworkError(reason: unknown): boolean {
   if (!reason) return false
@@ -42,7 +28,6 @@ function isClerkNetworkError(reason: unknown): boolean {
 }
 
 window.addEventListener('unhandledrejection', (event) => {
-  console.error('[Monei] Unhandled promise rejection:', event.reason)
   if (isClerkNetworkError(event.reason)) {
     reportAuthNetworkError()
   }

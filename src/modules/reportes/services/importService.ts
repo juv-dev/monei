@@ -1,3 +1,5 @@
+import { Workbook } from 'exceljs'
+import type { Worksheet } from 'exceljs'
 import type { NuevoIngreso, NuevoGasto, NuevaTarjeta, NuevaDeuda } from '~/shared/types'
 
 export interface ImportData {
@@ -7,13 +9,31 @@ export interface ImportData {
   deudas: NuevaDeuda[]
 }
 
+function sheetToJson(ws: Worksheet): Record<string, unknown>[] {
+  const headers: Record<number, string> = {}
+  ws.getRow(1).eachCell((cell, col) => {
+    headers[col] = String(cell.value ?? '')
+  })
+
+  const result: Record<string, unknown>[] = []
+  ws.eachRow((row, rowNumber) => {
+    if (rowNumber === 1) return
+    const obj: Record<string, unknown> = {}
+    Object.entries(headers).forEach(([col, key]) => {
+      obj[key] = row.getCell(Number(col)).value
+    })
+    result.push(obj)
+  })
+
+  return result
+}
+
 export async function parseImportFile(file: File): Promise<ImportData> {
-  const XLSX = await import('xlsx')
-  const buffer = await file.arrayBuffer()
-  const wb = XLSX.read(buffer, { type: 'array' })
+  const wb = new Workbook()
+  await wb.xlsx.load(await file.arrayBuffer())
 
   const required = ['_ingresos', '_egresos', '_tarjetas', '_deudas']
-  const missing = required.filter((s) => !wb.SheetNames.includes(s))
+  const missing = required.filter((s) => !wb.getWorksheet(s))
   if (missing.length > 0) {
     throw new Error(
       `Archivo inválido — hojas faltantes: ${missing.join(', ')}. Usá un reporte exportado desde Monei.`,
@@ -31,12 +51,12 @@ export async function parseImportFile(file: File): Promise<ImportData> {
     return Number.isFinite(n) && n > 0 ? n : undefined
   }
 
-  const ingRows = XLSX.utils.sheet_to_json<RawRow>(wb.Sheets['_ingresos']!)
+  const ingRows = sheetToJson(wb.getWorksheet('_ingresos')!) as RawRow[]
   const ingresos: NuevoIngreso[] = ingRows
     .filter((r) => str(r['descripcion']) && r['monto'] != null)
     .map((r) => ({ descripcion: str(r['descripcion']), monto: num(r['monto']) }))
 
-  const egrRows = XLSX.utils.sheet_to_json<RawRow>(wb.Sheets['_egresos']!)
+  const egrRows = sheetToJson(wb.getWorksheet('_egresos')!) as RawRow[]
   const gastos: NuevoGasto[] = egrRows
     .filter((r) => str(r['descripcion']) && r['monto'] != null && str(r['categoria']))
     .map((r) => ({
@@ -45,7 +65,7 @@ export async function parseImportFile(file: File): Promise<ImportData> {
       monto: num(r['monto']),
     }))
 
-  const tarRows = XLSX.utils.sheet_to_json<RawRow>(wb.Sheets['_tarjetas']!)
+  const tarRows = sheetToJson(wb.getWorksheet('_tarjetas')!) as RawRow[]
   const tarjetas: NuevaTarjeta[] = tarRows
     .filter((r) => str(r['descripcion']))
     .map((r) => ({
@@ -60,7 +80,7 @@ export async function parseImportFile(file: File): Promise<ImportData> {
       saldoTotalUsd: numPos(r['saldoTotalUsd']),
     }))
 
-  const deuRows = XLSX.utils.sheet_to_json<RawRow>(wb.Sheets['_deudas']!)
+  const deuRows = sheetToJson(wb.getWorksheet('_deudas')!) as RawRow[]
   const deudas: NuevaDeuda[] = deuRows
     .filter((r) => str(r['nombrePersona']) || str(r['descripcion']))
     .map((r) => ({

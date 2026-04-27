@@ -1,3 +1,4 @@
+import { Workbook } from 'exceljs'
 import type { Ingreso, GastoPresupuesto, Deuda, TarjetaCredito, TarjetaPago } from '~/shared/types'
 
 export interface ExportData {
@@ -9,6 +10,8 @@ export interface ExportData {
   usdRate: number
   userDisplayName?: string
 }
+
+type Row = (string | number)[]
 
 const PEN = (n: number) => Number((n ?? 0).toFixed(2))
 
@@ -30,9 +33,16 @@ function formatDate(iso: string): string {
   return Number.isNaN(d.getTime()) ? iso : d.toLocaleDateString('es-PE')
 }
 
+function addSheet(wb: Workbook, name: string, rows: Row[], colWidths: number[]): void {
+  const ws = wb.addWorksheet(name)
+  ws.addRows(rows)
+  colWidths.forEach((width, i) => {
+    ws.getColumn(i + 1).width = width
+  })
+}
+
 export async function exportReporteToExcel(data: ExportData): Promise<void> {
-  const XLSX = await import('xlsx')
-  const wb = XLSX.utils.book_new()
+  const wb = new Workbook()
   const used = new Set<string>()
 
   const totalIngresos = data.ingresos.reduce((s, i) => s + i.monto, 0)
@@ -47,7 +57,7 @@ export async function exportReporteToExcel(data: ExportData): Promise<void> {
   )
   const balance = totalIngresos - totalGastos - totalCuotasDeudas - totalPagoMesTarjetas
 
-  const resumenRows: (string | number)[][] = [
+  const resumenRows: Row[] = [
     ['Reporte Monei'],
     ['Usuario', data.userDisplayName ?? ''],
     ['Generado', new Date().toLocaleString('es-PE')],
@@ -73,32 +83,26 @@ export async function exportReporteToExcel(data: ExportData): Promise<void> {
       ),
     ],
   ]
-  const wsResumen = XLSX.utils.aoa_to_sheet(resumenRows)
-  wsResumen['!cols'] = [{ wch: 32 }, { wch: 18 }]
-  XLSX.utils.book_append_sheet(wb, wsResumen, sanitizeSheetName('Resumen', 'Resumen', used))
+  addSheet(wb, sanitizeSheetName('Resumen', 'Resumen', used), resumenRows, [32, 18])
 
-  const ingresosRows = [
+  const ingresosRows: Row[] = [
     ['Descripción', 'Monto (PEN)', 'Fecha'],
     ...data.ingresos.map((i) => [i.descripcion, PEN(i.monto), formatDate(i.createdAt)]),
     [],
     ['TOTAL', PEN(totalIngresos), ''],
   ]
-  const wsIng = XLSX.utils.aoa_to_sheet(ingresosRows)
-  wsIng['!cols'] = [{ wch: 40 }, { wch: 14 }, { wch: 14 }]
-  XLSX.utils.book_append_sheet(wb, wsIng, sanitizeSheetName('Ingresos', 'Ingresos', used))
+  addSheet(wb, sanitizeSheetName('Ingresos', 'Ingresos', used), ingresosRows, [40, 14, 14])
 
-  const gastosRows = [
+  const gastosRows: Row[] = [
     ['Categoría', 'Descripción', 'Monto (PEN)', 'Fecha'],
     ...data.gastos.map((g) => [g.categoria, g.descripcion, PEN(g.monto), formatDate(g.createdAt)]),
     [],
     ['', 'TOTAL', PEN(totalGastos), ''],
   ]
-  const wsGas = XLSX.utils.aoa_to_sheet(gastosRows)
-  wsGas['!cols'] = [{ wch: 18 }, { wch: 36 }, { wch: 14 }, { wch: 14 }]
-  XLSX.utils.book_append_sheet(wb, wsGas, sanitizeSheetName('Egresos', 'Egresos', used))
+  addSheet(wb, sanitizeSheetName('Egresos', 'Egresos', used), gastosRows, [18, 36, 14, 14])
 
   if (data.tarjetas.length > 0) {
-    const tarjetasRows = [
+    const tarjetasRows: Row[] = [
       [
         'Descripción',
         'Línea PEN',
@@ -122,19 +126,9 @@ export async function exportReporteToExcel(data: ExportData): Promise<void> {
         PEN(t.saldoTotalUsd ?? 0),
       ]),
     ]
-    const wsTar = XLSX.utils.aoa_to_sheet(tarjetasRows)
-    wsTar['!cols'] = [
-      { wch: 26 },
-      { wch: 14 },
-      { wch: 16 },
-      { wch: 16 },
-      { wch: 16 },
-      { wch: 12 },
-      { wch: 14 },
-      { wch: 14 },
-      { wch: 14 },
-    ]
-    XLSX.utils.book_append_sheet(wb, wsTar, sanitizeSheetName('Tarjetas', 'Tarjetas', used))
+    addSheet(wb, sanitizeSheetName('Tarjetas', 'Tarjetas', used), tarjetasRows, [
+      26, 14, 16, 16, 16, 12, 14, 14, 14,
+    ])
   }
 
   for (const d of data.deudas) {
@@ -143,7 +137,7 @@ export async function exportReporteToExcel(data: ExportData): Promise<void> {
       `Deuda ${d.id.slice(0, 6)}`,
       used,
     )
-    const rows: (string | number)[][] = [
+    const rows: Row[] = [
       ['Deuda', d.nombrePersona],
       ['Descripción', d.descripcion],
       ['Fecha alta', formatDate(d.createdAt)],
@@ -157,78 +151,96 @@ export async function exportReporteToExcel(data: ExportData): Promise<void> {
       ['Total de cuotas', d.totalCuotas ?? ''],
       ['Progreso', d.totalCuotas ? `${d.cuotasPagadas}/${d.totalCuotas}` : ''],
     ]
-    const ws = XLSX.utils.aoa_to_sheet(rows)
-    ws['!cols'] = [{ wch: 24 }, { wch: 28 }]
-    XLSX.utils.book_append_sheet(wb, ws, sheetName)
+    addSheet(wb, sheetName, rows, [24, 28])
   }
 
-  // Raw sheets for round-trip import — always present, even when empty
-  const ingRaw = data.ingresos.map((i) => [i.descripcion, PEN(i.monto), i.createdAt])
-  const wsIngRaw = XLSX.utils.aoa_to_sheet([
-    ['descripcion', 'monto', 'fecha_iso'],
-    ...ingRaw,
-  ])
-  XLSX.utils.book_append_sheet(wb, wsIngRaw, '_ingresos')
-
-  const egrRaw = data.gastos.map((g) => [g.categoria, g.descripcion, PEN(g.monto), g.createdAt])
-  const wsEgrRaw = XLSX.utils.aoa_to_sheet([
-    ['categoria', 'descripcion', 'monto', 'fecha_iso'],
-    ...egrRaw,
-  ])
-  XLSX.utils.book_append_sheet(wb, wsEgrRaw, '_egresos')
-
-  const tarRaw = data.tarjetas.map((t) => [
-    t.descripcion,
-    PEN(t.lineaTotal),
-    PEN(t.montoDeudaActual),
-    PEN(t.pagoMinimo ?? 0),
-    PEN(t.saldoTotal ?? 0),
-    PEN(t.lineaTotalUsd ?? 0),
-    PEN(t.montoDeudaActualUsd ?? 0),
-    PEN(t.pagoMinimoUsd ?? 0),
-    PEN(t.saldoTotalUsd ?? 0),
-  ])
-  const wsTarRaw = XLSX.utils.aoa_to_sheet([
+  addSheet(
+    wb,
+    '_ingresos',
     [
-      'descripcion',
-      'lineaTotal',
-      'montoDeudaActual',
-      'pagoMinimo',
-      'saldoTotal',
-      'lineaTotalUsd',
-      'montoDeudaActualUsd',
-      'pagoMinimoUsd',
-      'saldoTotalUsd',
+      ['descripcion', 'monto', 'fecha_iso'],
+      ...data.ingresos.map((i) => [i.descripcion, PEN(i.monto), i.createdAt]),
     ],
-    ...tarRaw,
-  ])
-  XLSX.utils.book_append_sheet(wb, wsTarRaw, '_tarjetas')
+    [],
+  )
 
-  const deuRaw = data.deudas.map((d) => [
-    d.nombrePersona,
-    d.descripcion,
-    PEN(d.totalDeuda),
-    PEN(d.montoActualPendiente),
-    PEN(d.cuotaMensual ?? 0),
-    PEN(d.tasaInteres),
-    d.cuotasPagadas,
-    d.totalCuotas ?? 0,
-  ])
-  const wsDeuRaw = XLSX.utils.aoa_to_sheet([
+  addSheet(
+    wb,
+    '_egresos',
     [
-      'nombrePersona',
-      'descripcion',
-      'totalDeuda',
-      'montoActualPendiente',
-      'cuotaMensual',
-      'tasaInteres',
-      'cuotasPagadas',
-      'totalCuotas',
+      ['categoria', 'descripcion', 'monto', 'fecha_iso'],
+      ...data.gastos.map((g) => [g.categoria, g.descripcion, PEN(g.monto), g.createdAt]),
     ],
-    ...deuRaw,
-  ])
-  XLSX.utils.book_append_sheet(wb, wsDeuRaw, '_deudas')
+    [],
+  )
+
+  addSheet(
+    wb,
+    '_tarjetas',
+    [
+      [
+        'descripcion',
+        'lineaTotal',
+        'montoDeudaActual',
+        'pagoMinimo',
+        'saldoTotal',
+        'lineaTotalUsd',
+        'montoDeudaActualUsd',
+        'pagoMinimoUsd',
+        'saldoTotalUsd',
+      ],
+      ...data.tarjetas.map((t) => [
+        t.descripcion,
+        PEN(t.lineaTotal),
+        PEN(t.montoDeudaActual),
+        PEN(t.pagoMinimo ?? 0),
+        PEN(t.saldoTotal ?? 0),
+        PEN(t.lineaTotalUsd ?? 0),
+        PEN(t.montoDeudaActualUsd ?? 0),
+        PEN(t.pagoMinimoUsd ?? 0),
+        PEN(t.saldoTotalUsd ?? 0),
+      ]),
+    ],
+    [],
+  )
+
+  addSheet(
+    wb,
+    '_deudas',
+    [
+      [
+        'nombrePersona',
+        'descripcion',
+        'totalDeuda',
+        'montoActualPendiente',
+        'cuotaMensual',
+        'tasaInteres',
+        'cuotasPagadas',
+        'totalCuotas',
+      ],
+      ...data.deudas.map((d) => [
+        d.nombrePersona,
+        d.descripcion,
+        PEN(d.totalDeuda),
+        PEN(d.montoActualPendiente),
+        PEN(d.cuotaMensual ?? 0),
+        PEN(d.tasaInteres),
+        d.cuotasPagadas,
+        d.totalCuotas ?? 0,
+      ]),
+    ],
+    [],
+  )
 
   const today = new Date().toISOString().slice(0, 10)
-  XLSX.writeFile(wb, `monei-reporte-${today}.xlsx`)
+  const buffer = await wb.xlsx.writeBuffer()
+  const blob = new Blob([buffer], {
+    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `monei-reporte-${today}.xlsx`
+  a.click()
+  URL.revokeObjectURL(url)
 }

@@ -1,10 +1,5 @@
 name: PR / security-review
 
-permissions:
-  actions: read
-  contents: read
-  security-events: write
-
 on:
   push:
     branches: [main, develop]
@@ -15,21 +10,4 @@ on:
 
 jobs:
   analyze:
-    name: CodeQL Analysis
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Initialize CodeQL
-        uses: github/codeql-action/init@v4
-        with:
-          languages: javascript-typescript
-
-      - name: Autobuild
-        uses: github/codeql-action/autobuild@v4
-
-      - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v4
-        with:
-          category: "/language:javascript-typescript"
+    uses: juv-dev/workflows-frontend/.github/workflows/security-review.yml@main
