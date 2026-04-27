@@ -1,36 +1,10 @@
-name: PR / load-values
+name: CI
 
 on:
   pull_request:
     branches: [main, develop]
 
-permissions:
-  contents: read
-
 jobs:
-  load-values:
-    name: load-values
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: pnpm/action-setup@v4
-        with:
-          version: '10.28.2'
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'pnpm'
-
-      - run: pnpm install --frozen-lockfile
-
-      - name: Load project values
-        id: values
-        run: |
-          VERSION=$(node -p "require('./package.json').version")
-          NAME=$(node -p "require('./package.json').name")
-          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-          echo "name=$NAME" >> "$GITHUB_OUTPUT"
-          echo "Project: $NAME v$VERSION"
+  PR:
+    uses: juv-dev/workflows-frontend/.github/workflows/pr-load-values.yml@main
+    secrets: inherit

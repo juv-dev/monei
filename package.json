@@ -2,6 +2,7 @@
   "name": "monei",
   "private": true,
   "version": "1.1.0",
+  "packageManager": "pnpm@10.12.1",
   "scripts": {
     "dev": "vite",
     "build": "vue-tsc -b && vite build",
@@ -15,7 +16,8 @@
     "lint": "eslint src/ test/",
     "lint:fix": "eslint src/ test/ --fix",
     "format": "prettier --write \"src/**/*.{ts,vue}\" \"test/**/*.ts\"",
-    "format:check": "prettier --check \"src/**/*.{ts,vue}\" \"test/**/*.ts\""
+    "format:check": "prettier --check \"src/**/*.{ts,vue}\" \"test/**/*.ts\"",
+    "prepare": "husky"
   },
   "dependencies": {
     "@clerk/vue": "^2.0.5",
@@ -25,6 +27,7 @@
     "@vitest/coverage-v8": "4.0.18",
     "chart.js": "4.5.1",
     "connect-history-api-fallback": "2.0.0",
+    "exceljs": "4.4.0",
     "lucide-vue-next": "0.575.0",
     "pinia": "^2.3.1",
     "reka-ui": "2.7.0",
@@ -32,11 +35,23 @@
     "vitest": "4.0.18",
     "vue": "3.5.24",
     "vue-chartjs": "5.3.3",
-    "vue-router": "^4.6.4",
-    "xlsx": "^0.18.5"
+    "vue-router": "^4.6.4"
   },
   "overrides": {
     "@clerk/shared": "^4.8.1"
+  },
+  "pnpm": {
+    "overrides": {
+      "serialize-javascript": ">=7.0.5",
+      "minimatch": ">=9.0.5",
+      "uuid": ">=14.0.0",
+      "flatted": ">=3.4.2",
+      "defu": ">=6.1.7",
+      "postcss": ">=8.5.12",
+      "picomatch": ">=4.0.4",
+      "lodash": "4.18.1",
+      "brace-expansion": ">=5.0.5"
+    }
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
@@ -51,6 +66,7 @@
     "class-variance-authority": "0.7.1",
     "eslint": "10.0.2",
     "eslint-plugin-vue": "10.8.0",
+    "husky": "^9.1.7",
     "jsdom": "27.4.0",
     "prettier": "3.8.1",
     "typescript": "5.9.3",
