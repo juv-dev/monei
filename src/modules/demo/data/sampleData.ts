@@ -1,72 +1,98 @@
 import type { NuevoIngreso, NuevoGasto, NuevaDeuda, NuevaTarjeta } from '~/shared/types'
 
 export const sampleIngresos: NuevoIngreso[] = [
-  { monto: 4500, descripcion: 'Sueldo mensual' },
-  { monto: 800, descripcion: 'Freelance diseño web' },
-  { monto: 200, descripcion: 'Venta de artículos usados' },
-  { monto: 350, descripcion: 'Clases particulares' },
+  { monto: 5200, descripcion: 'Sueldo mensual' },
+  { monto: 1200, descripcion: 'Proyecto freelance — Landing page' },
+  { monto: 450, descripcion: 'Clases de programación particulares' },
+  { monto: 300, descripcion: 'Venta de curso online' },
+  { monto: 180, descripcion: 'Reembolso de gastos empresa' },
 ]
 
 export const sampleGastos: NuevoGasto[] = [
-  { monto: 1200, descripcion: 'Alquiler departamento', categoria: 'Vivienda' },
-  { monto: 600, descripcion: 'Supermercado semanal', categoria: 'Alimentación' },
-  { monto: 150, descripcion: 'Internet y cable', categoria: 'Servicios' },
-  { monto: 80, descripcion: 'Plan celular', categoria: 'Servicios' },
-  { monto: 200, descripcion: 'Gasolina', categoria: 'Transporte' },
-  { monto: 120, descripcion: 'Uber y taxis', categoria: 'Transporte' },
-  { monto: 350, descripcion: 'Salidas y entretenimiento', categoria: 'Personal' },
-  { monto: 100, descripcion: 'Gym mensual', categoria: 'Salud' },
-  { monto: 250, descripcion: 'Ropa y calzado', categoria: 'Personal' },
-  { monto: 80, descripcion: 'Streaming (Netflix, Spotify)', categoria: 'Servicios' },
-  { monto: 150, descripcion: 'Comida delivery', categoria: 'Alimentación' },
+  // Vivienda
+  { monto: 1400, descripcion: 'Alquiler departamento', categoria: 'Vivienda' },
+  { monto: 120, descripcion: 'Servicio de luz y agua', categoria: 'Vivienda' },
+  { monto: 85, descripcion: 'Internet fibra óptica', categoria: 'Vivienda' },
+
+  // Alimentación
+  { monto: 680, descripcion: 'Supermercado Wong', categoria: 'Alimentación' },
+  { monto: 220, descripcion: 'Delivery Rappi / PedidosYa', categoria: 'Alimentación' },
+  { monto: 95, descripcion: 'Cafetería y snacks trabajo', categoria: 'Alimentación' },
+
+  // Transporte
+  { monto: 180, descripcion: 'Gasolina del mes', categoria: 'Transporte' },
+  { monto: 90, descripcion: 'Estacionamiento y peajes', categoria: 'Transporte' },
+
+  // Servicios
+  { monto: 45, descripcion: 'Plan celular Claro', categoria: 'Servicios' },
+  { monto: 38, descripcion: 'Netflix + Spotify', categoria: 'Servicios' },
+
+  // Salud
+  { monto: 150, descripcion: 'Gym Smartfit mensual', categoria: 'Salud' },
+  { monto: 80, descripcion: 'Consulta médica particular', categoria: 'Salud' },
+
+  // Personal
+  { monto: 320, descripcion: 'Salidas y entretenimiento', categoria: 'Personal' },
+  { monto: 190, descripcion: 'Ropa y calzado', categoria: 'Personal' },
 ]
 
 export const sampleDeudas: NuevaDeuda[] = [
   {
-    nombrePersona: 'Banco Nacional',
-    totalDeuda: 15000,
-    tasaInteres: 18,
-    cuotasPagadas: 6,
-    totalCuotas: 24,
-    cuotaMensual: 750,
-    montoActualPendiente: 11250,
-    descripcion: 'Préstamo personal',
+    nombrePersona: 'BCP',
+    totalDeuda: 18000,
+    tasaInteres: 19.5,
+    cuotasPagadas: 8,
+    totalCuotas: 36,
+    cuotaMensual: 680,
+    montoActualPendiente: 12760,
+    descripcion: 'Préstamo personal emprendimiento',
+  },
+  {
+    nombrePersona: 'Interbank',
+    totalDeuda: 4500,
+    tasaInteres: 15,
+    cuotasPagadas: 5,
+    totalCuotas: 18,
+    cuotaMensual: 285,
+    montoActualPendiente: 3420,
+    descripcion: 'Compra de laptop y equipo',
   },
   {
     nombrePersona: 'Carlos (amigo)',
-    totalDeuda: 2000,
+    totalDeuda: 1500,
     tasaInteres: 0,
-    cuotasPagadas: 2,
-    totalCuotas: 10,
-    cuotaMensual: 200,
-    montoActualPendiente: 1600,
-    descripcion: 'Préstamo para laptop',
-  },
-  {
-    nombrePersona: 'Cooperativa Sol',
-    totalDeuda: 5000,
-    tasaInteres: 12,
-    cuotasPagadas: 10,
-    totalCuotas: 36,
-    cuotaMensual: 180,
-    montoActualPendiente: 3200,
-    descripcion: 'Préstamo de estudios',
+    cuotasPagadas: 3,
+    totalCuotas: 6,
+    cuotaMensual: 250,
+    montoActualPendiente: 750,
+    descripcion: 'Préstamo para mudanza',
   },
 ]
 
 export const sampleTarjetas: NuevaTarjeta[] = [
   {
-    lineaTotal: 8000,
-    montoDeudaActual: 2400,
-    pagoMinimo: 180,
-    saldoTotal: 3200,
-    descripcion: 'Visa Banco Nacional',
+    lineaTotal: 10000,
+    montoDeudaActual: 2850,
+    pagoMinimo: 200,
+    saldoTotal: 3600,
+    descripcion: 'Visa BCP Clásica',
   },
   {
-    lineaTotal: 5000,
-    montoDeudaActual: 800,
-    pagoMinimo: 60,
-    saldoTotal: 800,
-    descripcion: 'Mastercard Digital',
+    lineaTotal: 6000,
+    montoDeudaActual: 940,
+    pagoMinimo: 65,
+    saldoTotal: 940,
+    descripcion: 'Mastercard Interbank Digital',
+  },
+  {
+    lineaTotal: 3000,
+    lineaTotalUsd: 800,
+    montoDeudaActual: 0,
+    montoDeudaActualUsd: 320,
+    pagoMinimo: 0,
+    pagoMinimoUsd: 25,
+    saldoTotal: 0,
+    saldoTotalUsd: 320,
+    descripcion: 'Visa BBVA Dólares',
   },
 ]

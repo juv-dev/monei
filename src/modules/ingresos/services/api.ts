@@ -6,12 +6,23 @@ const DEMO_USER_ID = 'demo'
 const storageKey = (userId: string) => `finance_${userId}_ingresos`
 
 export const ingresosApi = {
-  async getAll(userId: string): Promise<Ingreso[]> {
+  async getAll(userId: string, filter?: { year: number; month: number }): Promise<Ingreso[]> {
     if (userId === DEMO_USER_ID) {
       const raw = localStorage.getItem(storageKey(userId))
-      return raw ? (JSON.parse(raw) as Ingreso[]) : []
+      const all = raw ? (JSON.parse(raw) as Ingreso[]) : []
+      if (!filter) return all
+      return all.filter((item) => {
+        const d = new Date(item.createdAt)
+        return d.getFullYear() === filter.year && d.getMonth() + 1 === filter.month
+      })
     }
-    const { data, error } = await supabase.from('ingresos').select('*').eq('user_id', userId).order('created_at', { ascending: false })
+    let q = supabase.from('ingresos').select('*').eq('user_id', userId)
+    if (filter) {
+      const start = new Date(filter.year, filter.month - 1, 1).toISOString()
+      const end = new Date(filter.year, filter.month, 0, 23, 59, 59, 999).toISOString()
+      q = q.gte('created_at', start).lte('created_at', end)
+    }
+    const { data, error } = await q.order('created_at', { ascending: false })
     if (error) throw error
     return (data ?? []).map(mapDbIngreso)
   },
@@ -43,11 +54,25 @@ export const ingresosApi = {
       localStorage.setItem(storageKey(userId), JSON.stringify(all))
       return all[idx]!
     }
-    const updateData: Record<string, unknown> = {}
-    if (data.monto !== undefined) updateData.monto = data.monto
-    if (data.descripcion !== undefined) updateData.descripcion = data.descripcion
-    const { data: row, error } = await supabase.from('ingresos').update(updateData).eq('id', id).select().single()
-    if (error) throw new Error('Ingreso not found')
+    const { data: current, error: fetchErr } = await supabase
+      .from('ingresos')
+      .select('*')
+      .eq('id', id)
+      .single()
+    if (fetchErr || !current) throw new Error('Ingreso not found')
+    const payload = {
+      id,
+      user_id: userId,
+      monto: data.monto ?? current.monto,
+      descripcion: data.descripcion ?? current.descripcion,
+      created_at: current.created_at,
+    }
+    const { data: row, error } = await supabase
+      .from('ingresos')
+      .upsert(payload, { onConflict: 'id' })
+      .select()
+      .single()
+    if (error) throw error
     return mapDbIngreso(row)
   },
 
@@ -58,7 +83,7 @@ export const ingresosApi = {
       localStorage.setItem(storageKey(userId), JSON.stringify(filtered))
       return
     }
-    const { error } = await supabase.from('ingresos').delete().eq('id', id)
+    const { error } = await supabase.rpc('delete_ingreso', { p_id: id })
     if (error) throw error
   },
 }

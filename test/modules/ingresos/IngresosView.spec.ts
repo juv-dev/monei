@@ -162,6 +162,13 @@ describe('should IngresosView', () => {
     await wrapper.find('[data-testid="delete-button"]').trigger('click')
     await flushPromises()
 
+    // ConfirmDialog teleports to body — confirm via document.body
+    const confirmBtn = document.body.querySelector('[data-testid="confirm-dialog-confirm"]') as HTMLElement | null
+    if (confirmBtn) {
+      confirmBtn.click()
+      await flushPromises()
+    }
+
     const stored = await ingresosApi.getAll('jugaz')
     expect(stored).toHaveLength(0)
   })

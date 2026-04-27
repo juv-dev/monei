@@ -1,31 +1,24 @@
-name: PR / ai-review
-
-permissions:
-  issues: write
-  pull-requests: write
-  contents: write
-
+name: PR / agent
 on:
   pull_request:
-    branches: [main, develop]
     types: [opened, reopened, ready_for_review]
   issue_comment:
-
 jobs:
   pr_agent_job:
     if: ${{ github.event.sender.type != 'Bot' }}
     runs-on: ubuntu-latest
-    name: Run PR-Agent on every pull request
+    permissions:
+      issues: write
+      pull-requests: write
+      contents: write
     steps:
       - name: PR Agent action step
-        id: pragent
-        uses: qodo-ai/pr-agent@v0.32
+        uses: qodo-ai/pr-agent@v0.32 
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          config.model: "gemini/gemini-1.5-flash"
-          config.fallback_models: '["gemini/gemini-1.5-flash-8b"]'
+          config.model: "gemini/gemini-2.5-flash"
+          config.fallback_models: '["gemini/gemini-2.5-flash"]'
           GOOGLE_AI_STUDIO.GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           github_action_config.auto_review: "true"
           github_action_config.auto_describe: "true"
           github_action_config.auto_improve: "true"

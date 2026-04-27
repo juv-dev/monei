@@ -76,6 +76,15 @@ export interface TarjetaCredito {
   pagoMinimo?: number
   /** Saldo total acumulado (todas las cuotas pendientes). Opcional para datos legados. */
   saldoTotal?: number
+  // Dual-currency: los bancos peruanos suelen dar línea separada en USD sobre la misma tarjeta.
+  /** Línea total en dólares. Opcional. */
+  lineaTotalUsd?: number
+  /** Pago del mes actual en dólares. Opcional. */
+  montoDeudaActualUsd?: number
+  /** Pago mínimo en dólares. Opcional. */
+  pagoMinimoUsd?: number
+  /** Saldo total acumulado en dólares. Opcional. */
+  saldoTotalUsd?: number
   descripcion: string
   userId: string
   createdAt: string
@@ -83,7 +92,15 @@ export interface TarjetaCredito {
 
 export type NuevaTarjeta = Pick<
   TarjetaCredito,
-  'lineaTotal' | 'montoDeudaActual' | 'pagoMinimo' | 'saldoTotal' | 'descripcion'
+  | 'lineaTotal'
+  | 'montoDeudaActual'
+  | 'pagoMinimo'
+  | 'saldoTotal'
+  | 'lineaTotalUsd'
+  | 'montoDeudaActualUsd'
+  | 'pagoMinimoUsd'
+  | 'saldoTotalUsd'
+  | 'descripcion'
 >
 
 // ─── Pagos de Tarjetas ───────────────────────────────────────────────────────

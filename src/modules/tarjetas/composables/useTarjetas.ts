@@ -1,6 +1,7 @@
 import { computed } from 'vue'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
 import { useAuthStore } from '~/stores/auth'
+import { useExchangeRate } from '~/shared/composables/useExchangeRate'
 import { tarjetasApi } from '../services/api'
 import type { NuevaTarjeta } from '../types'
 
@@ -11,6 +12,7 @@ export const TARJETAS_QUERY_KEY = (userId: string) => ['finance', userId, 'tarje
 export function useTarjetas() {
   const auth = useAuthStore()
   const queryClient = useQueryClient()
+  const { usdToPen } = useExchangeRate()
   const userId = computed(() => auth.userId)
 
   const query = useQuery({
@@ -19,9 +21,38 @@ export function useTarjetas() {
     enabled: computed(() => !!userId.value),
   })
 
-  const totalTarjetas = computed(() => query.data.value?.reduce((sum, item) => sum + item.montoDeudaActual, 0) ?? 0)
+  const totalTarjetas = computed(
+    () =>
+      query.data.value?.reduce(
+        (sum, item) => sum + item.montoDeudaActual + usdToPen(item.montoDeudaActualUsd ?? 0),
+        0,
+      ) ?? 0,
+  )
 
-  const lineaTotalCombinada = computed(() => query.data.value?.reduce((sum, item) => sum + item.lineaTotal, 0) ?? 0)
+  const lineaTotalCombinada = computed(
+    () =>
+      query.data.value?.reduce(
+        (sum, item) => sum + item.lineaTotal + usdToPen(item.lineaTotalUsd ?? 0),
+        0,
+      ) ?? 0,
+  )
+
+  const totalDeudaUsd = computed(
+    () => query.data.value?.reduce((sum, item) => sum + (item.montoDeudaActualUsd ?? 0), 0) ?? 0,
+  )
+
+  const lineaTotalUsd = computed(
+    () => query.data.value?.reduce((sum, item) => sum + (item.lineaTotalUsd ?? 0), 0) ?? 0,
+  )
+
+  const pagoMensualTotal = computed(
+    () =>
+      query.data.value?.reduce((sum, item) => {
+        const pen = item.pagoMinimo ?? item.montoDeudaActual ?? 0
+        const usd = item.pagoMinimoUsd ?? item.montoDeudaActualUsd ?? 0
+        return sum + pen + usdToPen(usd)
+      }, 0) ?? 0,
+  )
 
   const addMutation = useMutation({
     mutationFn: (data: NuevaTarjeta) => tarjetasApi.create(userId.value, data),
@@ -56,6 +87,9 @@ export function useTarjetas() {
     isError: computed(() => query.isError.value),
     totalTarjetas,
     lineaTotalCombinada,
+    totalDeudaUsd,
+    lineaTotalUsd,
+    pagoMensualTotal,
     addTarjeta: (data: NuevaTarjeta) => addMutation.mutate(data),
     removeTarjeta: (id: string) => removeMutation.mutate(id),
     updateTarjeta: (id: string, data: Partial<NuevaTarjeta>) => updateMutation.mutate({ id, data }),

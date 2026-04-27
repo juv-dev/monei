@@ -1,15 +1,18 @@
-import { createRouter, createWebHistory } from 'vue-router';
-import { watch } from 'vue';
-import { useAuthStore } from '~/stores/auth';
+import { createRouter, createWebHistory } from 'vue-router'
+import { watch } from 'vue'
+import { useAuthStore } from '~/stores/auth'
 
 export const ROUTE_NAMES = {
   LOGIN: 'login',
+  SSO_CALLBACK: 'sso-callback',
   DASHBOARD: 'dashboard',
   INSIGHTS: 'insights',
   INGRESOS: 'ingresos',
   PRESUPUESTO: 'presupuesto',
+  CREDITOS: 'creditos',
   DEUDAS: 'deudas',
   TARJETAS: 'tarjetas',
+  REPORTES: 'reportes',
   CONFIGURACION: 'configuracion',
 } as const
 
@@ -20,6 +23,12 @@ const router = createRouter({
       path: '/login',
       name: ROUTE_NAMES.LOGIN,
       component: () => import('~/modules/auth/views/LoginView.vue'),
+      meta: { requiresAuth: false },
+    },
+    {
+      path: '/sso-callback',
+      name: ROUTE_NAMES.SSO_CALLBACK,
+      component: () => import('~/modules/auth/views/SsoCallbackView.vue'),
       meta: { requiresAuth: false },
     },
     {
@@ -47,19 +56,33 @@ const router = createRouter({
           component: () => import('~/modules/ingresos/views/IngresosView.vue'),
         },
         {
-          path: 'presupuesto',
+          path: 'egresos',
           name: ROUTE_NAMES.PRESUPUESTO,
           component: () => import('~/modules/presupuesto/views/PresupuestoView.vue'),
         },
         {
+          path: 'presupuesto',
+          redirect: { name: ROUTE_NAMES.PRESUPUESTO },
+        },
+        {
+          path: 'creditos',
+          name: ROUTE_NAMES.CREDITOS,
+          component: () => import('~/modules/creditos/views/CreditosView.vue'),
+        },
+        {
           path: 'deudas',
           name: ROUTE_NAMES.DEUDAS,
-          component: () => import('~/modules/deudas/views/DeudasView.vue'),
+          redirect: { name: ROUTE_NAMES.CREDITOS, query: { tab: 'prestamos' } },
         },
         {
           path: 'tarjetas',
           name: ROUTE_NAMES.TARJETAS,
-          component: () => import('~/modules/tarjetas/views/TarjetasView.vue'),
+          redirect: { name: ROUTE_NAMES.CREDITOS, query: { tab: 'tarjetas' } },
+        },
+        {
+          path: 'reportes',
+          name: ROUTE_NAMES.REPORTES,
+          component: () => import('~/modules/reportes/views/ReportesView.vue'),
         },
         {
           path: 'configuracion',
@@ -74,6 +97,8 @@ const router = createRouter({
     },
   ],
 })
+
+const CLERK_QUERY_KEYS = ['__clerk_handshake', '__clerk_status', '__clerk_db_jwt', '__clerk_ticket']
 
 router.beforeEach(async (to) => {
   const auth = useAuthStore()
@@ -101,6 +126,13 @@ router.beforeEach(async (to) => {
 
   if (to.name === ROUTE_NAMES.LOGIN && auth.isLoggedIn) {
     return { name: ROUTE_NAMES.DASHBOARD }
+  }
+
+  const hasClerkParam = CLERK_QUERY_KEYS.some((k) => k in to.query)
+  if (hasClerkParam) {
+    const cleanQuery = { ...to.query }
+    for (const k of CLERK_QUERY_KEYS) delete cleanQuery[k]
+    return { path: to.path, query: cleanQuery, hash: to.hash, replace: true }
   }
 })
 

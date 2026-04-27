@@ -1,4 +1,4 @@
-import { defineConfig } from 'vite'
+import { defineConfig, loadEnv } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import tailwindcss from '@tailwindcss/vite'
 import Components from 'unplugin-vue-components/vite'
@@ -6,8 +6,23 @@ import RekaResolver from 'reka-ui/resolver'
 import { VitePWA } from 'vite-plugin-pwa'
 import { resolve } from 'path'
 
+// Extract the Clerk Frontend API hostname from the publishable key.
+// Key format: pk_(test|live)_<base64>  where base64 decodes to "<hostname>$"
+function clerkFapiHost(publishableKey: string): string {
+  try {
+    const b64 = publishableKey.replace(/^pk_(test|live)_/, '')
+    return Buffer.from(b64, 'base64').toString('utf-8').replace(/\$$/, '')
+  } catch {
+    return ''
+  }
+}
+
 // https://vite.dev/config/
-export default defineConfig({
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, process.cwd(), '')
+  const fapiHost = clerkFapiHost(env.VITE_CLERK_PUBLISHABLE_KEY ?? '')
+
+  return {
   plugins: [
     vue(),
     tailwindcss(),
@@ -101,6 +116,15 @@ export default defineConfig({
     },
   },
   server: {
-    middlewareMode: false
+    middlewareMode: false,
+    proxy: fapiHost ? {
+      '/api/__clerk': {
+        target: `https://${fapiHost}`,
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/__clerk/, ''),
+        secure: true,
+      },
+    } : undefined,
+  },
   }
 })

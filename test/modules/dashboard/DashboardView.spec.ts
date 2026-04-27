@@ -120,7 +120,7 @@ describe('should DashboardView', () => {
     const { wrapper } = mountAuthenticated()
     await flushPromises()
 
-    expect(wrapper.find('[data-testid="resumen-ingresos"]').text()).toContain('4,000')
+    expect(wrapper.find('[data-testid="resumen-ingresos"]').text()).toContain('4.0k')
   })
 
   it('should show positive balance with green styling', async () => {
@@ -129,10 +129,8 @@ describe('should DashboardView', () => {
     const { wrapper } = mountAuthenticated()
     await flushPromises()
 
-    // Card background gradient contains the teal color
-    const cardEl = wrapper.find('[data-testid="card-balance"]')
-    const style = cardEl.attributes('style') ?? ''
-    expect(style.includes('#3E6F73') || style.includes('rgb(62, 111, 115)')).toBe(true)
+    // When balance is positive the card shows this message
+    expect(wrapper.find('[data-testid="card-balance"]').text()).toContain('Llegás bien a fin de mes')
   })
 
   it('should show negative balance with red styling', async () => {
@@ -141,10 +139,8 @@ describe('should DashboardView', () => {
     const { wrapper } = mountAuthenticated()
     await flushPromises()
 
-    // Card background gradient contains the terracota color
-    const cardEl = wrapper.find('[data-testid="card-balance"]')
-    const style = cardEl.attributes('style') ?? ''
-    expect(style.includes('#C65A3A') || style.includes('rgb(198, 90, 58)')).toBe(true)
+    // When balance is negative the card shows this message
+    expect(wrapper.find('[data-testid="card-balance"]').text()).toContain('Revisá tus compromisos')
   })
 
   it('should show deudas total pendiente in card-deudas', async () => {
@@ -153,7 +149,7 @@ describe('should DashboardView', () => {
     const { wrapper } = mountAuthenticated()
     await flushPromises()
 
-    expect(wrapper.find('[data-testid="resumen-deudas"]').text()).toContain('3,000')
+    expect(wrapper.find('[data-testid="resumen-deudas"]').text()).toContain('3.0k')
   })
 
   it('should show card-deudas-total with bruto amount', async () => {
@@ -162,7 +158,7 @@ describe('should DashboardView', () => {
     const { wrapper } = mountAuthenticated()
     await flushPromises()
 
-    expect(wrapper.find('[data-testid="resumen-deudas-total"]').text()).toContain('5,000')
+    expect(wrapper.find('[data-testid="resumen-deudas-total"]').text()).toContain('5.0k')
   })
 
   // ─── Section toggle handlers ──────────────────────────────────────────
@@ -317,7 +313,7 @@ describe('should DashboardView', () => {
     // diferenciaGastos < 0, porcentajeGastos > 100
     const cierreText = wrapper.text()
     expect(cierreText).toContain('Revisar gastos')
-    expect(cierreText).toContain('Necesitas reducir')
+    expect(cierreText).toContain('Necesitás reducir')
   })
 
   it('should show cierre de mes with compromisos only (no ingresos)', async () => {
@@ -339,7 +335,7 @@ describe('should DashboardView', () => {
     // totalPagoMinimo === 0, so the else template renders
     const pagoMinSection = wrapper.find('[data-testid="forecast-pago-minimo"]')
     expect(pagoMinSection.exists()).toBe(true)
-    expect(pagoMinSection.text()).toContain('Define pagos mínimos')
+    expect(pagoMinSection.text()).toContain('Definí pagos mínimos')
   })
 
   it('should show negative balance styling in forecast sections', async () => {

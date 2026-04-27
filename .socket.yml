@@ -1,0 +1,5 @@
+ignore:
+  - "entities@*":
+      - obfuscated-code: "Transitivo de @vue/compiler-core (Vue.js oficial). Falso positivo."
+  - "js-beautify@*":
+      - obfuscated-code: "Transitivo de @vue/test-utils (devDependency). No va a producción."

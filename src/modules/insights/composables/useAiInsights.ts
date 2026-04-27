@@ -102,6 +102,7 @@ export function useAiInsights() {
     isAiError,
     aiError,
     isAiAvailable,
+    isDemo,
     fetchAnalysis,
     chatMessages,
     isSendingChat,

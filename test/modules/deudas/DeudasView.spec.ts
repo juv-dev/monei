@@ -272,6 +272,12 @@ describe('should DeudasView', () => {
     await wrapper.find('[data-testid="delete-button"]').trigger('click')
     await flushPromises()
 
+    const confirmBtn = document.body.querySelector('[data-testid="confirm-dialog-confirm"]') as HTMLElement | null
+    if (confirmBtn) {
+      confirmBtn.click()
+      await flushPromises()
+    }
+
     const stored = await deudasApi.getAll('jugaz')
     expect(stored).toHaveLength(0)
   })

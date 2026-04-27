@@ -3,49 +3,70 @@
 /* ─── Design Tokens ────────────────────────────────────────────────────────── */
 
 :root {
-  /* Primary (gold) */
-  --color-primary: #B6A77A;
-  --color-primary-dark: #8A7050;
-  --color-primary-bg: rgba(182, 167, 122, 0.14);
+  /* ─── Primary — Sage Teal ──────────────────────────── */
+  --color-primary:        #4D9B97;
+  --color-primary-dark:   #356E6B;
+  --color-primary-light:  #A8D4D2;
+  --color-primary-subtle: #EBF5F5;
 
-  /* Income (teal) */
-  --color-income: #3E6F73;
-  --color-income-dark: #2C5558;
-  --color-income-bg: rgba(62, 111, 115, 0.1);
+  /* ─── Accent — Dusty Gold ──────────────────────────── */
+  --color-accent:         #C4A872;
+  --color-accent-light:   #EDD9AF;
+  --color-accent-subtle:  #FBF5E9;
 
-  /* Expense (orange-red) */
-  --color-expense: #C65A3A;
-  --color-expense-dark: #9A3D27;
-  --color-expense-bg: rgba(198, 90, 58, 0.1);
+  /* ─── Semantic ─────────────────────────────────────── */
+  --color-success:        #3D9970;
+  --color-success-light:  #B8E0CE;
+  --color-success-subtle: #EDFAF4;
 
-  /* Debt (gold-dark) */
-  --color-debt: #D4A017;
-  --color-debt-dark: #A87A0F;
-  --color-debt-bg: rgba(212, 160, 23, 0.1);
+  --color-warning:        #C4870D;
+  --color-warning-light:  #F5D68A;
+  --color-warning-subtle: #FEF7E6;
 
-  /* Neutrals */
-  --color-text: #1A1A2E;
-  --color-text-secondary: #64748B;
-  --color-text-muted: #94A3B8;
-  --color-bg: #F5F6FA;
-  --color-bg-alt: #F0F2F5;
-  --color-surface: #FFFFFF;
-  --color-border: #EEEEF0;
+  --color-error:          #C05B52;
+  --color-error-light:    #F0BAB6;
+  --color-error-subtle:   #FEF1F0;
 
-  /* Spacing & Radius */
-  --radius-sm: 0.5rem;
-  --radius-md: 0.75rem;
-  --radius-lg: 1rem;
-  --radius-xl: 1.25rem;
-  --radius-2xl: 1.5rem;
+  --color-info:           #6B7FC4;
+  --color-info-light:     #C0C9EC;
+  --color-info-subtle:    #F0F2FB;
 
-  /* Transitions */
-  --transition-fast: 150ms ease;
+  /* ─── Neutrals — Warm Ivory ────────────────────────── */
+  --color-bg:             #F8F6F1;
+  --color-bg-alt:         #F0EDE5;
+  --color-surface:        #FFFFFF;
+  --color-surface-warm:   #FDFAF5;
+  --color-border:         #E5E0D5;
+  --color-border-subtle:  #EEEAE0;
+
+  --color-text:           #1C1B18;
+  --color-text-secondary: #5A5854;
+  --color-text-muted:     #9A9690;
+
+  /* ─── Radius ────────────────────────────────────────── */
+  --radius-sm:   0.375rem;
+  --radius-md:   0.625rem;
+  --radius-lg:   0.875rem;
+  --radius-xl:   1.25rem;
+  --radius-2xl:  1.5rem;
+  --radius-3xl:  2rem;
+
+  /* ─── Shadows ───────────────────────────────────────── */
+  --shadow-card:       0 1px 3px rgba(28,27,24,0.04), 0 4px 16px rgba(28,27,24,0.05);
+  --shadow-card-hover: 0 4px 8px rgba(28,27,24,0.06), 0 16px 32px rgba(28,27,24,0.09);
+  --shadow-elevated:   0 8px 32px rgba(28,27,24,0.14), 0 2px 8px rgba(28,27,24,0.06);
+  --shadow-modal:      0 24px 64px rgba(28,27,24,0.20), 0 4px 16px rgba(28,27,24,0.08);
+
+  /* ─── Transitions ───────────────────────────────────── */
+  --transition-fast: 120ms ease;
   --transition-base: 200ms ease;
-  --transition-slow: 300ms ease;
+  --transition-slow: 320ms cubic-bezier(0.4, 0, 0.2, 1);
 
-  /* Font stack */
-  --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  /* ─── Typography ────────────────────────────────────── */
+  --font-sans:    'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --font-display: 'Instrument Serif', 'Times New Roman', Georgia, serif;
+  --font-mono:    ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  --font-family:  var(--font-sans);
 }
 
 /* ─── Base ─────────────────────────────────────────────────────────────────── */
@@ -61,7 +82,54 @@
     @apply antialiased;
     background-color: var(--color-bg);
     color: var(--color-text);
-    font-family: var(--font-family);
+    font-family: var(--font-sans);
+    font-feature-settings: 'cv11', 'ss01', 'ss03';
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  .font-display {
+    font-family: var(--font-display);
+    font-weight: 400;
+    letter-spacing: -0.02em;
+  }
+
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+@layer utilities {
+  .bento-card {
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-2xl);
+    box-shadow: var(--shadow-bento);
+    transition: box-shadow var(--transition-base), transform var(--transition-base);
+  }
+
+  .bento-card:hover {
+    box-shadow: var(--shadow-bento-hover);
+  }
+
+  .bento-cream {
+    background-color: var(--color-surface-cream);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-2xl);
+  }
+
+  .grain {
+    position: relative;
+  }
+  .grain::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    border-radius: inherit;
+    opacity: 0.5;
+    mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.35'/%3E%3C/svg%3E");
   }
 
   /* Skip-to-content link for keyboard navigation (a11y) */

@@ -1,8 +1,7 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import {
   TrendingUp,
-  TrendingDown,
   ShoppingBag,
   Clock,
   CreditCard,
@@ -14,16 +13,68 @@ import {
   ChevronUp,
   AlertTriangle,
   CheckCircle2,
+  Search,
+  X,
+  ArrowUpDown,
+  Download,
 } from 'lucide-vue-next'
 import type { Component } from 'vue'
 import { useDashboard } from '../composables/useDashboard'
 import DoughnutChart from '~/shared/components/charts/DoughnutChart.vue'
 import OnboardingModal from '~/modules/demo/components/OnboardingModal.vue'
+import MonthSelector from '~/shared/components/ui/MonthSelector.vue'
 import { useAuthStore } from '~/stores/auth'
+import { useIngresos } from '~/modules/ingresos/composables/useIngresos'
+import { usePresupuesto } from '~/modules/presupuesto/composables/usePresupuesto'
+import { useDeudas } from '~/modules/deudas/composables/useDeudas'
+import { useTarjetas } from '~/modules/tarjetas/composables/useTarjetas'
+import { useExchangeRate } from '~/shared/composables/useExchangeRate'
+import { exportReporteToExcel } from '~/modules/reportes/services/exportService'
 
 const auth = useAuthStore()
 const showOnboarding = ref(auth.currentUser?.provider === 'demo' && !localStorage.getItem('monei_demo_onboarding_done'))
-const { resumen, todasLasDescripciones, totalPagoMinimo, lineaTotalCombinada, isLoading } = useDashboard()
+const { resumen, todasLasDescripciones, totalPagoMinimo, totalPagoMes, totalArrastre, isLoading } = useDashboard()
+const { ingresos } = useIngresos()
+const { gastos } = usePresupuesto()
+const { deudas } = useDeudas()
+const { tarjetas } = useTarjetas()
+const { rate: usdRate } = useExchangeRate()
+
+const isExporting = ref(false)
+async function handleExport(): Promise<void> {
+  if (isExporting.value) return
+  isExporting.value = true
+  try {
+    await exportReporteToExcel({
+      ingresos: ingresos.value,
+      gastos: gastos.value,
+      deudas: deudas.value,
+      tarjetas: tarjetas.value,
+      usdRate: usdRate.value,
+      userDisplayName: auth.currentUser?.displayName,
+    })
+  } finally {
+    isExporting.value = false
+  }
+}
+
+const TARJETA_MODE_KEY = 'monei_tarjeta_pago_mode'
+const tarjetaPagoMode = ref<'total' | 'minimo'>(
+  (localStorage.getItem(TARJETA_MODE_KEY) as 'total' | 'minimo' | null) ?? 'total',
+)
+watch(tarjetaPagoMode, (v) => localStorage.setItem(TARJETA_MODE_KEY, v))
+
+const tarjetasCompromiso = computed(() =>
+  tarjetaPagoMode.value === 'minimo' ? totalPagoMinimo.value : totalPagoMes.value,
+)
+
+const balanceNeto = computed(
+  () =>
+    resumen.value.totalIngresos -
+    resumen.value.totalGastado -
+    resumen.value.totalCuotaMensualDeudas -
+    tarjetasCompromiso.value,
+)
 
 const ingresosSectionOpen = ref(true)
 const gastosSectionOpen = ref(true)
@@ -53,52 +104,13 @@ const todayDate = new Intl.DateTimeFormat('es-PE', {
 }).format(new Date())
 
 const typeConfig: Record<string, { hex: string; icon: Component }> = {
-  Ingreso: { hex: '#3E6F73', icon: TrendingUp },
-  Gasto: { hex: '#C65A3A', icon: ShoppingBag },
-  Deuda: { hex: '#D4A017', icon: Clock },
-  Tarjeta: { hex: '#6A1E2D', icon: CreditCard },
+  Ingreso: { hex: '#10B981', icon: TrendingUp },
+  Gasto: { hex: '#F97316', icon: ShoppingBag },
+  Deuda: { hex: '#F59E0B', icon: Clock },
+  Tarjeta: { hex: '#F43F5E', icon: CreditCard },
 }
 
-const statsCards = computed(() => [
-  {
-    label: 'Total Ingresos',
-    value: resumen.value.totalIngresos,
-    icon: TrendingUp,
-    color: '#3E6F73',
-    bgColor: 'rgba(62,111,115,0.10)',
-    testid: 'card-ingresos',
-    valueTestid: 'resumen-ingresos',
-  },
-  {
-    label: 'Total Gastado',
-    value: resumen.value.totalGastado,
-    icon: ShoppingBag,
-    color: '#C65A3A',
-    bgColor: 'rgba(198,90,58,0.10)',
-    testid: 'card-gastado',
-    valueTestid: 'resumen-gastado',
-  },
-  {
-    label: 'Cuota Mensual',
-    value: resumen.value.totalCuotaMensualDeudas,
-    icon: Clock,
-    color: '#D4A017',
-    bgColor: 'rgba(212,160,23,0.10)',
-    testid: 'card-deudas',
-    valueTestid: 'resumen-deudas',
-  },
-  {
-    label: 'Tarjetas Crédito',
-    value: resumen.value.totalTarjetas,
-    icon: CreditCard,
-    color: '#6A1E2D',
-    bgColor: 'rgba(106,30,45,0.08)',
-    testid: 'card-tarjetas',
-    valueTestid: 'resumen-tarjetas',
-  },
-])
-
-const compromisosFijos = computed(() => resumen.value.totalCuotaMensualDeudas + resumen.value.totalTarjetas)
+const compromisosFijos = computed(() => resumen.value.totalCuotaMensualDeudas + tarjetasCompromiso.value)
 const margenParaGastos = computed(() => resumen.value.totalIngresos - compromisosFijos.value)
 const diferenciaGastos = computed(() => margenParaGastos.value - resumen.value.totalGastado)
 const porcentajeGastos = computed(() =>
@@ -115,15 +127,8 @@ const showForecastTarjetas = computed(() => resumen.value.totalTarjetas > 0)
 const ahorroPagoMinimo = computed(() => resumen.value.totalTarjetas - totalPagoMinimo.value)
 const balancePagoMinimo = computed(() => resumen.value.balance + ahorroPagoMinimo.value)
 const balanceSinDeudas = computed(() => resumen.value.balance + resumen.value.totalCuotaMensualDeudas)
-const capacidadLibreSinDeudas = computed(() => resumen.value.totalIngresos - resumen.value.totalGastado)
 
-const isPositive = computed(() => resumen.value.balance >= 0)
-const balanceGradient = computed(() =>
-  isPositive.value
-    ? 'linear-gradient(135deg, #3E6F73 0%, #2C5558 100%)'
-    : 'linear-gradient(135deg, #C65A3A 0%, #9A3D27 100%)',
-)
-const balanceIcon = computed(() => (isPositive.value ? TrendingUp : TrendingDown))
+const isPositive = computed(() => balanceNeto.value >= 0)
 
 const hasChartData = computed(
   () =>
@@ -140,25 +145,117 @@ const chartValues = computed(() => [
   resumen.value.totalPendienteDeudas,
   resumen.value.totalTarjetas,
 ])
-const chartColors = ['#3E6F73', '#C65A3A', '#D4A017', '#6A1E2D']
+const modernChartColors = ['#10B981', '#F97316', '#F59E0B', '#F43F5E']
+
+type TxGroup = {
+  key: 'i' | 'g' | 'd' | 't'
+  label: string
+  color: string
+  sign: '+' | '−'
+  items: ReturnType<typeof todasLasDescripciones.value.filter>
+  total: number
+  open: boolean
+}
+
+const transactionGroups = computed<TxGroup[]>(() => [
+  { key: 'i', label: 'Ingresos', color: '#10B981', sign: '+', items: ingresosItems.value, total: resumen.value.totalIngresos, open: ingresosSectionOpen.value },
+  { key: 'g', label: 'Gastos', color: '#F97316', sign: '−', items: gastosItems.value, total: resumen.value.totalGastado, open: gastosSectionOpen.value },
+  { key: 'd', label: 'Deudas', color: '#F59E0B', sign: '−', items: deudasItems.value, total: resumen.value.totalCuotaMensualDeudas, open: deudasSectionOpen.value },
+  { key: 't', label: 'Tarjetas', color: '#F43F5E', sign: '−', items: tarjetasItems.value, total: resumen.value.totalTarjetas, open: tarjetasSectionOpen.value },
+])
+
+function toggleGroup(key: TxGroup['key']) {
+  if (key === 'i') ingresosSectionOpen.value = !ingresosSectionOpen.value
+  else if (key === 'g') gastosSectionOpen.value = !gastosSectionOpen.value
+  else if (key === 'd') deudasSectionOpen.value = !deudasSectionOpen.value
+  else tarjetasSectionOpen.value = !tarjetasSectionOpen.value
+}
+
+// Transactions UX: filter tabs + search + sort
+type FilterKey = 'all' | 'Ingreso' | 'Gasto' | 'Deuda' | 'Tarjeta'
+const activeFilter = ref<FilterKey>('all')
+const searchQuery = ref('')
+const sortDesc = ref(true)
+
+const filterTabs: { key: FilterKey; label: string; color: string }[] = [
+  { key: 'all', label: 'Todo', color: '#6366F1' },
+  { key: 'Ingreso', label: 'Ingresos', color: '#10B981' },
+  { key: 'Gasto', label: 'Gastos', color: '#F97316' },
+  { key: 'Deuda', label: 'Deudas', color: '#F59E0B' },
+  { key: 'Tarjeta', label: 'Tarjetas', color: '#F43F5E' },
+]
+
+const hasActiveFilterOrSearch = computed(() => activeFilter.value !== 'all' || searchQuery.value.trim() !== '')
+
+const filteredFlatItems = computed(() => {
+  const q = searchQuery.value.trim().toLowerCase()
+  let list = todasLasDescripciones.value.slice()
+  if (activeFilter.value !== 'all') list = list.filter((i) => i.tipo === activeFilter.value)
+  if (q) list = list.filter((i) => i.descripcion.toLowerCase().includes(q))
+  list.sort((a, b) => (sortDesc.value ? b.monto - a.monto : a.monto - b.monto))
+  return list
+})
+
+const netoMes = computed(() => resumen.value.totalIngresos - resumen.value.totalGastado - compromisosFijos.value)
+const totalSalidasMes = computed(() => resumen.value.totalGastado + compromisosFijos.value)
+
+function colorFor(tipo: string): string {
+  return typeConfig[tipo]?.hex ?? '#64748B'
+}
+
+function signFor(tipo: string): '+' | '−' {
+  return tipo === 'Ingreso' ? '+' : '−'
+}
+
+function groupTotalFor(tipo: string): number {
+  if (tipo === 'Ingreso') return resumen.value.totalIngresos
+  if (tipo === 'Gasto') return resumen.value.totalGastado
+  if (tipo === 'Deuda') return resumen.value.totalCuotaMensualDeudas
+  return resumen.value.totalTarjetas
+}
+
+function percentOfGroup(monto: number, tipo: string): number {
+  const total = groupTotalFor(tipo)
+  if (total <= 0) return 0
+  return Math.min(100, Math.round((monto / total) * 100))
+}
 </script>
 
 <template>
-  <div class="min-h-screen bg-[#F0F2F5]" data-testid="dashboard-view">
+  <div class="min-h-screen bg-[#F8F6F1]" data-testid="dashboard-view">
     <OnboardingModal v-if="showOnboarding" @close="showOnboarding = false" />
-    <div class="max-w-6xl mx-auto p-5 lg:p-8 space-y-5">
-      <div class="flex items-end justify-between">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-10">
+      <!-- Header -->
+      <div class="flex items-center justify-between mb-8">
         <div>
-          <p class="text-xs text-[#94A3B8] capitalize mb-1">{{ todayDate }}</p>
-          <h1 class="text-2xl lg:text-3xl font-bold text-[#1A1A2E]">
-            Hola, {{ auth.currentUser?.displayName ?? 'Usuario' }} 👋
+          <p class="text-sm text-[#9A9690] mb-1 capitalize">{{ todayDate }}</p>
+          <h1 class="text-2xl lg:text-3xl font-bold text-[#1C1B18] tracking-tight">
+            Hola, {{ auth.currentUser?.displayName?.split(' ')[0] ?? 'Usuario' }}
           </h1>
+        </div>
+        <div class="flex items-center gap-2 flex-wrap justify-end">
+          <MonthSelector />
+          <button
+            type="button"
+            class="flex items-center gap-2 bg-white border border-[#E5E0D5] hover:border-[#A8D4D2] hover:bg-[#EBF5F5] text-[#5A5854] hover:text-[#356E6B] rounded-full px-4 py-2 text-xs font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            :disabled="isExporting || isLoading"
+            data-testid="export-excel-btn"
+            @click="handleExport"
+          >
+            <Loader2 v-if="isExporting" :size="14" class="animate-spin" />
+            <Download v-else :size="14" />
+            <span>{{ isExporting ? 'Generando...' : 'Exportar Excel' }}</span>
+          </button>
+          <div class="hidden sm:flex items-center gap-2 bg-white border border-[#E5E0D5] rounded-full px-4 py-2 text-xs text-[#9A9690]">
+            <span class="w-2 h-2 rounded-full bg-[#3D9970] animate-pulse"></span>
+            Actualizado
+          </div>
         </div>
       </div>
 
       <div
         v-if="isLoading"
-        class="flex items-center justify-center gap-3 py-24 text-[#94A3B8]"
+        class="flex items-center justify-center gap-3 py-24 text-slate-400"
         data-testid="loading-state"
       >
         <Loader2 :size="28" class="animate-spin" aria-hidden="true" />
@@ -166,560 +263,495 @@ const chartColors = ['#3E6F73', '#C65A3A', '#D4A017', '#6A1E2D']
       </div>
 
       <template v-else>
-        <div
-          class="rounded-3xl p-6 lg:p-8 relative overflow-hidden shadow-lg"
-          :style="{ background: balanceGradient }"
-          data-testid="card-balance"
-        >
-          <div class="absolute -top-12 -right-12 w-48 h-48 rounded-full opacity-[0.08]" style="background: white"></div>
+        <!-- Balance + stat grid -->
+        <div class="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-6" data-testid="card-balance">
+          <!-- Balance (highlighted, wide) -->
           <div
-            class="absolute -bottom-16 -left-8 w-56 h-56 rounded-full opacity-[0.06]"
-            style="background: white"
-          ></div>
+            class="col-span-2 rounded-2xl p-4 lg:p-5 border shadow-sm"
+            :style="isPositive
+              ? 'background: linear-gradient(135deg, #EBF5F5 0%, #D5EDED 100%); border-color: rgba(77, 155, 151, 0.25);'
+              : 'background: linear-gradient(135deg, #FEF1F0 0%, #FDE4E2 100%); border-color: rgba(192, 91, 82, 0.25);'"
+          >
+            <div class="flex items-center gap-2 mb-2">
+              <div
+                class="w-7 h-7 rounded-lg flex items-center justify-center"
+                :style="isPositive
+                  ? 'background: rgba(77, 155, 151, 0.14);'
+                  : 'background: rgba(192, 91, 82, 0.12);'"
+              >
+                <component :is="isPositive ? ArrowUpRight : ArrowDownRight" :size="14" :style="{ color: isPositive ? '#356E6B' : '#C05B52' }" aria-hidden="true" />
+              </div>
+              <p class="text-[10px] font-semibold uppercase tracking-wider" :style="{ color: isPositive ? '#356E6B' : '#C05B52' }">Balance neto</p>
+            </div>
+            <p class="text-2xl lg:text-3xl font-black tabular-nums tracking-tight text-[#1C1B18]" data-testid="resumen-balance">
+              {{ formatCurrency(balanceNeto) }}
+            </p>
+            <p class="text-[11px] mt-1 font-medium" :style="{ color: isPositive ? '#356E6B' : '#C05B52' }">
+              {{ isPositive ? 'Llegás bien a fin de mes' : 'Revisá tus compromisos' }}
+            </p>
+          </div>
 
-          <div class="relative z-10 flex items-start justify-between gap-4">
-            <div class="flex-1 min-w-0">
-              <div class="flex items-center gap-2 mb-3">
-                <span class="text-white/60 text-xs font-semibold uppercase tracking-widest"> Balance Neto </span>
-                <span
-                  class="inline-flex items-center gap-0.5 text-xs font-bold rounded-full px-2.5 py-0.5"
-                  :class="isPositive ? 'bg-white/20 text-white' : 'bg-white/20 text-white'"
-                >
-                  <component :is="isPositive ? ArrowUpRight : ArrowDownRight" :size="12" />
-                  {{ isPositive ? 'Positivo' : 'Negativo' }}
+          <div class="rounded-2xl p-4 bg-white border border-[#E5E0D5] shadow-[0_1px_3px_rgba(28,27,24,0.04),0_4px_16px_rgba(28,27,24,0.05)]" data-testid="card-ingresos">
+            <div class="flex items-center gap-2 mb-2.5">
+              <div class="w-7 h-7 rounded-lg bg-[#EDFAF4] flex items-center justify-center">
+                <TrendingUp :size="14" class="text-[#3D9970]" />
+              </div>
+              <p class="text-xs font-medium text-[#9A9690]">Ingresos</p>
+            </div>
+            <p class="text-xl lg:text-2xl font-bold text-[#1C1B18] tabular-nums tracking-tight" data-testid="resumen-ingresos">{{ formatShort(resumen.totalIngresos) }}</p>
+          </div>
+
+          <div class="rounded-2xl p-4 bg-white border border-[#E5E0D5] shadow-[0_1px_3px_rgba(28,27,24,0.04),0_4px_16px_rgba(28,27,24,0.05)]" data-testid="card-gastado">
+            <div class="flex items-center gap-2 mb-2.5">
+              <div class="w-7 h-7 rounded-lg bg-[#FEF7E6] flex items-center justify-center">
+                <ShoppingBag :size="14" class="text-[#C4870D]" />
+              </div>
+              <p class="text-xs font-medium text-[#9A9690]">Gastado</p>
+            </div>
+            <p class="text-xl lg:text-2xl font-bold text-[#1C1B18] tabular-nums tracking-tight" data-testid="resumen-gastado">{{ formatShort(resumen.totalGastado) }}</p>
+          </div>
+
+          <div class="rounded-2xl p-4 bg-white border border-[#E5E0D5] shadow-[0_1px_3px_rgba(28,27,24,0.04),0_4px_16px_rgba(28,27,24,0.05)]" data-testid="card-deudas">
+            <div class="flex items-center gap-2 mb-2.5">
+              <div class="w-7 h-7 rounded-lg bg-[#FEF1F0] flex items-center justify-center">
+                <Clock :size="14" class="text-[#C05B52]" />
+              </div>
+              <p class="text-xs font-medium text-[#9A9690]">Cuota</p>
+            </div>
+            <p class="text-xl lg:text-2xl font-bold text-[#1C1B18] tabular-nums tracking-tight" data-testid="resumen-deudas">{{ formatShort(resumen.totalCuotaMensualDeudas) }}</p>
+            <p class="text-[11px] text-[#9A9690] tabular-nums mt-0.5" data-testid="resumen-deudas-total">{{ formatShort(resumen.totalDeudas) }} total</p>
+          </div>
+
+          <div class="rounded-2xl p-4 bg-white border border-[#E5E0D5] shadow-[0_1px_3px_rgba(28,27,24,0.04),0_4px_16px_rgba(28,27,24,0.05)] col-span-2 lg:col-span-5" data-testid="card-tarjetas">
+            <div class="flex items-center justify-between gap-3">
+              <div class="flex items-center gap-2">
+                <div class="w-7 h-7 rounded-lg bg-[#F0F2FB] flex items-center justify-center">
+                  <CreditCard :size="14" class="text-[#6B7FC4]" />
+                </div>
+                <p class="text-xs font-medium text-[#9A9690]">Tarjetas</p>
+                <div class="inline-flex rounded-full bg-slate-100 p-0.5 text-[10px] font-semibold" role="tablist" aria-label="Modo de pago de tarjetas">
+                  <button
+                    type="button"
+                    role="tab"
+                    :aria-selected="tarjetaPagoMode === 'total'"
+                    class="px-2.5 py-1 rounded-full transition-colors"
+                    :class="tarjetaPagoMode === 'total' ? 'bg-white text-[#356E6B] shadow-sm' : 'text-[#9A9690] hover:text-[#5A5854]'"
+                    data-testid="tarjeta-mode-total"
+                    @click="tarjetaPagoMode = 'total'"
+                  >Pago del mes</button>
+                  <button
+                    type="button"
+                    role="tab"
+                    :aria-selected="tarjetaPagoMode === 'minimo'"
+                    class="px-2.5 py-1 rounded-full transition-colors"
+                    :class="tarjetaPagoMode === 'minimo' ? 'bg-white text-[#356E6B] shadow-sm' : 'text-[#9A9690] hover:text-[#5A5854]'"
+                    data-testid="tarjeta-mode-minimo"
+                    @click="tarjetaPagoMode = 'minimo'"
+                  >Mínimo</button>
+                </div>
+              </div>
+              <p class="text-base lg:text-lg font-black text-slate-900 tabular-nums" data-testid="resumen-tarjetas">{{ formatCurrency(tarjetasCompromiso) }}</p>
+            </div>
+            <p
+              v-if="tarjetaPagoMode === 'minimo' && totalArrastre > 0"
+              class="text-[11px] text-rose-700 mt-2 tabular-nums"
+              data-testid="tarjeta-arrastre"
+            >
+              Arrastrás <strong>{{ formatCurrency(totalArrastre) }}</strong> al próximo mes
+            </p>
+          </div>
+        </div>
+
+        <!-- Plan cierre + Donut -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6 mb-6">
+          <div
+            v-if="showCierreDeMes"
+            class="lg:col-span-2 bg-white rounded-2xl p-6 border border-[#E5E0D5] shadow-[0_1px_3px_rgba(28,27,24,0.04),0_4px_16px_rgba(28,27,24,0.05)]"
+            data-testid="cierre-de-mes"
+          >
+            <div class="flex items-center justify-between mb-5">
+              <div>
+                <h2 class="text-base font-bold text-slate-900">Plan de cierre del mes</h2>
+                <p class="text-xs text-slate-500 mt-0.5">Cómo vas llegando a fin de mes</p>
+              </div>
+              <span
+                class="inline-flex items-center gap-1.5 text-xs font-semibold rounded-full px-3 py-1"
+                :class="diferenciaGastos >= 0 ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'"
+              >
+                <component :is="diferenciaGastos >= 0 ? CheckCircle2 : AlertTriangle" :size="12" />
+                {{ diferenciaGastos >= 0 ? 'En control' : 'Revisar gastos' }}
+              </span>
+            </div>
+
+            <div class="grid grid-cols-3 gap-3 mb-5">
+              <div class="bg-emerald-50/60 rounded-xl p-3">
+                <p class="text-[10px] font-semibold text-emerald-700 uppercase tracking-wider mb-1.5">Ingresos</p>
+                <p class="text-lg font-bold text-slate-900 tabular-nums">{{ formatShort(resumen.totalIngresos) }}</p>
+              </div>
+              <div class="bg-amber-50/60 rounded-xl p-3">
+                <p class="text-[10px] font-semibold text-amber-700 uppercase tracking-wider mb-1.5">Fijo</p>
+                <p class="text-lg font-bold text-slate-900 tabular-nums">{{ formatShort(compromisosFijos) }}</p>
+              </div>
+              <div
+                class="rounded-xl p-3"
+                :class="margenParaGastos >= 0 ? 'bg-indigo-50/60' : 'bg-red-50/60'"
+              >
+                <p
+                  class="text-[10px] font-semibold uppercase tracking-wider mb-1.5"
+                  :class="margenParaGastos >= 0 ? 'text-indigo-700' : 'text-red-700'"
+                >Margen</p>
+                <p class="text-lg font-bold text-slate-900 tabular-nums">{{ formatShort(Math.abs(margenParaGastos)) }}</p>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <div class="flex items-center justify-between text-xs mb-2">
+                <span class="text-slate-600">
+                  Gastaste <span class="font-semibold text-slate-900">{{ formatShort(resumen.totalGastado) }}</span>
+                  de <span class="font-semibold text-slate-900">{{ formatShort(Math.max(margenParaGastos, 0)) }}</span>
+                </span>
+                <span class="font-bold tabular-nums" :class="porcentajeGastos > 100 ? 'text-[#C05B52]' : 'text-[#356E6B]'">
+                  {{ porcentajeGastos }}%
                 </span>
               </div>
-
-              <p class="text-white text-4xl lg:text-5xl font-black tracking-tight" data-testid="resumen-balance">
-                {{ formatCurrency(resumen.balance) }}
-              </p>
-
-              <div class="flex flex-wrap gap-4 mt-5 pt-5 border-t border-white/20">
-                <div>
-                  <p class="text-white/50 text-xs mb-0.5">Ingresos</p>
-                  <p class="text-white font-bold text-sm">{{ formatShort(resumen.totalIngresos) }}</p>
-                </div>
-                <div>
-                  <p class="text-white/50 text-xs mb-0.5">Gastado</p>
-                  <p class="text-white font-bold text-sm">{{ formatShort(resumen.totalGastado) }}</p>
-                </div>
-                <div>
-                  <p class="text-white/50 text-xs mb-0.5">Cuota mensual</p>
-                  <p class="text-white font-bold text-sm">{{ formatShort(resumen.totalCuotaMensualDeudas) }}</p>
-                </div>
-                <div>
-                  <p class="text-white/50 text-xs mb-0.5">Deuda bruto</p>
-                  <p class="text-white font-bold text-sm" data-testid="resumen-deudas-total">
-                    {{ formatCurrency(resumen.totalDeudas) }}
-                  </p>
-                </div>
+              <div class="h-2.5 rounded-full bg-slate-100 overflow-hidden">
+                <div
+                  class="h-full rounded-full transition-all duration-500"
+                  :style="{
+                    width: barGastosWidth,
+                    background: porcentajeGastos > 100
+                      ? 'linear-gradient(90deg, #C05B52, #A04540)'
+                      : 'linear-gradient(90deg, #4D9B97, #356E6B)',
+                  }"
+                ></div>
               </div>
             </div>
 
-            <div class="shrink-0 w-16 h-16 rounded-2xl bg-white/15 flex items-center justify-center">
-              <component :is="balanceIcon" :size="32" class="text-white" aria-hidden="true" />
-            </div>
-          </div>
-        </div>
-
-        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <div
-            v-for="card in statsCards"
-            :key="card.testid"
-            class="rounded-2xl p-5 shadow-sm relative overflow-hidden"
-            :style="{ backgroundColor: card.bgColor }"
-            :data-testid="card.testid"
-          >
             <div
-              class="absolute -top-4 -right-4 w-20 h-20 rounded-full opacity-20"
-              :style="{ backgroundColor: card.color }"
-            ></div>
-
-            <div class="relative z-10">
-              <div class="flex items-center justify-between mb-4">
-                <component :is="card.icon" :size="22" :style="{ color: card.color }" aria-hidden="true" />
-                <p
-                  class="text-xs font-semibold text-right leading-tight max-w-[60%]"
-                  :style="{ color: card.color + 'CC' }"
-                >
-                  {{ card.label }}
-                </p>
-              </div>
-              <p class="text-xl lg:text-2xl font-black" :style="{ color: card.color }" :data-testid="card.valueTestid">
-                {{ formatCurrency(card.value) }}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div
-          v-if="showCierreDeMes"
-          class="bg-white rounded-2xl border border-[#EEEEF0] shadow-sm p-5"
-          data-testid="cierre-de-mes"
-        >
-          <div class="flex items-center justify-between mb-4">
-            <h2 class="text-sm font-bold text-[#1A1A2E]">Plan de cierre de mes</h2>
-            <span
-              class="inline-flex items-center gap-1.5 text-xs font-bold rounded-full px-3 py-1"
-              :class="
-                diferenciaGastos >= 0
-                  ? 'bg-[rgba(62,111,115,0.10)] text-[#3E6F73]'
-                  : 'bg-[rgba(198,90,58,0.10)] text-[#C65A3A]'
-              "
+              class="flex items-start gap-2 mt-4 p-3 rounded-xl text-xs"
+              :class="diferenciaGastos >= 0 ? 'bg-emerald-50 text-emerald-800' : 'bg-red-50 text-red-800'"
             >
-              <component :is="diferenciaGastos >= 0 ? CheckCircle2 : AlertTriangle" :size="12" aria-hidden="true" />
-              {{ diferenciaGastos >= 0 ? 'En control' : 'Revisar gastos' }}
-            </span>
-          </div>
-
-          <div class="grid grid-cols-3 gap-3 mb-4">
-            <div class="text-center p-3 rounded-xl bg-[rgba(62,111,115,0.08)]">
-              <p class="text-[10px] font-semibold text-[#3E6F73] uppercase tracking-wide mb-1">Ingresos</p>
-              <p class="text-base font-black text-[#3E6F73]">{{ formatShort(resumen.totalIngresos) }}</p>
-            </div>
-            <div class="text-center p-3 rounded-xl bg-[rgba(212,160,23,0.08)]">
-              <p class="text-[10px] font-semibold text-[#D4A017] uppercase tracking-wide mb-1">Compromisos</p>
-              <p class="text-base font-black text-[#D4A017]">{{ formatShort(compromisosFijos) }}</p>
-              <p class="text-[10px] text-[#94A3B8] mt-0.5">Deudas + Tarjetas</p>
-            </div>
-            <div
-              class="text-center p-3 rounded-xl"
-              :class="margenParaGastos >= 0 ? 'bg-[rgba(62,111,115,0.08)]' : 'bg-[rgba(198,90,58,0.08)]'"
-            >
-              <p
-                class="text-[10px] font-semibold uppercase tracking-wide mb-1"
-                :class="margenParaGastos >= 0 ? 'text-[#3E6F73]' : 'text-[#C65A3A]'"
-              >
-                Margen
-              </p>
-              <p class="text-base font-black" :class="margenParaGastos >= 0 ? 'text-[#3E6F73]' : 'text-[#C65A3A]'">
-                {{ formatShort(Math.abs(margenParaGastos)) }}
-              </p>
-              <p class="text-[10px] text-[#94A3B8] mt-0.5">para gastos</p>
-            </div>
-          </div>
-
-          <div class="mb-3">
-            <div class="flex items-center justify-between mb-1.5">
-              <span class="text-xs text-[#64748B]">
-                Gastos
-                <span class="font-semibold text-[#1A1A2E]">{{ formatShort(resumen.totalGastado) }}</span>
-                de
-                <span class="font-semibold text-[#1A1A2E]">{{ formatShort(Math.max(margenParaGastos, 0)) }}</span>
-                disponibles
+              <component :is="diferenciaGastos >= 0 ? CheckCircle2 : AlertTriangle" :size="14" class="shrink-0 mt-0.5" />
+              <span v-if="diferenciaGastos >= 0">
+                Te sobran <strong>{{ formatCurrency(diferenciaGastos) }}</strong> después de cubrir todo.
               </span>
-              <span class="text-xs font-bold" :class="porcentajeGastos > 100 ? 'text-[#C65A3A]' : 'text-[#3E6F73]'"
-                >{{ porcentajeGastos }}%</span
-              >
-            </div>
-            <div class="h-2.5 rounded-full bg-[#F0F2F5] overflow-hidden">
-              <div
-                class="h-full rounded-full transition-all duration-300"
-                :style="{
-                  width: barGastosWidth,
-                  backgroundColor: porcentajeGastos > 100 ? '#C65A3A' : '#3E6F73',
-                }"
-              ></div>
+              <span v-else>
+                Necesitás reducir <strong>{{ formatCurrency(Math.abs(diferenciaGastos)) }}</strong> para llegar a fin de mes.
+              </span>
             </div>
           </div>
 
           <div
-            class="flex items-center gap-2 p-3 rounded-xl text-xs font-semibold"
-            :class="
-              diferenciaGastos >= 0
-                ? 'bg-[rgba(62,111,115,0.08)] text-[#3E6F73]'
-                : 'bg-[rgba(198,90,58,0.08)] text-[#C65A3A]'
-            "
+            v-if="hasChartData"
+            class="bg-white rounded-2xl p-6 border border-[#E5E0D5] shadow-[0_1px_3px_rgba(28,27,24,0.04),0_4px_16px_rgba(28,27,24,0.05)] flex flex-col"
           >
-            <component
-              :is="diferenciaGastos >= 0 ? CheckCircle2 : AlertTriangle"
-              :size="14"
-              class="shrink-0"
-              aria-hidden="true"
-            />
-            <span v-if="diferenciaGastos >= 0">
-              Te sobran <strong>{{ formatCurrency(diferenciaGastos) }}</strong> después de cubrir todos tus compromisos
-              y gastos.
-            </span>
-            <span v-else>
-              Necesitas reducir <strong>{{ formatCurrency(Math.abs(diferenciaGastos)) }}</strong> en gastos para llegar
-              a fin de mes.
-            </span>
+            <div class="mb-4">
+              <h2 class="text-base font-bold text-slate-900">Distribución</h2>
+              <p class="text-xs text-slate-500 mt-0.5">A qué va tu plata</p>
+            </div>
+            <div class="flex-1 flex flex-col items-center">
+              <div class="w-full max-w-[180px] mb-4">
+                <DoughnutChart
+                  :labels="chartLabels"
+                  :values="chartValues"
+                  :colors="modernChartColors"
+                  :center-value="formatShort(resumen.totalIngresos)"
+                  center-label="ingresos"
+                />
+              </div>
+              <ul class="w-full space-y-2">
+                <li v-for="(label, i) in chartLabels" :key="label" class="flex items-center justify-between text-xs">
+                  <div class="flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full shrink-0" :style="{ backgroundColor: modernChartColors[i] }"></span>
+                    <span class="text-slate-600">{{ label }}</span>
+                  </div>
+                  <span class="font-semibold text-slate-900 tabular-nums">{{ formatShort(chartValues[i] ?? 0) }}</span>
+                </li>
+              </ul>
+            </div>
           </div>
         </div>
 
+        <!-- Forecast tarjetas -->
         <div
           v-if="showForecastTarjetas"
-          class="bg-white rounded-2xl border border-[#EEEEF0] shadow-sm p-5"
+          class="bg-white rounded-2xl p-6 border border-[#E5E0D5] shadow-[0_1px_3px_rgba(28,27,24,0.04),0_4px_16px_rgba(28,27,24,0.05)] mb-6"
           data-testid="forecast-tarjetas"
         >
-          <div class="flex items-center gap-2 mb-4">
-            <CreditCard :size="16" style="color: #6a1e2d" aria-hidden="true" />
-            <h2 class="text-sm font-bold text-[#1A1A2E]">Pronóstico Tarjetas de Crédito</h2>
+          <div class="flex items-center gap-3 mb-5">
+            <div class="w-10 h-10 rounded-xl bg-rose-50 flex items-center justify-center">
+              <CreditCard :size="20" class="text-rose-600" />
+            </div>
+            <div>
+              <h2 class="text-base font-bold text-slate-900">Escenarios de tarjetas</h2>
+              <p class="text-xs text-slate-500 mt-0.5">Tres caminos posibles este mes</p>
+            </div>
           </div>
 
-          <div
-            class="grid gap-3"
-            :class="resumen.totalCuotaMensualDeudas > 0 ? 'grid-cols-1 md:grid-cols-3' : 'grid-cols-1 md:grid-cols-2'"
-          >
-            <div class="rounded-xl border border-[#EEEEF0] p-4" data-testid="forecast-pago-total">
-              <p class="text-[10px] font-semibold text-[#6A1E2D] uppercase tracking-wide mb-2">Pago Completo</p>
-              <p class="text-lg font-black text-[#6A1E2D] mb-1">{{ formatCurrency(resumen.totalTarjetas) }}</p>
-              <p class="text-[10px] text-[#94A3B8] mb-3">Compromiso mensual actual</p>
-              <div class="flex items-center justify-between pt-3 border-t border-[#F0F2F5]">
-                <span class="text-[10px] text-[#94A3B8]">Balance resultante</span>
-                <span class="text-xs font-bold" :class="resumen.balance >= 0 ? 'text-[#3E6F73]' : 'text-[#C65A3A]'">{{
-                  formatCurrency(resumen.balance)
-                }}</span>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div class="rounded-xl border border-rose-100 bg-rose-50/30 p-4" data-testid="forecast-pago-total">
+              <p class="text-[10px] font-bold text-rose-700 uppercase tracking-wider mb-2">Pago Completo</p>
+              <p class="text-xl font-bold text-slate-900 tabular-nums mb-1">{{ formatCurrency(resumen.totalTarjetas) }}</p>
+              <p class="text-[11px] text-slate-500 mb-3">Compromiso actual</p>
+              <div class="flex items-center justify-between pt-3 border-t border-rose-100">
+                <span class="text-[11px] text-slate-500">Balance</span>
+                <span class="text-xs font-bold tabular-nums" :class="resumen.balance >= 0 ? 'text-emerald-600' : 'text-red-600'">
+                  {{ formatCurrency(resumen.balance) }}
+                </span>
               </div>
             </div>
 
-            <div class="rounded-xl border border-[#EEEEF0] p-4" data-testid="forecast-pago-minimo">
-              <p class="text-[10px] font-semibold text-[#D4A017] uppercase tracking-wide mb-2">Solo Mínimos</p>
+            <div class="rounded-xl border border-amber-100 bg-amber-50/30 p-4" data-testid="forecast-pago-minimo">
+              <p class="text-[10px] font-bold text-amber-700 uppercase tracking-wider mb-2">Solo Mínimos</p>
               <template v-if="totalPagoMinimo > 0">
-                <p class="text-lg font-black text-[#D4A017] mb-1">{{ formatCurrency(totalPagoMinimo) }}</p>
-                <p class="text-[10px] text-[#94A3B8] mb-3">
-                  Ahorras
-                  <span class="font-bold text-[#3E6F73]">{{ formatCurrency(ahorroPagoMinimo) }}</span>
-                  vs pago total
+                <p class="text-xl font-bold text-slate-900 tabular-nums mb-1">{{ formatCurrency(totalPagoMinimo) }}</p>
+                <p class="text-[11px] text-slate-500 mb-3">
+                  Ahorrás <span class="font-semibold text-emerald-600">{{ formatShort(ahorroPagoMinimo) }}</span>
                 </p>
-                <div class="flex items-center justify-between pt-3 border-t border-[#F0F2F5]">
-                  <span class="text-[10px] text-[#94A3B8]">Balance resultante</span>
-                  <span
-                    class="text-xs font-bold"
-                    :class="balancePagoMinimo >= 0 ? 'text-[#3E6F73]' : 'text-[#C65A3A]'"
-                    >{{ formatCurrency(balancePagoMinimo) }}</span
-                  >
+                <div class="flex items-center justify-between pt-3 border-t border-amber-100">
+                  <span class="text-[11px] text-slate-500">Balance</span>
+                  <span class="text-xs font-bold tabular-nums" :class="balancePagoMinimo >= 0 ? 'text-emerald-600' : 'text-red-600'">
+                    {{ formatCurrency(balancePagoMinimo) }}
+                  </span>
                 </div>
               </template>
               <template v-else>
-                <p class="text-xs text-[#94A3B8] leading-relaxed mt-1">
-                  Define pagos mínimos en tus tarjetas para activar este análisis.
-                </p>
+                <p class="text-xs text-slate-500 leading-relaxed mt-1">Definí pagos mínimos en tus tarjetas para activar este análisis.</p>
               </template>
             </div>
 
             <div
               v-if="resumen.totalCuotaMensualDeudas > 0"
-              class="rounded-xl border border-[#EEEEF0] p-4"
+              class="rounded-xl border border-emerald-100 bg-emerald-50/30 p-4"
               data-testid="forecast-sin-deudas"
             >
-              <p class="text-[10px] font-semibold text-[#3E6F73] uppercase tracking-wide mb-2">Sin Deudas</p>
-              <p class="text-lg font-black text-[#3E6F73] mb-1">
-                {{ formatCurrency(resumen.totalCuotaMensualDeudas) }}
-              </p>
-              <p class="text-[10px] text-[#94A3B8] mb-3">Cuota mensual que se libera</p>
-              <div class="space-y-2 pt-3 border-t border-[#F0F2F5]">
-                <div class="flex items-center justify-between">
-                  <span class="text-[10px] text-[#94A3B8]">Balance proyectado</span>
-                  <span
-                    class="text-xs font-bold"
-                    :class="balanceSinDeudas >= 0 ? 'text-[#3E6F73]' : 'text-[#C65A3A]'"
-                    >{{ formatCurrency(balanceSinDeudas) }}</span
-                  >
-                </div>
-                <div class="flex items-center justify-between">
-                  <span class="text-[10px] text-[#94A3B8]">Capacidad libre</span>
-                  <span
-                    class="text-xs font-bold"
-                    :class="capacidadLibreSinDeudas >= 0 ? 'text-[#3E6F73]' : 'text-[#C65A3A]'"
-                    >{{ formatCurrency(capacidadLibreSinDeudas) }}</span
-                  >
-                </div>
+              <p class="text-[10px] font-bold text-emerald-700 uppercase tracking-wider mb-2">Sin Deudas</p>
+              <p class="text-xl font-bold text-slate-900 tabular-nums mb-1">{{ formatCurrency(resumen.totalCuotaMensualDeudas) }}</p>
+              <p class="text-[11px] text-slate-500 mb-3">Cuota que se libera</p>
+              <div class="flex items-center justify-between pt-3 border-t border-emerald-100">
+                <span class="text-[11px] text-slate-500">Balance</span>
+                <span class="text-xs font-bold tabular-nums" :class="balanceSinDeudas >= 0 ? 'text-emerald-600' : 'text-red-600'">
+                  {{ formatCurrency(balanceSinDeudas) }}
+                </span>
               </div>
             </div>
-          </div>
-
-          <div
-            v-if="lineaTotalCombinada > 0"
-            class="flex items-center gap-2 mt-4 p-3 rounded-xl bg-[rgba(106,30,45,0.06)] text-xs text-[#6A1E2D]"
-          >
-            <CreditCard :size="14" class="shrink-0" aria-hidden="true" />
-            <span>
-              Línea de crédito combinada:
-              <strong>{{ formatCurrency(lineaTotalCombinada) }}</strong>
-            </span>
           </div>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-5 items-start">
-          <div v-if="hasChartData" class="bg-white rounded-2xl border border-[#EEEEF0] shadow-sm p-5">
-            <h2 class="text-sm font-bold text-[#1A1A2E] mb-5">Distribución</h2>
-            <div class="w-40 mx-auto mb-5">
-              <DoughnutChart
-                :labels="chartLabels"
-                :values="chartValues"
-                :colors="chartColors"
-                :center-value="formatShort(resumen.totalIngresos)"
-                center-label="ingresos"
-              />
-            </div>
-            <ul class="space-y-2.5">
-              <li v-for="(label, i) in chartLabels" :key="label" class="flex items-center justify-between text-xs">
-                <div class="flex items-center gap-2">
-                  <div
-                    class="w-2.5 h-2.5 rounded-full shrink-0"
-                    :style="{ backgroundColor: chartColors[i] }"
-                    aria-hidden="true"
-                  ></div>
-                  <span class="text-[#64748B]">{{ label }}</span>
-                </div>
-                <span class="font-bold text-[#1A1A2E]">{{ formatShort(chartValues[i] ?? 0) }}</span>
-              </li>
-            </ul>
-          </div>
-
-          <div
-            class="bg-white rounded-2xl border border-[#EEEEF0] shadow-sm overflow-hidden"
-            :class="hasChartData ? 'lg:col-span-2' : 'lg:col-span-3'"
-          >
-            <div class="flex items-center justify-between px-5 py-4 border-b border-[#F0F2F5]">
-              <h2 class="text-sm font-bold text-[#1A1A2E]">Transacciones Recientes</h2>
+        <!-- Transacciones -->
+        <div class="bg-white rounded-2xl border border-[#E5E0D5] shadow-[0_1px_3px_rgba(28,27,24,0.04),0_4px_16px_rgba(28,27,24,0.05)] overflow-hidden">
+          <!-- Header + Summary bar -->
+          <div class="px-6 py-5 border-b border-slate-100">
+            <div class="flex items-start justify-between mb-4">
+              <div>
+                <h2 class="text-base font-bold text-slate-900">Transacciones</h2>
+                <p class="text-xs text-slate-500 mt-0.5">Todo el movimiento del mes</p>
+              </div>
               <span
                 v-if="todasLasDescripciones.length > 0"
-                class="bg-[#F0F2F5] text-[#64748B] text-xs font-semibold rounded-full px-2.5 py-0.5"
+                class="bg-[#EBF5F5] text-[#356E6B] text-xs font-bold rounded-full px-3 py-1 tabular-nums"
               >
-                {{ todasLasDescripciones.length }}
+                {{ todasLasDescripciones.length }} movimientos
               </span>
             </div>
 
+            <!-- Net flow bar (visual summary) -->
+            <div v-if="todasLasDescripciones.length > 0" class="mb-4">
+              <div class="flex items-center justify-between text-[11px] mb-1.5">
+                <span class="text-slate-500">
+                  Entra <span class="font-semibold text-emerald-600 tabular-nums">{{ formatShort(resumen.totalIngresos) }}</span>
+                  · Sale <span class="font-semibold text-rose-600 tabular-nums">{{ formatShort(totalSalidasMes) }}</span>
+                </span>
+                <span class="font-semibold tabular-nums" :class="netoMes >= 0 ? 'text-emerald-600' : 'text-rose-600'">
+                  Neto {{ netoMes >= 0 ? '+' : '−' }}{{ formatShort(Math.abs(netoMes)) }}
+                </span>
+              </div>
+              <div class="flex h-1.5 rounded-full overflow-hidden bg-slate-100" aria-hidden="true">
+                <div
+                  class="bg-emerald-500"
+                  :style="{ width: (resumen.totalIngresos / Math.max(resumen.totalIngresos + totalSalidasMes, 1) * 100) + '%' }"
+                ></div>
+                <div
+                  class="bg-orange-500"
+                  :style="{ width: (resumen.totalGastado / Math.max(resumen.totalIngresos + totalSalidasMes, 1) * 100) + '%' }"
+                ></div>
+                <div
+                  class="bg-amber-500"
+                  :style="{ width: (resumen.totalCuotaMensualDeudas / Math.max(resumen.totalIngresos + totalSalidasMes, 1) * 100) + '%' }"
+                ></div>
+                <div
+                  class="bg-rose-500"
+                  :style="{ width: (resumen.totalTarjetas / Math.max(resumen.totalIngresos + totalSalidasMes, 1) * 100) + '%' }"
+                ></div>
+              </div>
+            </div>
+
+            <!-- Filter tabs + search + sort -->
+            <div v-if="todasLasDescripciones.length > 0" class="flex flex-col lg:flex-row gap-3">
+              <div class="flex gap-1 bg-slate-100 p-1 rounded-xl overflow-x-auto scrollbar-hide">
+                <button
+                  v-for="tab in filterTabs"
+                  :key="tab.key"
+                  class="px-3 py-1.5 text-xs font-semibold rounded-lg transition-all whitespace-nowrap"
+                  :class="activeFilter === tab.key ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'"
+                  :style="activeFilter === tab.key ? { color: tab.color } : {}"
+                  @click="activeFilter = tab.key"
+                >
+                  {{ tab.label }}
+                </button>
+              </div>
+
+              <div class="flex gap-2 lg:ml-auto">
+                <div class="relative flex-1 lg:flex-none lg:w-56">
+                  <Search :size="14" class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <input
+                    v-model="searchQuery"
+                    type="text"
+                    placeholder="Buscar transacción..."
+                    class="w-full pl-9 pr-8 py-2 text-xs bg-[#F8F6F1] border border-[#E5E0D5] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4D9B97]/30 focus:border-[#4D9B97] focus:bg-white transition-all"
+                  />
+                  <button
+                    v-if="searchQuery"
+                    class="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 rounded hover:bg-slate-200 text-slate-400"
+                    @click="searchQuery = ''"
+                    aria-label="Limpiar búsqueda"
+                  >
+                    <X :size="12" />
+                  </button>
+                </div>
+                <button
+                  class="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold bg-slate-50 border border-slate-200 rounded-lg text-slate-600 hover:bg-slate-100 transition-colors"
+                  :title="sortDesc ? 'Mayor a menor' : 'Menor a mayor'"
+                  @click="sortDesc = !sortDesc"
+                >
+                  <ArrowUpDown :size="12" />
+                  {{ sortDesc ? 'Mayor' : 'Menor' }}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div
+            v-if="todasLasDescripciones.length === 0"
+            class="flex flex-col items-center justify-center py-16 px-5 text-center"
+            data-testid="descriptions-empty"
+          >
+            <div class="w-14 h-14 rounded-2xl bg-slate-50 flex items-center justify-center mb-3">
+              <Inbox :size="24" class="text-slate-400" />
+            </div>
+            <p class="text-sm font-semibold text-slate-900">Sin transacciones</p>
+            <p class="text-xs text-slate-500 mt-1">Registrá ingresos o gastos para verlos acá.</p>
+          </div>
+
+          <!-- Flat filtered view (when filter or search active) -->
+          <div v-else-if="hasActiveFilterOrSearch" data-testid="descriptions-list">
             <div
-              v-if="todasLasDescripciones.length === 0"
-              class="flex flex-col items-center justify-center py-14 px-5 text-center"
-              data-testid="descriptions-empty"
+              v-if="filteredFlatItems.length === 0"
+              class="flex flex-col items-center justify-center py-12 text-center"
             >
-              <div class="w-14 h-14 rounded-2xl bg-[#F0F2F5] flex items-center justify-center mb-3">
-                <Inbox :size="26" class="text-[#94A3B8]" aria-hidden="true" />
+              <div class="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center mb-2">
+                <Search :size="20" class="text-slate-400" />
               </div>
-              <p class="text-sm font-semibold text-[#1A1A2E]">Sin transacciones</p>
-              <p class="text-xs text-[#94A3B8] mt-1 max-w-50">Registra ingresos o gastos para verlos aquí</p>
+              <p class="text-sm font-semibold text-slate-700">Sin resultados</p>
+              <p class="text-xs text-slate-500 mt-1">Probá con otro término o filtro</p>
             </div>
-
-            <div v-else data-testid="descriptions-list">
-              <div v-if="ingresosItems.length > 0" class="border-b border-[#F0F2F5]">
-                <button
-                  class="flex items-center justify-between w-full px-5 py-3 hover:bg-[#F8F9FB] transition-colors"
-                  @click="ingresosSectionOpen = !ingresosSectionOpen"
-                >
-                  <div class="flex items-center gap-2">
-                    <TrendingUp :size="14" style="color: #3e6f73" aria-hidden="true" />
-                    <span class="text-xs font-bold" style="color: #3e6f73">Ingresos</span>
-                    <span class="text-xs bg-[#F0F2F5] text-[#64748B] rounded-full px-2 py-0.5 font-semibold">
-                      {{ ingresosItems.length }}
+            <div v-else class="divide-y divide-slate-50">
+              <div
+                v-for="(item, idx) in filteredFlatItems"
+                :key="'flat-' + idx"
+                class="group relative flex items-center gap-3 px-6 py-3.5 hover:bg-slate-50/60 transition-colors"
+                data-testid="description-item"
+              >
+                <span
+                  class="absolute left-0 top-2 bottom-2 w-1 rounded-r-full"
+                  :style="{ backgroundColor: colorFor(item.tipo) }"
+                ></span>
+                <div class="flex-1 min-w-0 ml-1">
+                  <div class="flex items-center gap-2 mb-1">
+                    <p class="text-sm font-semibold text-slate-900 truncate leading-tight">{{ item.descripcion }}</p>
+                    <span
+                      class="text-[10px] font-bold rounded-full px-1.5 py-0.5 shrink-0"
+                      :style="{ backgroundColor: colorFor(item.tipo) + '1A', color: colorFor(item.tipo) }"
+                      data-testid="description-type"
+                    >
+                      {{ item.tipo }}
                     </span>
-                    <span class="text-xs font-bold tabular-nums" style="color: #3e6f73">{{
-                      formatShort(resumen.totalIngresos)
-                    }}</span>
                   </div>
-                  <component
-                    :is="ingresosSectionOpen ? ChevronUp : ChevronDown"
-                    :size="14"
-                    class="text-[#94A3B8]"
-                    aria-hidden="true"
-                  />
-                </button>
-                <div v-if="ingresosSectionOpen" class="divide-y divide-[#F0F2F5]">
-                  <div
-                    v-for="(item, index) in ingresosItems"
-                    :key="'i-' + index"
-                    class="flex items-center gap-3 px-5 py-3.5 hover:bg-[#F8F9FB] transition-colors cursor-default"
-                    data-testid="description-item"
-                  >
-                    <div
-                      class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
-                      :style="{ backgroundColor: (typeConfig[item.tipo]?.hex ?? '#64748B') + '15' }"
-                    >
-                      <component
-                        :is="typeConfig[item.tipo]?.icon"
-                        :size="18"
-                        :style="{ color: typeConfig[item.tipo]?.hex ?? '#64748B' }"
-                        aria-hidden="true"
-                      />
+                  <div class="flex items-center gap-2">
+                    <div class="flex-1 h-1 bg-slate-100 rounded-full overflow-hidden max-w-[160px]">
+                      <div
+                        class="h-full rounded-full transition-all"
+                        :style="{ width: percentOfGroup(item.monto, item.tipo) + '%', backgroundColor: colorFor(item.tipo) }"
+                      ></div>
                     </div>
-                    <div class="flex-1 min-w-0">
-                      <p class="text-sm font-semibold text-[#1A1A2E] truncate leading-tight">{{ item.descripcion }}</p>
-                      <span
-                        class="text-xs font-medium"
-                        :style="{ color: typeConfig[item.tipo]?.hex ?? '#64748B' }"
-                        data-testid="description-type"
-                        >{{ item.tipo }}</span
-                      >
-                    </div>
-                    <p
-                      class="text-sm font-bold shrink-0 tabular-nums"
-                      style="color: #3e6f73"
-                      data-testid="description-monto"
-                    >
-                      +{{ formatCurrency(item.monto) }}
-                    </p>
+                    <span class="text-[10px] text-slate-400 tabular-nums">{{ percentOfGroup(item.monto, item.tipo) }}%</span>
                   </div>
                 </div>
-              </div>
-
-              <div v-if="gastosItems.length > 0" class="border-b border-[#F0F2F5]">
-                <button
-                  class="flex items-center justify-between w-full px-5 py-3 hover:bg-[#F8F9FB] transition-colors"
-                  @click="gastosSectionOpen = !gastosSectionOpen"
-                >
-                  <div class="flex items-center gap-2">
-                    <TrendingDown :size="14" style="color: #c65a3a" aria-hidden="true" />
-                    <span class="text-xs font-bold" style="color: #c65a3a">Gastos</span>
-                    <span class="text-xs bg-[#F0F2F5] text-[#64748B] rounded-full px-2 py-0.5 font-semibold">
-                      {{ gastosItems.length }}
-                    </span>
-                    <span class="text-xs font-bold tabular-nums" style="color: #c65a3a">{{
-                      formatShort(resumen.totalGastado)
-                    }}</span>
-                  </div>
-                  <component
-                    :is="gastosSectionOpen ? ChevronUp : ChevronDown"
-                    :size="14"
-                    class="text-[#94A3B8]"
-                    aria-hidden="true"
-                  />
-                </button>
-                <div v-if="gastosSectionOpen" class="divide-y divide-[#F0F2F5]">
-                  <div
-                    v-for="(item, index) in gastosItems"
-                    :key="'g-' + index"
-                    class="flex items-center gap-3 px-5 py-3.5 hover:bg-[#F8F9FB] transition-colors cursor-default"
-                    data-testid="description-item"
-                  >
-                    <div
-                      class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
-                      :style="{ backgroundColor: (typeConfig[item.tipo]?.hex ?? '#64748B') + '15' }"
-                    >
-                      <component
-                        :is="typeConfig[item.tipo]?.icon"
-                        :size="18"
-                        :style="{ color: typeConfig[item.tipo]?.hex ?? '#64748B' }"
-                        aria-hidden="true"
-                      />
-                    </div>
-                    <div class="flex-1 min-w-0">
-                      <p class="text-sm font-semibold text-[#1A1A2E] truncate leading-tight">{{ item.descripcion }}</p>
-                      <span
-                        class="text-xs font-medium"
-                        :style="{ color: typeConfig[item.tipo]?.hex ?? '#64748B' }"
-                        data-testid="description-type"
-                        >{{ item.tipo }}</span
-                      >
-                    </div>
-                    <p
-                      class="text-sm font-bold shrink-0 tabular-nums"
-                      style="color: #c65a3a"
-                      data-testid="description-monto"
-                    >
-                      −{{ formatCurrency(item.monto) }}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <div v-if="deudasItems.length > 0" class="border-b border-[#F0F2F5]">
-                <button
-                  class="flex items-center justify-between w-full px-5 py-3 hover:bg-[#F8F9FB] transition-colors"
-                  @click="deudasSectionOpen = !deudasSectionOpen"
-                >
-                  <div class="flex items-center gap-2">
-                    <Clock :size="14" style="color: #d4a017" aria-hidden="true" />
-                    <span class="text-xs font-bold" style="color: #d4a017">Deudas</span>
-                    <span class="text-xs bg-[#F0F2F5] text-[#64748B] rounded-full px-2 py-0.5 font-semibold">
-                      {{ deudasItems.length }}
-                    </span>
-                    <span class="text-xs font-bold tabular-nums" style="color: #d4a017">{{
-                      formatShort(resumen.totalCuotaMensualDeudas)
-                    }}</span>
-                  </div>
-                  <component
-                    :is="deudasSectionOpen ? ChevronUp : ChevronDown"
-                    :size="14"
-                    class="text-[#94A3B8]"
-                    aria-hidden="true"
-                  />
-                </button>
-                <div v-if="deudasSectionOpen" class="divide-y divide-[#F0F2F5]">
-                  <div
-                    v-for="(item, index) in deudasItems"
-                    :key="'d-' + index"
-                    class="flex items-center gap-3 px-5 py-3.5 hover:bg-[#F8F9FB] transition-colors cursor-default"
-                    data-testid="description-item"
-                  >
-                    <div
-                      class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
-                      style="background-color: rgba(212, 160, 23, 0.12)"
-                    >
-                      <Clock :size="18" style="color: #d4a017" aria-hidden="true" />
-                    </div>
-                    <div class="flex-1 min-w-0">
-                      <p class="text-sm font-semibold text-[#1A1A2E] truncate leading-tight">{{ item.descripcion }}</p>
-                      <span class="text-xs font-medium" style="color: #d4a017" data-testid="description-type">{{
-                        item.tipo
-                      }}</span>
-                    </div>
-                    <p
-                      class="text-sm font-bold shrink-0 tabular-nums"
-                      style="color: #d4a017"
-                      data-testid="description-monto"
-                    >
-                      −{{ formatCurrency(item.monto) }}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <div v-if="tarjetasItems.length > 0">
-                <button
-                  class="flex items-center justify-between w-full px-5 py-3 hover:bg-[#F8F9FB] transition-colors"
-                  @click="tarjetasSectionOpen = !tarjetasSectionOpen"
-                >
-                  <div class="flex items-center gap-2">
-                    <CreditCard :size="14" style="color: #6a1e2d" aria-hidden="true" />
-                    <span class="text-xs font-bold" style="color: #6a1e2d">Tarjetas</span>
-                    <span class="text-xs bg-[#F0F2F5] text-[#64748B] rounded-full px-2 py-0.5 font-semibold">
-                      {{ tarjetasItems.length }}
-                    </span>
-                    <span class="text-xs font-bold tabular-nums" style="color: #6a1e2d">{{
-                      formatShort(resumen.totalTarjetas)
-                    }}</span>
-                  </div>
-                  <component
-                    :is="tarjetasSectionOpen ? ChevronUp : ChevronDown"
-                    :size="14"
-                    class="text-[#94A3B8]"
-                    aria-hidden="true"
-                  />
-                </button>
-                <div v-if="tarjetasSectionOpen" class="divide-y divide-[#F0F2F5]">
-                  <div
-                    v-for="(item, index) in tarjetasItems"
-                    :key="'t-' + index"
-                    class="flex items-center gap-3 px-5 py-3.5 hover:bg-[#F8F9FB] transition-colors cursor-default"
-                    data-testid="description-item"
-                  >
-                    <div
-                      class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
-                      style="background-color: rgba(106, 30, 45, 0.1)"
-                    >
-                      <CreditCard :size="18" style="color: #6a1e2d" aria-hidden="true" />
-                    </div>
-                    <div class="flex-1 min-w-0">
-                      <p class="text-sm font-semibold text-[#1A1A2E] truncate leading-tight">{{ item.descripcion }}</p>
-                      <span class="text-xs font-medium" style="color: #6a1e2d" data-testid="description-type">{{
-                        item.tipo
-                      }}</span>
-                    </div>
-                    <p
-                      class="text-sm font-bold shrink-0 tabular-nums"
-                      style="color: #6a1e2d"
-                      data-testid="description-monto"
-                    >
-                      −{{ formatCurrency(item.monto) }}
-                    </p>
-                  </div>
-                </div>
+                <p class="text-sm font-bold shrink-0 tabular-nums" :style="{ color: colorFor(item.tipo) }" data-testid="description-monto">
+                  {{ signFor(item.tipo) }}{{ formatCurrency(item.monto) }}
+                </p>
               </div>
             </div>
+          </div>
+
+          <!-- Grouped view (default) -->
+          <div v-else data-testid="descriptions-list">
+            <template v-for="group in transactionGroups" :key="group.key">
+              <div
+                v-if="group.items.length > 0"
+                class="border-b border-slate-100 last:border-0"
+              >
+                <button
+                  class="flex items-center justify-between w-full px-6 py-3.5 hover:bg-slate-50/60 transition-colors sticky top-0 bg-white/95 backdrop-blur-sm z-[1]"
+                  @click="toggleGroup(group.key)"
+                >
+                  <div class="flex items-center gap-2.5">
+                    <span
+                      class="inline-flex items-center text-[11px] font-bold rounded-full px-2.5 py-0.5"
+                      :style="{ backgroundColor: group.color + '1A', color: group.color }"
+                    >
+                      {{ group.label }}
+                    </span>
+                    <span class="text-xs text-slate-400">{{ group.items.length }} mov.</span>
+                  </div>
+                  <div class="flex items-center gap-3">
+                    <span class="text-sm font-bold tabular-nums" :style="{ color: group.color }">
+                      {{ group.sign }}{{ formatShort(group.total) }}
+                    </span>
+                    <component :is="group.open ? ChevronUp : ChevronDown" :size="14" class="text-slate-400" />
+                  </div>
+                </button>
+                <div v-if="group.open" class="divide-y divide-slate-50">
+                  <div
+                    v-for="(item, idx) in [...group.items].sort((a, b) => sortDesc ? b.monto - a.monto : a.monto - b.monto)"
+                    :key="group.key + '-' + idx"
+                    class="group relative flex items-center gap-3 px-6 py-3.5 hover:bg-slate-50/60 transition-colors"
+                    data-testid="description-item"
+                  >
+                    <span
+                      class="absolute left-0 top-2 bottom-2 w-1 rounded-r-full opacity-0 group-hover:opacity-100 transition-opacity"
+                      :style="{ backgroundColor: group.color }"
+                    ></span>
+                    <div class="flex-1 min-w-0 ml-1">
+                      <p class="text-sm font-semibold text-slate-900 truncate leading-tight mb-1">{{ item.descripcion }}</p>
+                      <div class="flex items-center gap-2">
+                        <div class="flex-1 h-1 bg-slate-100 rounded-full overflow-hidden max-w-[200px]">
+                          <div
+                            class="h-full rounded-full transition-all"
+                            :style="{ width: percentOfGroup(item.monto, item.tipo) + '%', backgroundColor: group.color }"
+                          ></div>
+                        </div>
+                        <span class="text-[10px] text-slate-400 tabular-nums">{{ percentOfGroup(item.monto, item.tipo) }}%</span>
+                        <span class="text-[10px] text-slate-400 hidden sm:inline" data-testid="description-type">{{ item.tipo }}</span>
+                      </div>
+                    </div>
+                    <p class="text-sm font-bold shrink-0 tabular-nums" :style="{ color: group.color }" data-testid="description-monto">
+                      {{ group.sign }}{{ formatCurrency(item.monto) }}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </template>
           </div>
         </div>
       </template>
