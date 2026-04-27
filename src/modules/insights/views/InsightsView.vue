@@ -8,6 +8,7 @@ import {
   CreditCard,
   Target,
   Sparkles,
+  ChevronRight,
 } from 'lucide-vue-next'
 import { useInsights } from '../composables/useInsights'
 import { formatMoneyDisplay } from '~/shared/utils/format'
@@ -57,7 +58,7 @@ function formatMonth(iso: string): string {
 </script>
 
 <template>
-  <div class="min-h-screen bg-[#F0F2F5]" data-testid="insights-view">
+  <div class="min-h-screen bg-[#F8F6F1]" data-testid="insights-view">
     <div class="max-w-4xl mx-auto p-5 lg:p-8 space-y-5">
       <PageHeader title="Insights" subtitle="Análisis inteligente de tus finanzas" />
 
@@ -164,25 +165,28 @@ function formatMonth(iso: string): string {
         </div>
 
         <!-- Análisis de Gastos -->
-        <div
+        <details
           v-if="categoryAnalysis.length > 0"
-          class="bg-white rounded-2xl shadow-sm border border-[#EEEEF0] p-6"
+          class="group bg-white rounded-2xl shadow-sm border border-[#EEEEF0]"
           data-testid="category-section"
         >
-          <div class="flex items-center gap-3 mb-5">
-            <div
-              class="w-10 h-10 rounded-xl flex items-center justify-center"
-              style="background: rgba(198, 90, 58, 0.12)"
-            >
-              <Target :size="18" style="color: #c65a3a" aria-hidden="true" />
+          <summary class="p-6 cursor-pointer list-none flex items-center justify-between gap-3">
+            <div class="flex items-center gap-3">
+              <div
+                class="w-10 h-10 rounded-xl flex items-center justify-center"
+                style="background: rgba(198, 90, 58, 0.12)"
+              >
+                <Target :size="18" style="color: #c65a3a" aria-hidden="true" />
+              </div>
+              <div>
+                <h2 class="text-sm font-bold text-[#1A1A2E]">Distribución de Gastos</h2>
+                <p class="text-xs text-[#94A3B8]">{{ categoryAnalysis.length }} categorías</p>
+              </div>
             </div>
-            <div>
-              <h2 class="text-sm font-bold text-[#1A1A2E]">Distribución de Gastos</h2>
-              <p class="text-xs text-[#94A3B8]">Tus categorías de mayor a menor</p>
-            </div>
-          </div>
+            <ChevronRight :size="16" class="text-[#94A3B8] transition-transform group-open:rotate-90" />
+          </summary>
 
-          <div class="space-y-4">
+          <div class="px-6 pb-6 space-y-4">
             <div v-for="cat in categoryAnalysis" :key="cat.nombre" data-testid="category-item">
               <div class="flex justify-between text-sm mb-1.5">
                 <span class="font-medium text-[#1A1A2E]">{{ cat.nombre }}</span>
@@ -200,28 +204,31 @@ function formatMonth(iso: string): string {
               </div>
             </div>
           </div>
-        </div>
+        </details>
 
         <!-- Proyección de Deudas -->
-        <div
+        <details
           v-if="debtProjections.length > 0"
-          class="bg-white rounded-2xl shadow-sm border border-[#EEEEF0] p-6"
+          class="group bg-white rounded-2xl shadow-sm border border-[#EEEEF0]"
           data-testid="debt-section"
         >
-          <div class="flex items-center gap-3 mb-5">
-            <div
-              class="w-10 h-10 rounded-xl flex items-center justify-center"
-              style="background: rgba(212, 160, 23, 0.12)"
-            >
-              <TrendingDown :size="18" style="color: #d4a017" aria-hidden="true" />
+          <summary class="p-6 cursor-pointer list-none flex items-center justify-between gap-3">
+            <div class="flex items-center gap-3">
+              <div
+                class="w-10 h-10 rounded-xl flex items-center justify-center"
+                style="background: rgba(212, 160, 23, 0.12)"
+              >
+                <TrendingDown :size="18" style="color: #d4a017" aria-hidden="true" />
+              </div>
+              <div>
+                <h2 class="text-sm font-bold text-[#1A1A2E]">Proyección de Deudas</h2>
+                <p class="text-xs text-[#94A3B8]">{{ debtProjections.length }} deudas activas</p>
+              </div>
             </div>
-            <div>
-              <h2 class="text-sm font-bold text-[#1A1A2E]">Proyección de Deudas</h2>
-              <p class="text-xs text-[#94A3B8]">Estimación de pago con cuotas actuales</p>
-            </div>
-          </div>
+            <ChevronRight :size="16" class="text-[#94A3B8] transition-transform group-open:rotate-90" />
+          </summary>
 
-          <div class="space-y-4">
+          <div class="px-6 pb-6 space-y-4">
             <div
               v-for="proj in debtProjections"
               :key="proj.deudaId"
@@ -259,47 +266,50 @@ function formatMonth(iso: string): string {
               </div>
             </div>
           </div>
-        </div>
+        </details>
 
         <!-- Salud Crediticia -->
-        <div
+        <details
           v-if="creditHealth.length > 0"
-          class="bg-white rounded-2xl shadow-sm border border-[#EEEEF0] p-6"
+          class="group bg-white rounded-2xl shadow-sm border border-[#EEEEF0]"
           data-testid="credit-section"
         >
-          <div class="flex items-center gap-3 mb-5">
-            <div
-              class="w-10 h-10 rounded-xl flex items-center justify-center"
-              style="background: rgba(106, 30, 45, 0.1)"
-            >
-              <CreditCard :size="18" style="color: #6a1e2d" aria-hidden="true" />
+          <summary class="p-6 cursor-pointer list-none flex items-center justify-between gap-3">
+            <div class="flex items-center gap-3">
+              <div
+                class="w-10 h-10 rounded-xl flex items-center justify-center"
+                style="background: rgba(106, 30, 45, 0.1)"
+              >
+                <CreditCard :size="18" style="color: #6a1e2d" aria-hidden="true" />
+              </div>
+              <div>
+                <h2 class="text-sm font-bold text-[#1A1A2E]">Salud Crediticia</h2>
+                <p class="text-xs text-[#94A3B8]">
+                  Utilización:
+                  <span
+                    class="font-bold"
+                    :style="{
+                      color:
+                        creditStatusColor[
+                          creditUtilizationTotal < 30
+                            ? 'bueno'
+                            : creditUtilizationTotal < 50
+                              ? 'moderado'
+                              : creditUtilizationTotal < 75
+                                ? 'alto'
+                                : 'critico'
+                        ],
+                    }"
+                  >
+                    {{ creditUtilizationTotal.toFixed(0) }}%
+                  </span>
+                </p>
+              </div>
             </div>
-            <div>
-              <h2 class="text-sm font-bold text-[#1A1A2E]">Salud Crediticia</h2>
-              <p class="text-xs text-[#94A3B8]">
-                Utilización combinada:
-                <span
-                  class="font-bold"
-                  :style="{
-                    color:
-                      creditStatusColor[
-                        creditUtilizationTotal < 30
-                          ? 'bueno'
-                          : creditUtilizationTotal < 50
-                            ? 'moderado'
-                            : creditUtilizationTotal < 75
-                              ? 'alto'
-                              : 'critico'
-                      ],
-                  }"
-                >
-                  {{ creditUtilizationTotal.toFixed(0) }}%
-                </span>
-              </p>
-            </div>
-          </div>
+            <ChevronRight :size="16" class="text-[#94A3B8] transition-transform group-open:rotate-90" />
+          </summary>
 
-          <div class="space-y-4">
+          <div class="px-6 pb-6 space-y-4">
             <div v-for="card in creditHealth" :key="card.tarjetaId" data-testid="credit-card-item">
               <div class="flex justify-between text-sm mb-1.5">
                 <span class="font-medium text-[#1A1A2E]">{{ card.descripcion }}</span>
@@ -322,28 +332,31 @@ function formatMonth(iso: string): string {
               </div>
             </div>
           </div>
-        </div>
+        </details>
 
         <!-- Tips Personalizados -->
-        <div
+        <details
           v-if="tips.length > 0"
-          class="bg-white rounded-2xl shadow-sm border border-[#EEEEF0] p-6"
+          class="group bg-white rounded-2xl shadow-sm border border-[#EEEEF0]"
           data-testid="tips-section"
         >
-          <div class="flex items-center gap-3 mb-5">
-            <div
-              class="w-10 h-10 rounded-xl flex items-center justify-center"
-              style="background: rgba(45, 159, 143, 0.12)"
-            >
-              <Sparkles :size="18" style="color: #2d9f8f" aria-hidden="true" />
+          <summary class="p-6 cursor-pointer list-none flex items-center justify-between gap-3">
+            <div class="flex items-center gap-3">
+              <div
+                class="w-10 h-10 rounded-xl flex items-center justify-center"
+                style="background: rgba(45, 159, 143, 0.12)"
+              >
+                <Sparkles :size="18" style="color: #2d9f8f" aria-hidden="true" />
+              </div>
+              <div>
+                <h2 class="text-sm font-bold text-[#1A1A2E]">Recomendaciones</h2>
+                <p class="text-xs text-[#94A3B8]">{{ tips.length }} tips personalizados</p>
+              </div>
             </div>
-            <div>
-              <h2 class="text-sm font-bold text-[#1A1A2E]">Recomendaciones</h2>
-              <p class="text-xs text-[#94A3B8]">Tips personalizados basados en tus datos</p>
-            </div>
-          </div>
+            <ChevronRight :size="16" class="text-[#94A3B8] transition-transform group-open:rotate-90" />
+          </summary>
 
-          <div class="space-y-3">
+          <div class="px-6 pb-6 space-y-3">
             <div
               v-for="tip in tips"
               :key="tip.id"
@@ -360,7 +373,7 @@ function formatMonth(iso: string): string {
               <p class="text-sm text-[#1A1A2E]">{{ tip.text }}</p>
             </div>
           </div>
-        </div>
+        </details>
         <!-- Análisis con IA -->
         <AiInsightsPanel />
       </template>

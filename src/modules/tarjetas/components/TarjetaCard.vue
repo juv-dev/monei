@@ -1,5 +1,4 @@
 <script setup lang="ts">
-/* eslint-disable vue/no-mutating-props */
 import { ref } from 'vue'
 import { CreditCard, Trash2, Pencil, Check, X, Banknote, ChevronDown, ChevronUp } from 'lucide-vue-next'
 import type { TarjetaCredito, TarjetaPago } from '../types'
@@ -7,15 +6,6 @@ import CurrencyInput from '~/shared/components/ui/CurrencyInput.vue'
 
 defineProps<{
   tarjeta: TarjetaCredito
-  isEditing: boolean
-  editForm: {
-    descripcion: string
-    lineaTotal: string
-    montoDeudaActual: string
-    pagoMinimo: string
-    saldoTotal: string
-  }
-  isUpdating: boolean
   isPaying: boolean
   payAmount: string
   pagos: TarjetaPago[]
@@ -25,8 +15,6 @@ defineProps<{
 const emit = defineEmits<{
   edit: [tarjeta: TarjetaCredito]
   delete: [id: string]
-  save: [id: string]
-  cancel: []
   pay: [tarjeta: TarjetaCredito]
   'update:payAmount': [value: string]
   'confirm-pay': [id: string]
@@ -38,6 +26,10 @@ const historialOpen = ref(false)
 
 function formatCurrency(value: number): string {
   return new Intl.NumberFormat('es-PE', { style: 'currency', currency: 'PEN' }).format(value)
+}
+
+function formatUsd(value: number): string {
+  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value)
 }
 
 function formatDate(dateStr: string): string {
@@ -58,75 +50,6 @@ function utilizacionColor(pct: number): string {
 
 <template>
   <div class="bg-white rounded-2xl border border-[#EEEEF0] shadow-sm p-5" data-testid="tarjeta-item">
-    <template v-if="isEditing">
-      <div class="space-y-3">
-        <input
-          v-model="editForm.descripcion"
-          type="text"
-          placeholder="Descripción"
-          class="w-full px-3 py-2 border border-[#EEEEF0] rounded-xl text-sm bg-[#F5F6FA] text-[#1A1A2E] placeholder-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#6A1E2D]/30 focus:bg-white transition-all"
-          data-testid="edit-descripcion"
-        />
-
-        <CurrencyInput
-          :model-value="editForm.lineaTotal"
-          label="Línea total (S/)"
-          accent-color="#6A1E2D"
-          testid="edit-linea-total"
-          @update:model-value="editForm.lineaTotal = $event"
-        />
-
-        <div class="grid grid-cols-2 gap-3">
-          <CurrencyInput
-            :model-value="editForm.montoDeudaActual"
-            label="Pago del mes (S/)"
-            accent-color="#6A1E2D"
-            testid="edit-monto-deuda"
-            @update:model-value="editForm.montoDeudaActual = $event"
-          />
-          <CurrencyInput
-            :model-value="editForm.saldoTotal"
-            label="Deuda total (S/)"
-            accent-color="#6A1E2D"
-            testid="edit-saldo-total"
-            @update:model-value="editForm.saldoTotal = $event"
-          />
-        </div>
-
-        <CurrencyInput
-          :model-value="editForm.pagoMinimo"
-          label="Pago mínimo (S/)"
-          accent-color="#6A1E2D"
-          testid="edit-pago-minimo"
-          @update:model-value="editForm.pagoMinimo = $event"
-        />
-
-        <div class="flex gap-2 pt-1">
-          <button
-            type="button"
-            :disabled="isUpdating"
-            class="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-white transition-all hover:opacity-90 disabled:opacity-50"
-            style="background: linear-gradient(135deg, #6a1e2d 0%, #4a1520 100%)"
-            data-testid="save-edit-button"
-            @click="emit('save', tarjeta.id)"
-          >
-            <Check :size="13" />
-            {{ isUpdating ? 'Guardando…' : 'Guardar' }}
-          </button>
-          <button
-            type="button"
-            class="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-[#64748B] bg-[#F0F2F5] hover:bg-[#E2E8F0] transition-all"
-            data-testid="cancel-edit-button"
-            @click="emit('cancel')"
-          >
-            <X :size="13" />
-            Cancelar
-          </button>
-        </div>
-      </div>
-    </template>
-
-    <template v-else>
       <div class="flex items-center justify-between mb-4">
         <div class="flex items-center gap-3">
           <div
@@ -141,7 +64,22 @@ function utilizacionColor(pct: number): string {
               {{ tarjeta.descripcion }}
             </p>
             <p class="text-xs text-[#94A3B8]">
-              Línea: <strong data-testid="tarjeta-linea">{{ formatCurrency(tarjeta.lineaTotal) }}</strong>
+              Línea:
+              <strong
+                v-if="tarjeta.lineaTotal > 0"
+                data-testid="tarjeta-linea"
+              >{{ formatCurrency(tarjeta.lineaTotal) }}</strong>
+              <template v-if="tarjeta.lineaTotal > 0 && tarjeta.lineaTotalUsd != null && tarjeta.lineaTotalUsd > 0">
+                <span class="text-[#CBD5E1]"> · </span>
+              </template>
+              <strong
+                v-if="tarjeta.lineaTotalUsd != null && tarjeta.lineaTotalUsd > 0"
+                class="text-sky-700"
+                data-testid="tarjeta-linea-usd"
+              >{{ formatUsd(tarjeta.lineaTotalUsd) }}</strong>
+              <strong v-if="tarjeta.lineaTotal === 0 && (tarjeta.lineaTotalUsd == null || tarjeta.lineaTotalUsd === 0)">
+                —
+              </strong>
             </p>
           </div>
         </div>
@@ -173,9 +111,9 @@ function utilizacionColor(pct: number): string {
         </div>
       </div>
 
-      <div class="mb-4">
+      <div v-if="tarjeta.lineaTotal > 0" class="mb-4">
         <div class="flex justify-between text-xs text-[#94A3B8] mb-1.5">
-          <span>Utilización del crédito</span>
+          <span>Utilización del crédito (S/)</span>
           <span
             class="font-semibold"
             :style="{ color: utilizacionColor(utilizacion(tarjeta.lineaTotal, tarjeta.montoDeudaActual)) }"
@@ -194,7 +132,10 @@ function utilizacionColor(pct: number): string {
         </div>
       </div>
 
-      <div class="grid grid-cols-2 gap-2 pt-1 border-t border-[#F0F2F5]">
+      <div
+        v-if="tarjeta.lineaTotal > 0"
+        class="grid grid-cols-2 gap-2 pt-1 border-t border-[#F0F2F5]"
+      >
         <div class="bg-[#F0F2F5] rounded-xl p-2.5">
           <p class="text-xs text-[#94A3B8] mb-0.5">Pago del mes</p>
           <p class="text-sm font-bold text-[#1A1A2E]" data-testid="tarjeta-deuda">
@@ -218,6 +159,74 @@ function utilizacionColor(pct: number): string {
           <p class="text-sm font-bold" style="color: #6a1e2d">
             {{ formatCurrency(tarjeta.lineaTotal - (tarjeta.saldoTotal ?? tarjeta.montoDeudaActual)) }}
           </p>
+        </div>
+      </div>
+
+      <div
+        v-else-if="tarjeta.montoDeudaActual > 0 || (tarjeta.saldoTotal != null && tarjeta.saldoTotal > 0) || (tarjeta.pagoMinimo != null && tarjeta.pagoMinimo > 0)"
+        class="pt-1 border-t border-[#F0F2F5]"
+      >
+        <p class="text-[10px] font-semibold text-emerald-700 uppercase tracking-wider mb-2">Gastos en Soles</p>
+        <div class="grid grid-cols-3 gap-2">
+          <div v-if="tarjeta.montoDeudaActual > 0" class="bg-emerald-50/60 rounded-xl p-2.5">
+            <p class="text-xs text-[#94A3B8] mb-0.5">Pago del mes</p>
+            <p class="text-sm font-bold text-[#1A1A2E]" data-testid="tarjeta-deuda">
+              {{ formatCurrency(tarjeta.montoDeudaActual) }}
+            </p>
+          </div>
+          <div v-if="tarjeta.saldoTotal != null && tarjeta.saldoTotal > 0" class="bg-emerald-50/60 rounded-xl p-2.5">
+            <p class="text-xs text-[#94A3B8] mb-0.5">Deuda total</p>
+            <p class="text-sm font-bold text-[#1A1A2E]" data-testid="tarjeta-saldo-total">
+              {{ formatCurrency(tarjeta.saldoTotal) }}
+            </p>
+          </div>
+          <div v-if="tarjeta.pagoMinimo != null && tarjeta.pagoMinimo > 0" class="bg-emerald-50/60 rounded-xl p-2.5">
+            <p class="text-xs text-[#94A3B8] mb-0.5">Pago mínimo</p>
+            <p class="text-sm font-bold text-[#1A1A2E]" data-testid="tarjeta-pago-minimo">
+              {{ formatCurrency(tarjeta.pagoMinimo) }}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bloque USD (opcional) -->
+      <div
+        v-if="tarjeta.lineaTotalUsd != null && tarjeta.lineaTotalUsd > 0"
+        class="mt-3 pt-3 border-t border-dashed border-sky-200"
+        data-testid="tarjeta-usd-block"
+      >
+        <div class="flex items-center gap-2 mb-2">
+          <span class="inline-flex items-center gap-1 text-[10px] font-bold text-sky-700 bg-sky-50 border border-sky-200 rounded-full px-2 py-0.5">US$</span>
+          <span class="text-xs font-semibold text-slate-600">Línea en dólares</span>
+          <span class="ml-auto text-xs text-slate-500">
+            Línea: <strong class="text-slate-800">{{ formatUsd(tarjeta.lineaTotalUsd) }}</strong>
+          </span>
+        </div>
+        <div class="grid grid-cols-4 gap-2">
+          <div class="bg-sky-50/70 rounded-lg p-2">
+            <p class="text-[10px] text-sky-700/80 mb-0.5">Pago mes</p>
+            <p class="text-xs font-bold text-sky-900 tabular-nums">
+              {{ tarjeta.montoDeudaActualUsd != null ? formatUsd(tarjeta.montoDeudaActualUsd) : '—' }}
+            </p>
+          </div>
+          <div class="bg-sky-50/70 rounded-lg p-2">
+            <p class="text-[10px] text-sky-700/80 mb-0.5">Deuda total</p>
+            <p class="text-xs font-bold text-sky-900 tabular-nums">
+              {{ tarjeta.saldoTotalUsd != null ? formatUsd(tarjeta.saldoTotalUsd) : '—' }}
+            </p>
+          </div>
+          <div class="bg-sky-50/70 rounded-lg p-2">
+            <p class="text-[10px] text-sky-700/80 mb-0.5">Mínimo</p>
+            <p class="text-xs font-bold text-sky-900 tabular-nums">
+              {{ tarjeta.pagoMinimoUsd != null ? formatUsd(tarjeta.pagoMinimoUsd) : '—' }}
+            </p>
+          </div>
+          <div class="rounded-lg p-2" style="background: rgba(14, 165, 233, 0.12)">
+            <p class="text-[10px] text-sky-700/80 mb-0.5">Disponible</p>
+            <p class="text-xs font-bold text-sky-800 tabular-nums">
+              {{ formatUsd(tarjeta.lineaTotalUsd - (tarjeta.saldoTotalUsd ?? tarjeta.montoDeudaActualUsd ?? 0)) }}
+            </p>
+          </div>
         </div>
       </div>
 
@@ -286,6 +295,5 @@ function utilizacionColor(pct: number): string {
           </div>
         </div>
       </div>
-    </template>
   </div>
 </template>

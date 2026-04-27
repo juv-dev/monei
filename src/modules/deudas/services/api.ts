@@ -43,17 +43,33 @@ export const deudasApi = {
       localStorage.setItem(storageKey(userId), JSON.stringify(all))
       return all[idx]!
     }
-    const updateData: Record<string, unknown> = {}
-    if (data.nombrePersona !== undefined) updateData.nombre_persona = data.nombrePersona
-    if (data.totalDeuda !== undefined) updateData.total_deuda = data.totalDeuda
-    if (data.tasaInteres !== undefined) updateData.tasa_interes = data.tasaInteres
-    if (data.cuotasPagadas !== undefined) updateData.cuotas_pagadas = data.cuotasPagadas
-    if (data.totalCuotas !== undefined) updateData.total_cuotas = data.totalCuotas
-    if (data.cuotaMensual !== undefined) updateData.cuota_mensual = data.cuotaMensual
-    if (data.montoActualPendiente !== undefined) updateData.monto_actual_pendiente = data.montoActualPendiente
-    if (data.descripcion !== undefined) updateData.descripcion = data.descripcion
-    const { data: row, error } = await supabase.from('deudas').update(updateData).eq('id', id).select().single()
-    if (error) throw new Error('Deuda not found')
+    const { data: current, error: fetchErr } = await supabase
+      .from('deudas')
+      .select('*')
+      .eq('id', id)
+      .single()
+    if (fetchErr || !current) throw new Error('Deuda not found')
+    const payload = {
+      id,
+      user_id: userId,
+      nombre_persona: data.nombrePersona ?? current.nombre_persona,
+      total_deuda: data.totalDeuda ?? current.total_deuda,
+      tasa_interes: data.tasaInteres ?? current.tasa_interes,
+      cuotas_pagadas: data.cuotasPagadas ?? current.cuotas_pagadas,
+      total_cuotas:
+        data.totalCuotas !== undefined ? (data.totalCuotas ?? null) : current.total_cuotas,
+      cuota_mensual:
+        data.cuotaMensual !== undefined ? (data.cuotaMensual ?? null) : current.cuota_mensual,
+      monto_actual_pendiente: data.montoActualPendiente ?? current.monto_actual_pendiente,
+      descripcion: data.descripcion ?? current.descripcion,
+      created_at: current.created_at,
+    }
+    const { data: row, error } = await supabase
+      .from('deudas')
+      .upsert(payload, { onConflict: 'id' })
+      .select()
+      .single()
+    if (error) throw error
     return mapDbDeuda(row)
   },
 
@@ -64,7 +80,7 @@ export const deudasApi = {
       localStorage.setItem(storageKey(userId), JSON.stringify(filtered))
       return
     }
-    const { error } = await supabase.from('deudas').delete().eq('id', id)
+    const { error } = await supabase.rpc('delete_deuda', { p_id: id })
     if (error) throw error
   },
 }

@@ -60,7 +60,7 @@ export const pagosApi = {
       localStorage.setItem(storageKey(userId), JSON.stringify(filtered))
       return
     }
-    const { error } = await supabase.from('tarjeta_pagos').delete().eq('id', pagoId)
+    const { error } = await supabase.rpc('delete_tarjeta_pago', { p_id: pagoId })
     if (error) throw error
   },
 }

@@ -30,6 +30,8 @@ export default tseslint.config(
       },
     },
     rules: {
+      'no-eval': 'error',
+      'no-implied-eval': 'error',
       'vue/multi-word-component-names': 'off',
       '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
       '@typescript-eslint/no-explicit-any': 'warn',

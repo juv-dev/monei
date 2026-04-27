@@ -1,8 +1,3 @@
-/**
- * Validation utilities for financial data inputs.
- * Centralizes validation logic used across form views.
- */
-
 const MAX_MONEY_AMOUNT = 999_999_999
 const MAX_DESCRIPTION_LENGTH = 200
 const MAX_INTEREST_RATE = 100
@@ -21,7 +16,6 @@ function fail(error: string): ValidationResult {
   return { valid: false, error }
 }
 
-/** Validate a monetary amount: must be a positive number within a reasonable range */
 export function validateMonto(value: number, label = 'El monto'): ValidationResult {
   if (isNaN(value) || value <= 0) {
     return fail(`${label} debe ser un número positivo`)
@@ -35,7 +29,6 @@ export function validateMonto(value: number, label = 'El monto'): ValidationResu
   return ok()
 }
 
-/** Validate a text description: required, max length, no script injection */
 export function validateDescripcion(value: string, label = 'La descripción', requiredMsg?: string): ValidationResult {
   const trimmed = value.trim()
   if (!trimmed) {
@@ -50,7 +43,6 @@ export function validateDescripcion(value: string, label = 'La descripción', re
   return ok()
 }
 
-/** Validate an interest rate: 0–100% */
 export function validateTasaInteres(value: number): ValidationResult {
   if (isNaN(value) || value < 0) {
     return fail('La tasa de interés debe ser mayor o igual a 0')
@@ -61,7 +53,6 @@ export function validateTasaInteres(value: number): ValidationResult {
   return ok()
 }
 
-/** Validate a password */
 export function validatePassword(password: string): ValidationResult {
   if (password.length < MIN_PASSWORD_LENGTH) {
     return fail(`La contraseña debe tener al menos ${MIN_PASSWORD_LENGTH} caracteres`)
@@ -69,7 +60,6 @@ export function validatePassword(password: string): ValidationResult {
   return ok()
 }
 
-/** Validate that two passwords match */
 export function validatePasswordMatch(password: string, confirm: string): ValidationResult {
   if (password !== confirm) {
     return fail('Las contraseñas no coinciden')
@@ -77,10 +67,8 @@ export function validatePasswordMatch(password: string, confirm: string): Valida
   return ok()
 }
 
-/** Sanitize a string by trimming and removing dangerous patterns */
 export function sanitize(value: string): string {
-  return value
-    .trim()
-    .replace(/<script[\s\S]*?<\/script>/gi, '')
-    .replace(/<[^>]*>/g, '')
+  const div = document.createElement('div')
+  div.textContent = value.trim()
+  return div.innerHTML
 }

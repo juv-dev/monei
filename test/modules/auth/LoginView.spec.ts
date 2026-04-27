@@ -45,7 +45,7 @@ describe('should LoginView', () => {
 
     expect(wrapper.find('[data-testid="login-page"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="google-button"]').exists()).toBe(true)
-    expect(wrapper.find('[data-testid="github-button"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="apple-button"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="demo-button"]').exists()).toBe(true)
   })
 
@@ -64,14 +64,14 @@ describe('should LoginView', () => {
     expect(wrapper.find('[data-testid="google-button"]').text()).toContain('Continuar con Google')
   })
 
-  it('should show GitHub button with correct text', () => {
+  it('should show Apple button with correct text', () => {
     const { wrapper } = mountView()
-    expect(wrapper.find('[data-testid="github-button"]').text()).toContain('Continuar con GitHub')
+    expect(wrapper.find('[data-testid="apple-button"]').text()).toContain('Continuar con Apple')
   })
 
   it('should show demo button with correct text', () => {
     const { wrapper } = mountView()
-    expect(wrapper.find('[data-testid="demo-button"]').text()).toContain('Probar en modo demo')
+    expect(wrapper.find('[data-testid="demo-button"]').text()).toContain('Explorar en modo demo')
   })
 
   // ─── Demo login ────────────────────────────────────────────────────────────
@@ -110,27 +110,27 @@ describe('should LoginView', () => {
     expect(wrapper.find('[data-testid="error-message"]').text()).toContain('Google OAuth failed')
   })
 
-  // ─── Microsoft OAuth ───────────────────────────────────────────────────────
-  it('should call signInWithGitHub on GitHub button click', async () => {
+  // ─── Apple OAuth ───────────────────────────────────────────────────────────
+  it('should call signInWithApple on Apple button click', async () => {
     const { wrapper } = mountView()
     const auth = useAuthStore()
-    const spy = vi.spyOn(auth, 'signInWithGitHub').mockResolvedValue({})
+    const spy = vi.spyOn(auth, 'signInWithApple').mockResolvedValue({})
 
-    await wrapper.find('[data-testid="github-button"]').trigger('click')
+    await wrapper.find('[data-testid="apple-button"]').trigger('click')
     await flushPromises()
 
     expect(spy).toHaveBeenCalled()
   })
 
-  it('should show error when GitHub sign in fails', async () => {
+  it('should show error when Apple sign in fails', async () => {
     const { wrapper } = mountView()
     const auth = useAuthStore()
-    vi.spyOn(auth, 'signInWithGitHub').mockResolvedValue({ error: 'GitHub error' })
+    vi.spyOn(auth, 'signInWithApple').mockResolvedValue({ error: 'Apple error' })
 
-    await wrapper.find('[data-testid="github-button"]').trigger('click')
+    await wrapper.find('[data-testid="apple-button"]').trigger('click')
     await flushPromises()
 
-    expect(wrapper.find('[data-testid="error-message"]').text()).toContain('GitHub error')
+    expect(wrapper.find('[data-testid="error-message"]').text()).toContain('Apple error')
   })
 
   // ─── Email flow ──────────────────────────────────────────────────────────
@@ -163,7 +163,7 @@ describe('should LoginView', () => {
     await wrapper.find('[data-testid="email-button"]').trigger('click')
     await flushPromises()
 
-    const toggleBtn = wrapper.findAll('button').find((b) => b.text().includes('Crear cuenta nueva'))
+    const toggleBtn = wrapper.findAll('button').find((b) => b.text().includes('Registrarte'))
     await toggleBtn!.trigger('click')
     await flushPromises()
 
@@ -179,7 +179,7 @@ describe('should LoginView', () => {
     await wrapper.find('form').trigger('submit')
     await flushPromises()
 
-    expect(wrapper.find('[data-testid="error-message"]').text()).toContain('Completa todos los campos')
+    expect(wrapper.find('[data-testid="error-message"]').text()).toContain('todos los campos')
   })
 
   it('should show error when register passwords do not match', async () => {
@@ -187,7 +187,7 @@ describe('should LoginView', () => {
     await wrapper.find('[data-testid="email-button"]').trigger('click')
     await flushPromises()
 
-    const toggleBtn = wrapper.findAll('button').find((b) => b.text().includes('Crear cuenta nueva'))
+    const toggleBtn = wrapper.findAll('button').find((b) => b.text().includes('Registrarte'))
     await toggleBtn!.trigger('click')
     await flushPromises()
 
@@ -205,7 +205,7 @@ describe('should LoginView', () => {
     await wrapper.find('[data-testid="email-button"]').trigger('click')
     await flushPromises()
 
-    const toggleBtn = wrapper.findAll('button').find((b) => b.text().includes('Crear cuenta nueva'))
+    const toggleBtn = wrapper.findAll('button').find((b) => b.text().includes('Registrarte'))
     await toggleBtn!.trigger('click')
     await flushPromises()
 
@@ -226,7 +226,7 @@ describe('should LoginView', () => {
     await wrapper.find('[data-testid="email-button"]').trigger('click')
     await flushPromises()
 
-    const toggleBtn = wrapper.findAll('button').find((b) => b.text().includes('Crear cuenta nueva'))
+    const toggleBtn = wrapper.findAll('button').find((b) => b.text().includes('Registrarte'))
     await toggleBtn!.trigger('click')
     await flushPromises()
 
@@ -248,7 +248,7 @@ describe('should LoginView', () => {
     await wrapper.find('[data-testid="email-button"]').trigger('click')
     await flushPromises()
 
-    const toggleBtn = wrapper.findAll('button').find((b) => b.text().includes('Crear cuenta nueva'))
+    const toggleBtn = wrapper.findAll('button').find((b) => b.text().includes('Registrarte'))
     await toggleBtn!.trigger('click')
     await flushPromises()
 
@@ -300,13 +300,13 @@ describe('should LoginView', () => {
 
     expect(wrapper.find('[data-testid="email-submit-button"]').text()).toContain('Iniciar sesión')
 
-    let toggleBtn = wrapper.findAll('button').find((b) => b.text().includes('Crear cuenta nueva'))
+    let toggleBtn = wrapper.findAll('button').find((b) => b.text().includes('Registrarte'))
     await toggleBtn!.trigger('click')
     await flushPromises()
 
     expect(wrapper.find('[data-testid="email-submit-button"]').text()).toContain('Crear cuenta')
 
-    toggleBtn = wrapper.findAll('button').find((b) => b.text().includes('Ya tengo cuenta'))
+    toggleBtn = wrapper.findAll('button').find((b) => b.text().includes('Ya tenés cuenta'))
     await toggleBtn!.trigger('click')
     await flushPromises()
 
@@ -316,7 +316,7 @@ describe('should LoginView', () => {
   // ─── Logo y branding ──────────────────────────────────────────────────────
   it('should show Monei branding', () => {
     const { wrapper } = mountView()
-    expect(wrapper.text()).toContain('Monei')
+    expect(wrapper.text()).toContain('monei')
     expect(wrapper.text()).toContain('Tu dinero, bajo control')
   })
 })

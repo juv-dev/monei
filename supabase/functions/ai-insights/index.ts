@@ -1,5 +1,4 @@
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -13,21 +12,23 @@ function jsonResponse(data: unknown, status = 200) {
   })
 }
 
-async function verifyUser(req: Request) {
+function verifyUser(req: Request): { id: string } | null {
   const authHeader = req.headers.get('Authorization')
-  if (!authHeader) return null
+  if (!authHeader?.startsWith('Bearer ')) return null
 
-  const supabase = createClient(
-    Deno.env.get('SUPABASE_URL')!,
-    Deno.env.get('SUPABASE_ANON_KEY')!,
-    { global: { headers: { Authorization: authHeader } } },
-  )
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-  return user
+  try {
+    const token = authHeader.slice(7)
+    const payload = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')))
+    if (!payload?.sub) return null
+    if (payload.exp && payload.exp < Math.floor(Date.now() / 1000)) return null
+    return { id: payload.sub }
+  } catch {
+    return null
+  }
 }
+
+const GEMINI_MODEL = 'gemini-2.5-flash-lite'
+const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`
 
 const SYSTEM_PROMPT = `Eres MoneiAI, un asesor financiero personal experto e inteligente. Analizas datos financieros reales del usuario y das insights accionables.
 
@@ -85,6 +86,41 @@ REGLAS:
 - NO respondas en JSON, responde en texto natural con formato claro
 - Puedes usar viñetas o listas si mejoran la claridad`
 
+async function callGemini(
+  apiKey: string,
+  systemPrompt: string,
+  contents: { role: string; parts: { text: string }[] }[],
+  useJsonMode = false,
+) {
+  const body: Record<string, unknown> = {
+    system_instruction: { parts: [{ text: systemPrompt }] },
+    contents,
+    generationConfig: {
+      maxOutputTokens: useJsonMode ? 2048 : 800,
+      temperature: 0.7,
+      thinkingConfig: { thinkingBudget: 0 },
+    },
+  }
+
+  const response = await fetch(`${GEMINI_URL}?key=${apiKey}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  })
+
+  if (!response.ok) {
+    const errorText = await response.text()
+    console.error('Gemini API error:', response.status, errorText)
+    throw new Error(`Gemini ${response.status}: ${errorText}`)
+  }
+
+  const result = await response.json()
+  // Find the last text part (skips thinking parts in models that support it)
+  const parts: { text?: string; thought?: boolean }[] = result.candidates?.[0]?.content?.parts ?? []
+  const textPart = parts.filter((p) => !p.thought && p.text).at(-1)
+  return textPart?.text ?? ''
+}
+
 serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
@@ -96,68 +132,46 @@ serve(async (req: Request) => {
       return jsonResponse({ error: 'Unauthorized' }, 401)
     }
 
-    const anthropicApiKey = Deno.env.get('ANTHROPIC_API_KEY')
-    if (!anthropicApiKey) {
+    const geminiApiKey = Deno.env.get('GEMINI_API_KEY')
+    if (!geminiApiKey) {
       return jsonResponse({ error: 'AI service not configured' }, 500)
     }
 
     const body = await req.json()
     const { financialData, action = 'analyze', message, conversationHistory = [] } = body
 
-    let systemPrompt: string
-    let messages: { role: string; content: string }[]
-    let maxTokens: number
-
     if (action === 'chat') {
-      systemPrompt = `${CHAT_SYSTEM_PROMPT}\n\nDatos financieros del usuario:\n${JSON.stringify(financialData, null, 2)}`
-      messages = [
-        ...conversationHistory,
-        { role: 'user', content: message },
+      const systemPrompt = `${CHAT_SYSTEM_PROMPT}\n\nDatos financieros del usuario:\n${JSON.stringify(financialData, null, 2)}`
+
+      // Map conversation history: Anthropic "assistant" → Gemini "model"
+      const contents = [
+        ...conversationHistory.map((m: { role: string; content: string }) => ({
+          role: m.role === 'assistant' ? 'model' : 'user',
+          parts: [{ text: m.content }],
+        })),
+        { role: 'user', parts: [{ text: message }] },
       ]
-      maxTokens = 800
-    } else {
-      systemPrompt = SYSTEM_PROMPT
-      messages = [
-        {
-          role: 'user',
-          content: `Analiza estos datos financieros y genera un análisis completo:\n${JSON.stringify(financialData, null, 2)}`,
-        },
-      ]
-      maxTokens = 2048
+
+      const reply = await callGemini(geminiApiKey, systemPrompt, contents, false)
+      return jsonResponse({ reply })
     }
 
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': anthropicApiKey,
-        'anthropic-version': '2023-06-01',
+    // action === 'analyze'
+    const contents = [
+      {
+        role: 'user',
+        parts: [{ text: `Analiza estos datos financieros y genera un análisis completo:\n${JSON.stringify(financialData, null, 2)}` }],
       },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: maxTokens,
-        system: systemPrompt,
-        messages,
-      }),
-    })
+    ]
 
-    if (!response.ok) {
-      const errorText = await response.text()
-      console.error('Anthropic API error:', errorText)
-      return jsonResponse({ error: 'AI analysis failed' }, 502)
-    }
-
-    const aiResponse = await response.json()
-    const textContent = aiResponse.content?.[0]?.text ?? '{}'
-
-    if (action === 'chat') {
-      return jsonResponse({ reply: textContent })
-    }
-
-    const analysis = JSON.parse(textContent)
+    const text = await callGemini(geminiApiKey, SYSTEM_PROMPT, contents, true)
+    const jsonMatch = text.match(/\{[\s\S]*\}/)
+    if (!jsonMatch) throw new Error('No JSON in response')
+    const analysis = JSON.parse(jsonMatch[0])
     return jsonResponse({ analysis })
   } catch (error) {
-    console.error('Edge function error:', error)
-    return jsonResponse({ error: 'Internal server error' }, 500)
+    const msg = error instanceof Error ? error.message : String(error)
+    console.error('Edge function error:', msg)
+    return jsonResponse({ error: msg }, 500)
   }
 })

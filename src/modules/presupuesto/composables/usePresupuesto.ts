@@ -1,19 +1,24 @@
 import { computed } from 'vue'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
 import { useAuthStore } from '~/stores/auth'
+import { useSelectedMonth } from '~/shared/composables/useSelectedMonth'
 import { presupuestoApi } from '../services/api'
 import type { NuevoGasto, CategoriaResumen } from '~/shared/types'
 
-export const PRESUPUESTO_QUERY_KEY = (userId: string) => ['finance', userId, 'presupuesto'] as const
+export const PRESUPUESTO_BASE_KEY = (userId: string) => ['finance', userId, 'presupuesto'] as const
+const PRESUPUESTO_QUERY_KEY = (userId: string, year: number, month: number) =>
+  [...PRESUPUESTO_BASE_KEY(userId), year, month] as const
 
 export function usePresupuesto() {
   const auth = useAuthStore()
   const queryClient = useQueryClient()
   const userId = computed(() => auth.userId)
+  const { selectedYear, selectedMonth } = useSelectedMonth()
 
   const query = useQuery({
-    queryKey: computed(() => PRESUPUESTO_QUERY_KEY(userId.value)),
-    queryFn: () => presupuestoApi.getAll(userId.value),
+    queryKey: computed(() => PRESUPUESTO_QUERY_KEY(userId.value, selectedYear.value, selectedMonth.value)),
+    queryFn: () =>
+      presupuestoApi.getAll(userId.value, { year: selectedYear.value, month: selectedMonth.value }),
     enabled: computed(() => !!userId.value),
   })
 
@@ -21,7 +26,6 @@ export function usePresupuesto() {
 
   const totalGastado = computed(() => gastos.value.reduce((sum, item) => sum + item.monto, 0))
 
-  /** Gastos agrupados por categoría con subtotal */
   const porCategoria = computed<CategoriaResumen[]>(() => {
     const map = new Map<string, CategoriaResumen>()
     for (const gasto of gastos.value) {
@@ -36,15 +40,14 @@ export function usePresupuesto() {
     return Array.from(map.values())
   })
 
-  /** Lista de nombres de categorías únicas ya registradas */
-  const categorias = computed<string[]>(() => Array.from(new Set(gastos.value.map((g) => g.categoria || 'General'))))
+  const categorias = computed<string[]>(() =>
+    Array.from(new Set(gastos.value.map((g) => g.categoria || 'General'))),
+  )
 
   const addMutation = useMutation({
     mutationFn: (data: NuevoGasto) => presupuestoApi.create(userId.value, data),
     onSuccess: () => {
-      void queryClient.invalidateQueries({
-        queryKey: PRESUPUESTO_QUERY_KEY(userId.value),
-      })
+      void queryClient.invalidateQueries({ queryKey: PRESUPUESTO_BASE_KEY(userId.value) })
     },
   })
 
@@ -52,18 +55,14 @@ export function usePresupuesto() {
     mutationFn: ({ id, data }: { id: string; data: { monto?: number; descripcion?: string; categoria?: string } }) =>
       presupuestoApi.update(userId.value, id, data),
     onSuccess: () => {
-      void queryClient.invalidateQueries({
-        queryKey: PRESUPUESTO_QUERY_KEY(userId.value),
-      })
+      void queryClient.invalidateQueries({ queryKey: PRESUPUESTO_BASE_KEY(userId.value) })
     },
   })
 
   const removeMutation = useMutation({
     mutationFn: (id: string) => presupuestoApi.remove(userId.value, id),
     onSuccess: () => {
-      void queryClient.invalidateQueries({
-        queryKey: PRESUPUESTO_QUERY_KEY(userId.value),
-      })
+      void queryClient.invalidateQueries({ queryKey: PRESUPUESTO_BASE_KEY(userId.value) })
     },
   })
 

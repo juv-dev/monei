@@ -68,9 +68,9 @@ describe('should AppModal', () => {
       props: { open: true, title: 'Accent', accentColor: '#6A1E2D' },
     })
 
-    const header = wrapper.find('div.flex.items-center.justify-between')
-    // jsdom converts hex to rgb
-    expect(header.attributes('style')).toContain('border-bottom-color')
+    const header = wrapper.find('div.flex.items-start.justify-between')
+    // jsdom converts hex to rgb, accent renders as a background span
+    expect(header.find('span[style]').attributes('style')).toContain('background')
   })
 
   it('should not apply accent border when no accentColor', () => {
@@ -78,8 +78,7 @@ describe('should AppModal', () => {
       props: { open: true, title: 'No Accent' },
     })
 
-    const header = wrapper.find('div.flex.items-center.justify-between')
-    const style = header.attributes('style') ?? ''
-    expect(style).not.toContain('border-bottom-color')
+    const header = wrapper.find('div.flex.items-start.justify-between')
+    expect(header.find('span[style]').exists()).toBe(false)
   })
 })

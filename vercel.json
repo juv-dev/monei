@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/__clerk/:path*",
+      "destination": "https://pro-phoenix-61.clerk.accounts.dev/:path*"
+    }
+  ]
+}

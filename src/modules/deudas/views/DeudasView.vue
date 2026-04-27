@@ -7,9 +7,12 @@ import { useAuthStore } from '~/stores/auth'
 import AppModal from '~/shared/components/ui/AppModal.vue'
 import EmptyState from '~/shared/components/ui/EmptyState.vue'
 import PageHeader from '~/shared/components/layout/PageHeader.vue'
+import ConfirmDialog from '~/shared/components/ui/ConfirmDialog.vue'
 import type { Deuda } from '~/shared/types'
 import { formatMoneyDisplay, parseMoneyInput, onDecimalInput, onIntInput } from '~/shared/utils/format'
 import { validateMonto, validateDescripcion, validateTasaInteres, sanitize } from '~/shared/utils/validation'
+
+defineProps<{ embedded?: boolean }>()
 
 const {
   deudas,
@@ -259,9 +262,18 @@ function onDragEnd() {
   dragOverId.value = null
 }
 
+const pendingDeleteId = ref<string | null>(null)
+
 function handleDelete(id: string): void {
-  removeDeuda(id)
+  pendingDeleteId.value = id
 }
+
+function confirmDelete(): void {
+  if (pendingDeleteId.value) removeDeuda(pendingDeleteId.value)
+  pendingDeleteId.value = null
+}
+
+defineExpose({ openModal })
 
 function formatCurrency(value: number): string {
   return new Intl.NumberFormat('es-PE', { style: 'currency', currency: 'PEN' }).format(value)
@@ -337,9 +349,10 @@ function calcularAmortizacion(deuda: Deuda): CuotaRow[] {
 </script>
 
 <template>
-  <div class="min-h-screen bg-[#F0F2F5]" data-testid="deudas-view">
-    <div class="max-w-5xl mx-auto p-5 lg:p-8 space-y-5">
+  <div :class="embedded ? '' : 'min-h-screen bg-[#F0F2F5]'" data-testid="deudas-view">
+    <div :class="embedded ? 'space-y-4' : 'max-w-5xl mx-auto p-5 lg:p-8 space-y-5'">
       <PageHeader
+        v-if="!embedded"
         title="Deudas"
         subtitle="Gestiona tus deudas personales"
         button-label="Agregar deuda"
@@ -349,6 +362,7 @@ function calcularAmortizacion(deuda: Deuda): CuotaRow[] {
       />
 
       <div
+        v-if="!embedded"
         class="rounded-3xl p-6 lg:p-8 relative overflow-hidden shadow-lg"
         style="background: linear-gradient(135deg, #d4a017 0%, #a87a0f 100%)"
       >
@@ -397,9 +411,11 @@ function calcularAmortizacion(deuda: Deuda): CuotaRow[] {
           v-else-if="deudas.length === 0"
           :icon="Inbox"
           color="#D4A017"
-          title="No hay deudas registradas"
-          subtitle="Agrega una deuda para hacer seguimiento"
+          title="No hay préstamos registrados"
+          subtitle="Hacé seguimiento de tus deudas y cuotas mensuales"
+          action-label="Agregar préstamo"
           testid="empty-state"
+          @action="openModal"
         />
 
         <div v-else class="space-y-4" data-testid="deudas-list">
@@ -599,172 +615,193 @@ function calcularAmortizacion(deuda: Deuda): CuotaRow[] {
     </div>
   </div>
 
-  <AppModal :open="isModalOpen" title="Agregar Deuda" accent-color="#D4A017" @close="isModalOpen = false">
-    <form data-testid="deudas-form" novalidate @submit.prevent="handleSubmit">
-      <div class="space-y-3">
-        <div>
-          <label for="nombre-persona" class="block text-xs font-semibold text-[#64748B] mb-1.5 uppercase tracking-wide">
-            Nombre persona
-          </label>
-          <input
-            id="nombre-persona"
-            v-model="form.nombrePersona"
-            type="text"
-            placeholder="Ej: Juan Pérez"
-            class="w-full px-4 py-2.5 border border-[#EEEEF0] rounded-xl text-sm bg-[#F5F6FA] text-[#1A1A2E] placeholder-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#D4A017]/30 focus:border-transparent focus:bg-white transition-all"
-            data-testid="nombre-persona-input"
-          />
-        </div>
-
-        <div>
-          <label
-            for="descripcion-deuda"
-            class="block text-xs font-semibold text-[#64748B] mb-1.5 uppercase tracking-wide"
-          >
-            Descripción
-          </label>
-          <input
-            id="descripcion-deuda"
-            v-model="form.descripcion"
-            type="text"
-            placeholder="Ej: Préstamo personal"
-            class="w-full px-4 py-2.5 border border-[#EEEEF0] rounded-xl text-sm bg-[#F5F6FA] text-[#1A1A2E] placeholder-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#D4A017]/30 focus:border-transparent focus:bg-white transition-all"
-            data-testid="descripcion-input"
-          />
-        </div>
-
-        <div class="grid grid-cols-2 gap-2">
+  <AppModal
+    :open="isModalOpen"
+    title="Nuevo préstamo"
+    subtitle="Registrá una deuda o crédito personal"
+    accent-color="#D4A017"
+    @close="isModalOpen = false"
+  >
+    <form data-testid="deudas-form" novalidate autocomplete="off" @submit.prevent="handleSubmit">
+      <div class="space-y-5">
+        <!-- Sección: Datos -->
+        <div class="space-y-2">
+          <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Datos</p>
           <div>
-            <label for="total-deuda" class="block text-xs font-semibold text-[#64748B] mb-1.5 uppercase tracking-wide">
-              Total (S/)
-            </label>
+            <label for="nombre-persona" class="block text-xs font-medium text-slate-600 mb-1.5">Nombre de la persona / entidad</label>
             <input
-              id="total-deuda"
+              id="nombre-persona"
+              v-model="form.nombrePersona"
               type="text"
-              inputmode="decimal"
-              :value="form.totalDeuda"
-              placeholder="0.00"
-              class="w-full px-3 py-2.5 border border-[#EEEEF0] rounded-xl text-sm bg-[#F5F6FA] text-[#1A1A2E] placeholder-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#D4A017]/30 focus:border-transparent focus:bg-white transition-all"
-              data-testid="total-deuda-input"
-              @input="onDecimalInput($event, (v) => (form.totalDeuda = v))"
-              @blur="form.totalDeuda = formatMoneyDisplay(form.totalDeuda)"
+              autocomplete="off"
+              placeholder="Ej: Juan Pérez"
+              class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-400 transition-all"
+              data-testid="nombre-persona-input"
             />
           </div>
           <div>
-            <label
-              for="monto-pendiente"
-              class="block text-xs font-semibold text-[#64748B] mb-1.5 uppercase tracking-wide"
-            >
-              Pendiente (S/)
-            </label>
+            <label for="descripcion-deuda" class="block text-xs font-medium text-slate-600 mb-1.5">Descripción</label>
             <input
-              id="monto-pendiente"
+              id="descripcion-deuda"
+              v-model="form.descripcion"
               type="text"
-              inputmode="decimal"
-              :value="form.montoActualPendiente"
-              placeholder="0.00"
-              class="w-full px-3 py-2.5 border border-[#EEEEF0] rounded-xl text-sm bg-[#F5F6FA] text-[#1A1A2E] placeholder-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#D4A017]/30 focus:border-transparent focus:bg-white transition-all"
-              data-testid="monto-pendiente-input"
-              @input="onDecimalInput($event, (v) => (form.montoActualPendiente = v))"
-              @blur="form.montoActualPendiente = formatMoneyDisplay(form.montoActualPendiente)"
+              autocomplete="off"
+              placeholder="Ej: Préstamo personal"
+              class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-400 transition-all"
+              data-testid="descripcion-input"
             />
           </div>
         </div>
 
-        <div class="grid grid-cols-2 gap-2">
-          <div>
-            <label
-              for="cuota-mensual"
-              class="block text-xs font-semibold text-[#64748B] mb-1.5 uppercase tracking-wide"
-            >
-              Cuota mensual (S/)
-            </label>
-            <input
-              id="cuota-mensual"
-              type="text"
-              inputmode="decimal"
-              :value="form.cuotaMensual"
-              placeholder="0.00"
-              class="w-full px-3 py-2.5 border border-[#EEEEF0] rounded-xl text-sm bg-[#F5F6FA] text-[#1A1A2E] placeholder-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#D4A017]/30 focus:border-transparent focus:bg-white transition-all"
-              data-testid="cuota-mensual-input"
-              @input="onDecimalInput($event, (v) => (form.cuotaMensual = v))"
-              @blur="form.cuotaMensual = formatMoneyDisplay(form.cuotaMensual)"
-            />
+        <!-- Sección: Montos -->
+        <div class="space-y-2">
+          <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Montos</p>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label for="total-deuda" class="block text-xs font-medium text-slate-600 mb-1.5">Total</label>
+              <div class="relative">
+                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-slate-400">S/</span>
+                <input
+                  id="total-deuda"
+                  type="text"
+                  inputmode="decimal"
+                  autocomplete="off"
+                  :value="form.totalDeuda"
+                  placeholder="0.00"
+                  class="w-full pl-8 pr-3 py-2.5 border border-slate-200 rounded-xl text-sm bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-400 tabular-nums transition-all"
+                  data-testid="total-deuda-input"
+                  @input="onDecimalInput($event, (v) => (form.totalDeuda = v))"
+                  @blur="form.totalDeuda = formatMoneyDisplay(form.totalDeuda)"
+                />
+              </div>
+            </div>
+            <div>
+              <label for="monto-pendiente" class="block text-xs font-medium text-slate-600 mb-1.5">Pendiente</label>
+              <div class="relative">
+                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-slate-400">S/</span>
+                <input
+                  id="monto-pendiente"
+                  type="text"
+                  inputmode="decimal"
+                  autocomplete="off"
+                  :value="form.montoActualPendiente"
+                  placeholder="0.00"
+                  class="w-full pl-8 pr-3 py-2.5 border border-slate-200 rounded-xl text-sm bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-400 tabular-nums transition-all"
+                  data-testid="monto-pendiente-input"
+                  @input="onDecimalInput($event, (v) => (form.montoActualPendiente = v))"
+                  @blur="form.montoActualPendiente = formatMoneyDisplay(form.montoActualPendiente)"
+                />
+              </div>
+            </div>
           </div>
-          <div>
-            <label for="tasa-interes" class="block text-xs font-semibold text-[#64748B] mb-1.5 uppercase tracking-wide">
-              Interés (%)
-            </label>
-            <input
-              id="tasa-interes"
-              type="text"
-              inputmode="decimal"
-              :value="form.tasaInteres"
-              placeholder="0.00"
-              class="w-full px-3 py-2.5 border border-[#EEEEF0] rounded-xl text-sm bg-[#F5F6FA] text-[#1A1A2E] placeholder-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#D4A017]/30 focus:border-transparent focus:bg-white transition-all"
-              data-testid="tasa-interes-input"
-              @input="onDecimalInput($event, (v) => (form.tasaInteres = v))"
-            />
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label for="cuota-mensual" class="block text-xs font-medium text-slate-600 mb-1.5">Cuota mensual</label>
+              <div class="relative">
+                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-slate-400">S/</span>
+                <input
+                  id="cuota-mensual"
+                  type="text"
+                  inputmode="decimal"
+                  autocomplete="off"
+                  :value="form.cuotaMensual"
+                  placeholder="0.00"
+                  class="w-full pl-8 pr-3 py-2.5 border border-slate-200 rounded-xl text-sm bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-400 tabular-nums transition-all"
+                  data-testid="cuota-mensual-input"
+                  @input="onDecimalInput($event, (v) => (form.cuotaMensual = v))"
+                  @blur="form.cuotaMensual = formatMoneyDisplay(form.cuotaMensual)"
+                />
+              </div>
+            </div>
+            <div>
+              <label for="tasa-interes" class="block text-xs font-medium text-slate-600 mb-1.5">Interés anual</label>
+              <div class="relative">
+                <input
+                  id="tasa-interes"
+                  type="text"
+                  inputmode="decimal"
+                  autocomplete="off"
+                  :value="form.tasaInteres"
+                  placeholder="0.00"
+                  class="w-full pl-3 pr-8 py-2.5 border border-slate-200 rounded-xl text-sm bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-400 tabular-nums transition-all"
+                  data-testid="tasa-interes-input"
+                  @input="onDecimalInput($event, (v) => (form.tasaInteres = v))"
+                />
+                <span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-slate-400">%</span>
+              </div>
+            </div>
           </div>
         </div>
 
-        <div class="grid grid-cols-2 gap-2">
-          <div>
-            <label
-              for="cuotas-pagadas"
-              class="block text-xs font-semibold text-[#64748B] mb-1.5 uppercase tracking-wide"
-            >
-              Cuotas pagadas
-            </label>
-            <input
-              id="cuotas-pagadas"
-              type="text"
-              inputmode="numeric"
-              :value="form.cuotasPagadas"
-              placeholder="0"
-              class="w-full px-3 py-2.5 border border-[#EEEEF0] rounded-xl text-sm bg-[#F5F6FA] text-[#1A1A2E] placeholder-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#D4A017]/30 focus:border-transparent focus:bg-white transition-all"
-              data-testid="cuotas-pagadas-input"
-              @input="onIntInput($event, (v) => (form.cuotasPagadas = v))"
-            />
-          </div>
-          <div>
-            <label for="total-cuotas" class="block text-xs font-semibold text-[#64748B] mb-1.5 uppercase tracking-wide">
-              Total cuotas <span class="font-normal normal-case text-[#94A3B8]">(opcional)</span>
-            </label>
-            <input
-              id="total-cuotas"
-              type="text"
-              inputmode="numeric"
-              :value="form.totalCuotas"
-              placeholder="Ej: 60"
-              class="w-full px-3 py-2.5 border border-[#EEEEF0] rounded-xl text-sm bg-[#F5F6FA] text-[#1A1A2E] placeholder-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#D4A017]/30 focus:border-transparent focus:bg-white transition-all"
-              data-testid="total-cuotas-input"
-              @input="onIntInput($event, (v) => (form.totalCuotas = v))"
-            />
+        <!-- Sección: Cuotas -->
+        <div class="space-y-2">
+          <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Cuotas</p>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label for="cuotas-pagadas" class="block text-xs font-medium text-slate-600 mb-1.5">Pagadas</label>
+              <input
+                id="cuotas-pagadas"
+                type="text"
+                inputmode="numeric"
+                autocomplete="off"
+                :value="form.cuotasPagadas"
+                placeholder="0"
+                class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-400 tabular-nums transition-all"
+                data-testid="cuotas-pagadas-input"
+                @input="onIntInput($event, (v) => (form.cuotasPagadas = v))"
+              />
+            </div>
+            <div>
+              <label for="total-cuotas" class="block text-xs font-medium text-slate-600 mb-1.5">
+                Totales <span class="text-slate-400">· opc.</span>
+              </label>
+              <input
+                id="total-cuotas"
+                type="text"
+                inputmode="numeric"
+                autocomplete="off"
+                :value="form.totalCuotas"
+                placeholder="Ej: 60"
+                class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-400 tabular-nums transition-all"
+                data-testid="total-cuotas-input"
+                @input="onIntInput($event, (v) => (form.totalCuotas = v))"
+              />
+            </div>
           </div>
         </div>
 
         <p
           v-if="formError"
-          class="text-sm bg-[#C65A3A]/8 border border-[#C65A3A]/20 rounded-xl px-3 py-2.5"
-          style="color: #c65a3a"
+          class="text-xs bg-rose-50 border border-rose-200 rounded-xl px-3 py-2.5 text-rose-700"
           role="alert"
           data-testid="form-error"
         >
           {{ formError }}
         </p>
-
-        <button
-          type="submit"
-          :disabled="isAdding"
-          class="w-full py-3 text-white font-bold rounded-xl transition-all shadow-md hover:opacity-90 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-          style="background: linear-gradient(135deg, #d4a017 0%, #a87a0f 100%)"
-          data-testid="submit-button"
-        >
-          {{ isAdding ? 'Agregando...' : '+ Agregar deuda' }}
-        </button>
       </div>
     </form>
+    <template #footer>
+      <div class="flex gap-2">
+        <button
+          type="button"
+          class="flex-1 py-2.5 text-sm font-semibold rounded-xl border border-slate-200 text-slate-600 bg-white hover:bg-slate-50 transition-all"
+          @click="isModalOpen = false"
+        >
+          Cancelar
+        </button>
+        <button
+          type="button"
+          :disabled="isAdding"
+          class="flex-[2] py-2.5 text-sm text-white font-semibold rounded-xl transition-all shadow-sm hover:shadow-md hover:opacity-95 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
+          style="background: linear-gradient(135deg, #D4A017 0%, #A87A0F 100%);"
+          data-testid="submit-button"
+          @click="handleSubmit"
+        >
+          {{ isAdding ? 'Agregando…' : 'Agregar préstamo' }}
+        </button>
+      </div>
+    </template>
   </AppModal>
 
   <AppModal :open="isEditModalOpen" title="Editar Deuda" accent-color="#D4A017" @close="isEditModalOpen = false">
@@ -946,4 +983,10 @@ function calcularAmortizacion(deuda: Deuda): CuotaRow[] {
       </div>
     </form>
   </AppModal>
+
+  <ConfirmDialog
+    :open="pendingDeleteId !== null"
+    @confirm="confirmDelete"
+    @cancel="pendingDeleteId = null"
+  />
 </template>

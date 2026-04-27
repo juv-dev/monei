@@ -1,6 +1,15 @@
 import { beforeEach, vi } from 'vitest'
 import { config } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
+import { shallowRef, ref } from 'vue'
+
+// ─── Clerk mock ───────────────────────────────────────────────────────────────
+vi.mock('@clerk/vue', () => ({
+  useClerk: () => shallowRef(null),
+  useUser: () => ({ user: shallowRef(null), isLoaded: ref(true) }),
+  useSignIn: () => ({ signIn: shallowRef(null) }),
+  useAuth: () => ({ isSignedIn: ref(false), userId: ref(null) }),
+}))
 
 // ─── In-memory Supabase store (simulates DB tables) ─────────────────────────
 const tables: Record<string, Record<string, unknown>[]> = {}
@@ -23,6 +32,7 @@ function createQueryBuilder(tableName: string) {
   let orderAsc = true
   let insertData: Record<string, unknown> | null = null
   let updateData: Record<string, unknown> | null = null
+  let upsertData: Record<string, unknown> | null = null
   let deleteMode = false
   let selectMode = false
   let singleMode = false
@@ -49,10 +59,18 @@ function createQueryBuilder(tableName: string) {
     return builder
   }
 
+  builder.upsert = (data: Record<string, unknown>, _opts?: unknown) => {
+    upsertData = data
+    return builder
+  }
+
   builder.eq = (col: string, val: unknown) => {
     filters.push({ col, val })
     return builder
   }
+
+  builder.gte = (_col: string, _val: unknown) => builder
+  builder.lte = (_col: string, _val: unknown) => builder
 
   builder.order = (col: string, opts?: { ascending?: boolean }) => {
     orderCol = col
@@ -77,6 +95,29 @@ function createQueryBuilder(tableName: string) {
           resolve({ data: [{ ...insertData }], error: null })
         } else {
           resolve({ data: null, error: null })
+        }
+        return
+      }
+
+      if (upsertData) {
+        const table = getTable(tableName)
+        const id = (upsertData as Record<string, unknown>).id
+        const existing = id ? table.find((r) => r['id'] === id) : null
+        if (existing) {
+          Object.assign(existing, upsertData)
+          if (selectMode && singleMode) {
+            resolve({ data: { ...existing }, error: null })
+          } else {
+            resolve({ data: [{ ...existing }], error: null })
+          }
+        } else {
+          const row = { id: `test-uuid-${Math.random().toString(36).slice(2, 10)}`, created_at: new Date().toISOString(), ...upsertData }
+          table.push(row)
+          if (selectMode && singleMode) {
+            resolve({ data: { ...row }, error: null })
+          } else {
+            resolve({ data: [{ ...row }], error: null })
+          }
         }
         return
       }
@@ -156,11 +197,29 @@ vi.mock('~/config/supabase', () => {
         }),
       },
       from: vi.fn((tableName: string) => createQueryBuilder(tableName)),
+      rpc: vi.fn((fnName: string, params?: Record<string, unknown>) => {
+        const deleteRpcFns: Record<string, { table: string; col: string }> = {
+          delete_tarjeta: { table: 'tarjetas_credito', col: 'id' },
+          delete_tarjeta_pago: { table: 'tarjeta_pagos', col: 'id' },
+          delete_deuda: { table: 'deudas', col: 'id' },
+          delete_ingreso: { table: 'ingresos', col: 'id' },
+          delete_gasto: { table: 'gastos', col: 'id' },
+          delete_gasto_presupuesto: { table: 'gastos_presupuesto', col: 'id' },
+        }
+        const mapping = deleteRpcFns[fnName]
+        if (mapping && params) {
+          const idValue = params['p_id']
+          const table = getTable(mapping.table)
+          tables[mapping.table] = table.filter((r) => r[mapping.col] !== idValue)
+        }
+        return Promise.resolve({ data: null, error: null })
+      }),
       functions: {
         invoke: vi.fn().mockResolvedValue({ data: { analysis: {} }, error: null }),
       },
       _authCallbacks: authCallbacks,
     },
+    setSupabaseToken: vi.fn().mockResolvedValue(undefined),
   }
 })
 

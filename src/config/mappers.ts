@@ -50,6 +50,10 @@ interface DbTarjeta {
   monto_deuda_actual: number
   pago_minimo: number | null
   saldo_total: number | null
+  linea_total_usd: number | null
+  monto_deuda_actual_usd: number | null
+  pago_minimo_usd: number | null
+  saldo_total_usd: number | null
   descripcion: string
   user_id: string
   created_at: string
@@ -110,6 +114,10 @@ export function mapDbTarjeta(row: DbTarjeta): TarjetaCredito {
     montoDeudaActual: Number(row.monto_deuda_actual),
     pagoMinimo: row.pago_minimo != null ? Number(row.pago_minimo) : undefined,
     saldoTotal: row.saldo_total != null ? Number(row.saldo_total) : undefined,
+    lineaTotalUsd: row.linea_total_usd != null ? Number(row.linea_total_usd) : undefined,
+    montoDeudaActualUsd: row.monto_deuda_actual_usd != null ? Number(row.monto_deuda_actual_usd) : undefined,
+    pagoMinimoUsd: row.pago_minimo_usd != null ? Number(row.pago_minimo_usd) : undefined,
+    saldoTotalUsd: row.saldo_total_usd != null ? Number(row.saldo_total_usd) : undefined,
     descripcion: row.descripcion,
     userId: row.user_id,
     createdAt: row.created_at,
@@ -162,6 +170,10 @@ export function mapTarjetaToDb(data: NuevaTarjeta, userId: string) {
     monto_deuda_actual: data.montoDeudaActual,
     pago_minimo: data.pagoMinimo ?? null,
     saldo_total: data.saldoTotal ?? null,
+    linea_total_usd: data.lineaTotalUsd ?? null,
+    monto_deuda_actual_usd: data.montoDeudaActualUsd ?? null,
+    pago_minimo_usd: data.pagoMinimoUsd ?? null,
+    saldo_total_usd: data.saldoTotalUsd ?? null,
     descripcion: data.descripcion,
     user_id: userId,
   }

@@ -154,6 +154,9 @@ describe('should PresupuestoView', () => {
     await wrapper.find('[data-testid="delete-button"]').trigger('click')
     await flushPromises()
 
+    const confirmBtn = document.body.querySelector('[data-testid="confirm-dialog-confirm"]') as HTMLElement | null
+    if (confirmBtn) { confirmBtn.click(); await flushPromises() }
+
     const stored = await presupuestoApi.getAll('demo')
     expect(stored).toHaveLength(0)
   })
@@ -482,8 +485,9 @@ describe('should PresupuestoView', () => {
 
     await wrapper.find('[data-testid="delete-categoria-button"]').trigger('click')
     await flushPromises()
-    await flushPromises()
-    await flushPromises()
+
+    const confirmBtn = document.body.querySelector('[data-testid="confirm-dialog-confirm"]') as HTMLElement | null
+    if (confirmBtn) { confirmBtn.click(); await flushPromises() }
 
     const stored = await presupuestoApi.getAll('demo')
     expect(stored).toHaveLength(0)
@@ -771,7 +775,7 @@ describe('should PresupuestoView', () => {
   })
 
   // ─── Item edit form categoria keydown handlers ──────────────────────
-  it('should handle keydown.enter on edit-categoria-input inside item edit', async () => {
+  it('should handle keydown.enter on edit-categoria-input while item edit is also open', async () => {
     await presupuestoApi.create('demo', { monto: 200, descripcion: 'Luz', categoria: 'Casa' })
 
     const { wrapper } = mountAuthenticated()
@@ -780,20 +784,25 @@ describe('should PresupuestoView', () => {
     await wrapper.find('[data-testid="categoria-header"]').trigger('click')
     await flushPromises()
 
+    // Open item edit and category rename simultaneously
     await wrapper.find('[data-testid="edit-button"]').trigger('click')
     await flushPromises()
 
-    // Modify the categoria in the item edit form and press enter
+    await wrapper.find('[data-testid="edit-categoria-button"]').trigger('click')
+    await flushPromises()
+
     const catInput = wrapper.find('[data-testid="edit-categoria-input"]')
     await catInput.setValue('Hogar')
     await catInput.trigger('keydown', { key: 'Enter' })
+    await flushPromises()
+    await flushPromises()
     await flushPromises()
 
     const stored = await presupuestoApi.getAll('demo')
     expect(stored[0].categoria).toBe('Hogar')
   })
 
-  it('should handle keydown.esc on edit-categoria-input inside item edit', async () => {
+  it('should handle keydown.esc on edit-categoria-input cancels category rename only', async () => {
     await presupuestoApi.create('demo', { monto: 200, descripcion: 'Luz', categoria: 'Casa' })
 
     const { wrapper } = mountAuthenticated()
@@ -802,16 +811,22 @@ describe('should PresupuestoView', () => {
     await wrapper.find('[data-testid="categoria-header"]').trigger('click')
     await flushPromises()
 
+    // Open item edit and category rename simultaneously
     await wrapper.find('[data-testid="edit-button"]').trigger('click')
     await flushPromises()
     expect(wrapper.find('[data-testid="edit-descripcion-input"]').exists()).toBe(true)
 
-    // Press escape on the edit-categoria-input field — should cancel edit
+    await wrapper.find('[data-testid="edit-categoria-button"]').trigger('click')
+    await flushPromises()
+    expect(wrapper.find('[data-testid="edit-categoria-input"]').exists()).toBe(true)
+
+    // Press escape on the edit-categoria-input: cancels category rename, item edit stays open
     const catInput = wrapper.find('[data-testid="edit-categoria-input"]')
     await catInput.trigger('keydown', { key: 'Escape' })
     await flushPromises()
 
-    expect(wrapper.find('[data-testid="edit-descripcion-input"]').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="edit-categoria-input"]').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="edit-descripcion-input"]').exists()).toBe(true)
   })
 
   it('should handle inline monto keydown.enter to submit', async () => {
