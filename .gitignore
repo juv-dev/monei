@@ -27,6 +27,7 @@ coverage
 *.sln
 *.sw?
 .env
+.env.*
 
 # AI tools
 .agent/
