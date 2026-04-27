@@ -5,6 +5,6 @@ on:
     branches: [main, develop]
 
 jobs:
-  run:
+  load-values:
     uses: juv-dev/workflows-frontend/.github/workflows/pr-load-values.yml@main
     secrets: inherit
