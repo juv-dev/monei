@@ -1,4 +1,4 @@
-name: Workflow Pull Request
+name: Personal
 
 on:
   pull_request:
