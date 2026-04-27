@@ -1,9 +1,9 @@
-name: PR
+name: Workflow Pull Request
 
 on:
   pull_request:
     branches: [main, develop]
 
 jobs:
-  validate-tag:
+  FE:
     uses: juv-dev/workflows-frontend/.github/workflows/pr-validate-tag.yml@main

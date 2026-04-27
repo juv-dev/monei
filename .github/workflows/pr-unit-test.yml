@@ -1,10 +1,10 @@
-name: PR
+name: Workflow Pull Request
 
 on:
   pull_request:
     branches: [main, develop]
 
 jobs:
-  unit-test:
+  FE:
     uses: juv-dev/workflows-frontend/.github/workflows/pr-unit-test.yml@main
     secrets: inherit
