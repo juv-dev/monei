@@ -20,7 +20,7 @@
     "prepare": "husky"
   },
   "dependencies": {
-    "@clerk/vue": "^2.0.5",
+    "@clerk/vue": "2.0.5",
     "@supabase/supabase-js": "2.98.0",
     "@tailwindcss/vite": "4.1.18",
     "@tanstack/vue-query": "5.92.9",
@@ -29,13 +29,13 @@
     "connect-history-api-fallback": "2.0.0",
     "exceljs": "4.4.0",
     "lucide-vue-next": "0.575.0",
-    "pinia": "^2.3.1",
+    "pinia": "2.3.1",
     "reka-ui": "2.7.0",
     "tailwindcss": "4.1.18",
     "vitest": "4.0.18",
     "vue": "3.5.24",
     "vue-chartjs": "5.3.3",
-    "vue-router": "^4.6.4"
+    "vue-router": "4.6.4"
   },
   "overrides": {
     "@clerk/shared": "^4.8.1"
@@ -66,7 +66,7 @@
     "class-variance-authority": "0.7.1",
     "eslint": "10.0.2",
     "eslint-plugin-vue": "10.8.0",
-    "husky": "^9.1.7",
+    "husky": "9.1.7",
     "jsdom": "27.4.0",
     "prettier": "3.8.1",
     "typescript": "5.9.3",
