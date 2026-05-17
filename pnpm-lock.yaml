@@ -20,8 +20,8 @@ importers:
   .:
     dependencies:
       '@clerk/vue':
-        specifier: ^2.0.5
-        version: 2.0.18(vue@3.5.24(typescript@5.9.3))
+        specifier: 2.0.5
+        version: 2.0.5(vue@3.5.24(typescript@5.9.3))
       '@supabase/supabase-js':
         specifier: 2.98.0
         version: 2.98.0
@@ -47,7 +47,7 @@ importers:
         specifier: 0.575.0
         version: 0.575.0(vue@3.5.24(typescript@5.9.3))
       pinia:
-        specifier: ^2.3.1
+        specifier: 2.3.1
         version: 2.3.1(typescript@5.9.3)(vue@3.5.24(typescript@5.9.3))
       reka-ui:
         specifier: 2.7.0
@@ -65,7 +65,7 @@ importers:
         specifier: 5.3.3
         version: 5.3.3(chart.js@4.5.1)(vue@3.5.24(typescript@5.9.3))
       vue-router:
-        specifier: ^4.6.4
+        specifier: 4.6.4
         version: 4.6.4(vue@3.5.24(typescript@5.9.3))
     devDependencies:
       '@eslint/js':
@@ -105,7 +105,7 @@ importers:
         specifier: 10.8.0
         version: 10.8.0(@typescript-eslint/parser@8.56.1(eslint@10.0.2(jiti@2.6.1))(typescript@5.9.3))(eslint@10.0.2(jiti@2.6.1))(vue-eslint-parser@10.4.0(eslint@10.0.2(jiti@2.6.1)))
       husky:
-        specifier: ^9.1.7
+        specifier: 9.1.7
         version: 9.1.7
       jsdom:
         specifier: 27.4.0
@@ -672,8 +672,8 @@ packages:
       react-dom:
         optional: true
 
-  '@clerk/vue@2.0.18':
-    resolution: {integrity: sha512-Fj6RQIJe33ylfH8+tA/OzSd4OZSndXCAyir5Pr2pPRM52NUPbnCg+F68aDI6XQXRthYEUVcKjXIzQKQqjDrdzA==}
+  '@clerk/vue@2.0.5':
+    resolution: {integrity: sha512-IO8xQe+vOwSH75v+kzYNyRhIvz2JN1+ymnLDX56048hho9TVhJ7pVtfixYcWo8MFbPk6LHXAbo/qbO7eI3LRjQ==}
     engines: {node: '>=20.9.0'}
     peerDependencies:
       vue: ^3.2.0
@@ -4420,7 +4420,7 @@ snapshots:
       js-cookie: 3.0.5
       std-env: 3.10.0
 
-  '@clerk/vue@2.0.18(vue@3.5.24(typescript@5.9.3))':
+  '@clerk/vue@2.0.5(vue@3.5.24(typescript@5.9.3))':
     dependencies:
       '@clerk/shared': 4.8.5
       vue: 3.5.24(typescript@5.9.3)
