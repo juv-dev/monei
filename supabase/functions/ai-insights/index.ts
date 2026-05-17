@@ -110,7 +110,6 @@ async function callGemini(
 
   if (!response.ok) {
     const errorText = await response.text()
-    console.error('Gemini API error:', response.status, errorText)
     throw new Error(`Gemini ${response.status}: ${errorText}`)
   }
 
@@ -169,9 +168,7 @@ serve(async (req: Request) => {
     if (!jsonMatch) throw new Error('No JSON in response')
     const analysis = JSON.parse(jsonMatch[0])
     return jsonResponse({ analysis })
-  } catch (error) {
-    const msg = error instanceof Error ? error.message : String(error)
-    console.error('Edge function error:', msg)
-    return jsonResponse({ error: msg }, 500)
+  } catch {
+    return jsonResponse({ error: 'Internal server error' }, 500)
   }
 })

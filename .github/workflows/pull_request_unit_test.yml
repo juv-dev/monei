@@ -1,0 +1,11 @@
+name: Workflow PR Unit Tests
+
+on:
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  Pull_Request:
+    name: PR
+    uses: juv-dev/workflows-frontend/.github/workflows/frontend-pr-unit-test.yml@main
+    secrets: inherit
