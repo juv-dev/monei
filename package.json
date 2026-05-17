@@ -2,7 +2,7 @@
   "name": "monei",
   "private": true,
   "version": "1.1.0",
-  "packageManager": "pnpm@10.12.1",
+  "packageManager": "pnpm@11.1.2",
   "scripts": {
     "dev": "vite",
     "build": "vue-tsc -b && vite build",
@@ -20,7 +20,7 @@
     "prepare": "husky"
   },
   "dependencies": {
-    "@clerk/vue": "2.0.5",
+    "@clerk/vue": "2.0.16",
     "@supabase/supabase-js": "2.98.0",
     "@tailwindcss/vite": "4.1.18",
     "@tanstack/vue-query": "5.92.9",
@@ -43,14 +43,16 @@
   "pnpm": {
     "overrides": {
       "serialize-javascript": ">=7.0.5",
-      "minimatch": ">=9.0.5",
+      "minimatch": ">=9.0.7",
       "uuid": ">=14.0.0",
       "flatted": ">=3.4.2",
       "defu": ">=6.1.7",
       "postcss": ">=8.5.12",
       "picomatch": ">=4.0.4",
       "lodash": "4.18.1",
-      "brace-expansion": ">=5.0.5"
+      "brace-expansion": ">=5.0.5",
+      "fast-uri": ">=3.1.2",
+      "@babel/plugin-transform-modules-systemjs": ">=7.29.4"
     }
   },
   "devDependencies": {
