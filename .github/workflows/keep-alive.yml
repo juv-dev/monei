@@ -10,14 +10,38 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Ping Supabase
+        env:
+          SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
         run: |
-          STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
-            "${{ secrets.VITE_SUPABASE_URL }}/rest/v1/ingresos?select=id&limit=1" \
-            -H "apikey: ${{ secrets.VITE_SUPABASE_ANON_KEY }}" \
-            -H "Authorization: Bearer ${{ secrets.VITE_SUPABASE_ANON_KEY }}")
-          echo "Response status: $STATUS"
-          if [ "$STATUS" -lt 200 ] || [ "$STATUS" -ge 300 ]; then
-            echo "Ping failed with status $STATUS"
+          if [ -z "$SUPABASE_URL" ]; then
+            echo "::error::VITE_SUPABASE_URL secret is not set"
             exit 1
           fi
-          echo "Supabase is alive"
+          if [ -z "$SUPABASE_KEY" ]; then
+            echo "::error::VITE_SUPABASE_ANON_KEY secret is not set"
+            exit 1
+          fi
+
+          for i in 1 2 3; do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+              --max-time 30 \
+              "$SUPABASE_URL/rest/v1/ingresos?select=id&limit=1" \
+              -H "apikey: $SUPABASE_KEY" \
+              -H "Authorization: Bearer $SUPABASE_KEY")
+            CURL_EXIT=$?
+
+            echo "Attempt $i: curl=$CURL_EXIT HTTP=$STATUS"
+
+            if [ "$CURL_EXIT" -eq 0 ] && [ "$STATUS" -ge 200 ] && [ "$STATUS" -lt 300 ]; then
+              echo "Supabase is alive (HTTP $STATUS)"
+              exit 0
+            fi
+
+            if [ $i -lt 3 ]; then
+              sleep 10
+            fi
+          done
+
+          echo "::error::Ping failed after 3 attempts (last: curl=$CURL_EXIT HTTP=$STATUS)"
+          exit 1
