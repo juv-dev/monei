@@ -13,7 +13,7 @@ describe('should useIngresos', () => {
   function setupWithAuthUser(username = 'jugaz') {
     const { result, queryClient, unmount } = withSetup(() => {
       const auth = useAuthStore()
-      auth.$patch({ user: { id: username, username, displayName: 'Test', provider: 'demo' }, isAuthenticated: true })
+      auth.$patch({ user: { id: username, username, displayName: 'Test', provider: 'demo' }, isAuthenticated: true, isTokenReady: true })
       return useIngresos()
     })
     return { result, queryClient, unmount }

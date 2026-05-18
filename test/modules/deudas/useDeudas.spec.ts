@@ -22,7 +22,7 @@ describe('should useDeudas', () => {
   function setupWithUser(username = 'jugaz') {
     return withSetup(() => {
       const auth = useAuthStore()
-      auth.$patch({ user: { id: username, username, displayName: 'Test', provider: 'demo' }, isAuthenticated: true })
+      auth.$patch({ user: { id: username, username, displayName: 'Test', provider: 'demo' }, isAuthenticated: true, isTokenReady: true })
       return useDeudas()
     })
   }

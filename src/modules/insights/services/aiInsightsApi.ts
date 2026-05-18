@@ -1,4 +1,4 @@
-import { supabase } from '~/config/supabase'
+import { useAuth } from '@clerk/vue'
 
 export type HealthGrade = 'A' | 'B' | 'C' | 'D' | 'F'
 export type HealthStatus = 'positivo' | 'neutro' | 'negativo'
@@ -65,12 +65,37 @@ export interface FinancialSummaryPayload {
   score: number
 }
 
-export async function fetchAiInsights(data: FinancialSummaryPayload): Promise<AiAnalysis> {
-  const { data: result, error } = await supabase.functions.invoke('ai-insights', {
-    body: { financialData: data, action: 'analyze' },
+const AI_ENDPOINT = '/api/ai-insights'
+
+async function getClerkToken(): Promise<string | null> {
+  try {
+    const { getToken } = useAuth()
+    return (await getToken.value?.({ template: 'neon' })) ?? null
+  } catch {
+    return null
+  }
+}
+
+async function callAi<T>(body: Record<string, unknown>): Promise<T> {
+  const token = await getClerkToken()
+  const res = await fetch(AI_ENDPOINT, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify(body),
   })
-  if (error) throw error
-  return result.analysis as AiAnalysis
+  if (!res.ok) {
+    const text = await res.text().catch(() => '')
+    throw new Error(`AI API ${res.status}: ${text || res.statusText}`)
+  }
+  return (await res.json()) as T
+}
+
+export async function fetchAiInsights(data: FinancialSummaryPayload): Promise<AiAnalysis> {
+  const result = await callAi<{ analysis: AiAnalysis }>({ financialData: data, action: 'analyze' })
+  return result.analysis
 }
 
 export async function sendAiChat(
@@ -78,14 +103,11 @@ export async function sendAiChat(
   message: string,
   conversationHistory: ChatMessage[],
 ): Promise<string> {
-  const { data: result, error } = await supabase.functions.invoke('ai-insights', {
-    body: {
-      financialData: data,
-      action: 'chat',
-      message,
-      conversationHistory,
-    },
+  const result = await callAi<{ reply: string }>({
+    financialData: data,
+    action: 'chat',
+    message,
+    conversationHistory,
   })
-  if (error) throw error
-  return result.reply as string
+  return result.reply
 }

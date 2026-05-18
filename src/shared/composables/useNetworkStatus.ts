@@ -37,7 +37,6 @@ export function clearAuthNetworkError() {
 export function useNetworkStatus() {
   onMounted(attachListeners)
   onUnmounted(() => {
-    // keep global listeners alive across route changes; do nothing
   })
 
   return { isOnline, hasAuthError, reconnectedFlash }

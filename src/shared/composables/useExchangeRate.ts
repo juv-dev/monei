@@ -32,7 +32,6 @@ function saveCached(value: FxCache): void {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(value))
   } catch {
-    // ignore
   }
 }
 

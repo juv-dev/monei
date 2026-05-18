@@ -73,7 +73,6 @@ async function handleLogout(): Promise<void> {
 <template>
   <div class="flex h-screen bg-[#F8F6F1]" data-testid="app-layout">
 
-    <!-- Sidebar -->
     <aside
       class="hidden lg:flex flex-col bg-[#FDFAF5] border-r border-[#E5E0D5] shrink-0 transition-[width] duration-[250ms] ease-in-out overflow-hidden"
       :class="isExpanded ? 'w-60' : 'w-[4.5rem]'"
@@ -81,7 +80,6 @@ async function handleLogout(): Promise<void> {
       @mouseenter="onMouseEnter"
       @mouseleave="onMouseLeave"
     >
-      <!-- Logo / Brand -->
       <div class="flex items-center h-16 px-4 border-b border-[#E5E0D5] shrink-0 gap-2.5">
         <div
           class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 shadow-sm"
@@ -106,7 +104,6 @@ async function handleLogout(): Promise<void> {
         >monei</span>
       </div>
 
-      <!-- Nav -->
       <nav class="sidebar-no-scrollbar flex flex-col w-full overflow-y-auto overflow-x-hidden flex-1 min-h-0 py-3 px-2 gap-0.5" aria-label="Navegación principal">
         <RouterLink
           v-for="item in navItems"
@@ -128,7 +125,6 @@ async function handleLogout(): Promise<void> {
         </RouterLink>
       </nav>
 
-      <!-- FX Rate chip -->
       <div class="w-full shrink-0 px-2 pb-1.5">
         <button
           type="button"
@@ -153,7 +149,6 @@ async function handleLogout(): Promise<void> {
         </button>
       </div>
 
-      <!-- User section -->
       <div class="w-full shrink-0 border-t border-[#E5E0D5] p-2">
         <div v-if="isExpanded" class="flex items-center gap-1">
           <div class="flex items-center gap-2.5 flex-1 min-w-0 px-2 py-2">
@@ -202,7 +197,6 @@ async function handleLogout(): Promise<void> {
           </PopoverRoot>
         </div>
 
-        <!-- Collapsed -->
         <PopoverRoot v-else @update:open="setMenuLocked">
           <PopoverTrigger class="flex items-center justify-center w-full py-2 rounded-xl hover:bg-slate-50 transition-all">
             <img v-if="auth.currentUser?.avatarUrl" :src="auth.currentUser.avatarUrl" :alt="auth.currentUser.displayName" class="w-9 h-9 rounded-full object-cover ring-2 ring-white shadow-sm" />
@@ -231,7 +225,6 @@ async function handleLogout(): Promise<void> {
       </div>
     </aside>
 
-    <!-- Toggle pin button -->
     <button
       class="hidden lg:flex fixed top-[4.5rem] z-20 items-center justify-center w-6 h-6 rounded-full bg-white border border-[#E5E0D5] shadow-md text-[#4D9B97] hover:bg-[#EBF5F5] hover:border-[#A8D4D2] transition-all duration-[250ms]"
       :style="{ left: isExpanded ? 'calc(15rem - 0.75rem)' : 'calc(4.5rem - 0.75rem)' }"
@@ -249,7 +242,6 @@ async function handleLogout(): Promise<void> {
     </button>
 
     <div class="flex-1 flex flex-col overflow-hidden">
-      <!-- Mobile header -->
       <header class="lg:hidden flex items-center justify-between px-4 h-14 bg-[#FDFAF5] border-b border-[#E5E0D5] shrink-0">
         <div class="flex items-center gap-2">
           <div
@@ -273,7 +265,6 @@ async function handleLogout(): Promise<void> {
       </main>
     </div>
 
-    <!-- Mobile bottom nav -->
     <nav
       class="lg:hidden fixed bottom-0 inset-x-0 bg-white/95 backdrop-blur-md border-t border-[#E5E0D5] flex items-center justify-around h-16 z-50 px-2"
       data-testid="bottom-nav"
@@ -303,7 +294,6 @@ async function handleLogout(): Promise<void> {
   display: none;
 }
 
-/* Nav item — default */
 .nav-item {
   color: #9A9690;
 }
@@ -318,7 +308,6 @@ async function handleLogout(): Promise<void> {
   color: #4D9B97;
 }
 
-/* Active state — sage tint */
 .nav-item.router-link-active {
   background: linear-gradient(135deg, rgba(77, 155, 151, 0.12) 0%, rgba(53, 110, 107, 0.08) 100%);
   color: #356E6B;
@@ -330,7 +319,6 @@ async function handleLogout(): Promise<void> {
   box-shadow: 0 1px 2px rgba(77, 155, 151, 0.12), 0 0 0 1px rgba(77, 155, 151, 0.10);
 }
 
-/* Mobile bottom nav */
 .bottom-link {
   color: #9A9690;
 }

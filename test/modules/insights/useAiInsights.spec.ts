@@ -37,6 +37,7 @@ describe('useAiInsights', () => {
     auth.$patch({
       user: { id: userId, username: userId, displayName: 'Test', provider: userId === 'demo' ? 'demo' : 'email' },
       isAuthenticated: true,
+      isTokenReady: true,
     })
     return { ...setup, auth }
   }

@@ -19,7 +19,7 @@ export function useIngresos() {
     queryKey: computed(() => INGRESOS_QUERY_KEY(userId.value, selectedYear.value, selectedMonth.value)),
     queryFn: () =>
       ingresosApi.getAll(userId.value, { year: selectedYear.value, month: selectedMonth.value }),
-    enabled: computed(() => !!userId.value),
+    enabled: computed(() => auth.isTokenReady && !!userId.value),
   })
 
   const totalIngresos = computed(() => query.data.value?.reduce((sum, item) => sum + item.monto, 0) ?? 0)

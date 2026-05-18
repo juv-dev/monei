@@ -3,227 +3,206 @@ import { config } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import { shallowRef, ref } from 'vue'
 
-// ─── Clerk mock ───────────────────────────────────────────────────────────────
 vi.mock('@clerk/vue', () => ({
   useClerk: () => shallowRef(null),
-  useUser: () => ({ user: shallowRef(null), isLoaded: ref(true) }),
+  useUser: () => ({ user: shallowRef(null), isLoaded: ref(false) }),
   useSignIn: () => ({ signIn: shallowRef(null) }),
   useAuth: () => ({ isSignedIn: ref(false), userId: ref(null) }),
 }))
 
-// ─── In-memory Supabase store (simulates DB tables) ─────────────────────────
-const tables: Record<string, Record<string, unknown>[]> = {}
+const neonStore: Map<string, Record<string, unknown>[]> = new Map()
+let neonIdSeq = 0
+let neonInsertSeq = 0
 
-function getTable(name: string): Record<string, unknown>[] {
-  if (!tables[name]) tables[name] = []
-  return tables[name]!
+function getNeonTable(name: string): Record<string, unknown>[] {
+  let table = neonStore.get(name)
+  if (!table) {
+    table = []
+    neonStore.set(name, table)
+  }
+  return table
 }
 
-function clearTables() {
-  Object.keys(tables).forEach((k) => delete tables[k])
+function clearNeonStore() {
+  neonStore.clear()
+  neonIdSeq = 0
+  neonInsertSeq = 0
 }
 
-let insertSeq = 0
+function parseFilter(value: string): { op: string; target: string } | null {
+  const idx = value.indexOf('.')
+  if (idx === -1) return null
+  return { op: value.slice(0, idx), target: value.slice(idx + 1) }
+}
 
-// Chainable query builder that simulates supabase's fluent API
-function createQueryBuilder(tableName: string) {
-  const filters: Array<{ col: string; val: unknown }> = []
-  let orderCol: string | null = null
-  let orderAsc = true
-  let insertData: Record<string, unknown> | null = null
-  let updateData: Record<string, unknown> | null = null
-  let upsertData: Record<string, unknown> | null = null
-  let deleteMode = false
-  let selectMode = false
-  let singleMode = false
+function compareValues(a: unknown, b: unknown): number {
+  if (typeof a === 'number' && typeof b === 'number') return a - b
+  const as = String(a ?? '')
+  const bs = String(b ?? '')
+  if (as < bs) return -1
+  if (as > bs) return 1
+  return 0
+}
 
-  const builder: Record<string, unknown> = {}
-
-  builder.select = () => {
-    selectMode = true
-    return builder
+function matchFilter(rowValue: unknown, op: string, target: string): boolean {
+  switch (op) {
+    case 'eq':
+      return String(rowValue ?? '') === target
+    case 'neq':
+      return String(rowValue ?? '') !== target
+    case 'gte':
+      return compareValues(rowValue, target) >= 0
+    case 'lte':
+      return compareValues(rowValue, target) <= 0
+    case 'gt':
+      return compareValues(rowValue, target) > 0
+    case 'lt':
+      return compareValues(rowValue, target) < 0
+    default:
+      return false
   }
+}
 
-  builder.insert = (data: Record<string, unknown>) => {
-    insertData = { id: `test-uuid-${Math.random().toString(36).slice(2, 10)}`, created_at: new Date(Date.now() + insertSeq++).toISOString(), ...data }
-    return builder
-  }
+function applyParams(
+  rows: Record<string, unknown>[],
+  params?: Record<string, string | string[]>,
+): Record<string, unknown>[] {
+  if (!params) return [...rows]
+  let results = [...rows]
+  let orderField: string | null = null
+  let orderDesc = false
 
-  builder.update = (data: Record<string, unknown>) => {
-    updateData = data
-    return builder
-  }
-
-  builder.delete = () => {
-    deleteMode = true
-    return builder
-  }
-
-  builder.upsert = (data: Record<string, unknown>, _opts?: unknown) => {
-    upsertData = data
-    return builder
-  }
-
-  builder.eq = (col: string, val: unknown) => {
-    filters.push({ col, val })
-    return builder
-  }
-
-  builder.gte = (_col: string, _val: unknown) => builder
-  builder.lte = (_col: string, _val: unknown) => builder
-
-  builder.order = (col: string, opts?: { ascending?: boolean }) => {
-    orderCol = col
-    orderAsc = opts?.ascending ?? true
-    return builder
-  }
-
-  builder.single = () => {
-    singleMode = true
-    return builder
-  }
-
-  builder.then = (resolve: (val: unknown) => void, reject?: (err: unknown) => void) => {
-    try {
-      const table = getTable(tableName)
-
-      if (insertData) {
-        table.push({ ...insertData })
-        if (selectMode && singleMode) {
-          resolve({ data: { ...insertData }, error: null })
-        } else if (selectMode) {
-          resolve({ data: [{ ...insertData }], error: null })
-        } else {
-          resolve({ data: null, error: null })
-        }
-        return
-      }
-
-      if (upsertData) {
-        const table = getTable(tableName)
-        const id = (upsertData as Record<string, unknown>).id
-        const existing = id ? table.find((r) => r['id'] === id) : null
-        if (existing) {
-          Object.assign(existing, upsertData)
-          if (selectMode && singleMode) {
-            resolve({ data: { ...existing }, error: null })
-          } else {
-            resolve({ data: [{ ...existing }], error: null })
-          }
-        } else {
-          const row = { id: `test-uuid-${Math.random().toString(36).slice(2, 10)}`, created_at: new Date().toISOString(), ...upsertData }
-          table.push(row)
-          if (selectMode && singleMode) {
-            resolve({ data: { ...row }, error: null })
-          } else {
-            resolve({ data: [{ ...row }], error: null })
-          }
-        }
-        return
-      }
-
-      if (updateData) {
-        let updated: Record<string, unknown> | null = null
-        for (const row of table) {
-          const match = filters.every((f) => row[f.col] === f.val)
-          if (match) {
-            Object.assign(row, updateData)
-            updated = { ...row }
-          }
-        }
-        if (selectMode && singleMode) {
-          if (updated) {
-            resolve({ data: updated, error: null })
-          } else {
-            resolve({ data: null, error: { message: 'Not found', code: 'PGRST116' } })
-          }
-        } else {
-          resolve({ data: updated ? [updated] : [], error: null })
-        }
-        return
-      }
-
-      if (deleteMode) {
-        const before = table.length
-        tables[tableName] = table.filter(
-          (row) => !filters.every((f) => row[f.col] === f.val),
-        )
-        resolve({ data: null, error: null, count: before - (tables[tableName]?.length ?? 0) })
-        return
-      }
-
-      // Select
-      let results = [...table]
-      for (const f of filters) {
-        results = results.filter((row) => row[f.col] === f.val)
-      }
-      if (orderCol) {
-        const col = orderCol
-        const asc = orderAsc
-        results.sort((a, b) => {
-          const av = String(a[col] ?? '')
-          const bv = String(b[col] ?? '')
-          return asc ? (av < bv ? -1 : 1) : av > bv ? -1 : 1
-        })
-      }
-      if (singleMode) {
-        resolve({ data: results[0] ?? null, error: results[0] ? null : { message: 'Not found' } })
-      } else {
-        resolve({ data: results, error: null })
-      }
-    } catch (err) {
-      if (reject) reject(err)
+  for (const [key, value] of Object.entries(params)) {
+    if (key === 'select') continue
+    if (key === 'order') {
+      const raw = Array.isArray(value) ? value[0] ?? '' : value
+      const [field, dir] = raw.split('.')
+      orderField = field ?? null
+      orderDesc = dir === 'desc'
+      continue
+    }
+    const values = Array.isArray(value) ? value : [value]
+    for (const v of values) {
+      const parsed = parseFilter(v)
+      if (!parsed) continue
+      results = results.filter((row) => matchFilter(row[key], parsed.op, parsed.target))
     }
   }
 
-  return builder
+  if (orderField) {
+    const field = orderField
+    const dir = orderDesc ? -1 : 1
+    results.sort((a, b) => compareValues(a[field], b[field]) * dir)
+  }
+
+  return results
 }
 
-// ─── Supabase mock ──────────────────────────────────────────────────────────
-vi.mock('~/config/supabase', () => {
-  const authCallbacks: Array<(event: string, session: unknown) => void> = []
+function nextNeonId(): string {
+  return `neon-id-${++neonIdSeq}`
+}
+
+function nextCreatedAt(): string {
+  return new Date(Date.now() + neonInsertSeq++).toISOString()
+}
+
+vi.mock('~/config/neon', () => {
   return {
-    supabase: {
-      auth: {
-        getSession: vi.fn().mockResolvedValue({ data: { session: null }, error: null }),
-        signInWithOAuth: vi.fn().mockResolvedValue({ error: null }),
-        signUp: vi.fn().mockResolvedValue({ data: {}, error: null }),
-        signInWithPassword: vi.fn().mockResolvedValue({ data: {}, error: null }),
-        signOut: vi.fn().mockResolvedValue({ error: null }),
-        updateUser: vi.fn().mockResolvedValue({ data: {}, error: null }),
-        onAuthStateChange: vi.fn((cb: (event: string, session: unknown) => void) => {
-          authCallbacks.push(cb)
-          return { data: { subscription: { unsubscribe: vi.fn() } } }
-        }),
+    setNeonToken: vi.fn(),
+    neon: {
+      async select<T>(table: string, params?: Record<string, string | string[]>): Promise<T[]> {
+        const rows = applyParams(getNeonTable(table), params)
+        return rows.map((r) => ({ ...r })) as T[]
       },
-      from: vi.fn((tableName: string) => createQueryBuilder(tableName)),
-      rpc: vi.fn((fnName: string, params?: Record<string, unknown>) => {
-        const deleteRpcFns: Record<string, { table: string; col: string }> = {
-          delete_tarjeta: { table: 'tarjetas_credito', col: 'id' },
-          delete_tarjeta_pago: { table: 'tarjeta_pagos', col: 'id' },
-          delete_deuda: { table: 'deudas', col: 'id' },
-          delete_ingreso: { table: 'ingresos', col: 'id' },
-          delete_gasto: { table: 'gastos', col: 'id' },
-          delete_gasto_presupuesto: { table: 'gastos_presupuesto', col: 'id' },
-        }
-        const mapping = deleteRpcFns[fnName]
-        if (mapping && params) {
-          const idValue = params['p_id']
-          const table = getTable(mapping.table)
-          tables[mapping.table] = table.filter((r) => r[mapping.col] !== idValue)
-        }
-        return Promise.resolve({ data: null, error: null })
-      }),
-      functions: {
-        invoke: vi.fn().mockResolvedValue({ data: { analysis: {} }, error: null }),
+      async selectOne<T>(table: string, params?: Record<string, string | string[]>): Promise<T | null> {
+        const rows = applyParams(getNeonTable(table), params)
+        return rows[0] ? ({ ...rows[0] } as T) : null
       },
-      _authCallbacks: authCallbacks,
+      async insert<T>(table: string, body: Record<string, unknown>): Promise<T> {
+        const row: Record<string, unknown> = {
+          id: nextNeonId(),
+          created_at: nextCreatedAt(),
+          ...body,
+        }
+        getNeonTable(table).push(row)
+        return { ...row } as T
+      },
+      async update<T>(
+        table: string,
+        filters: Record<string, string>,
+        body: Record<string, unknown>,
+      ): Promise<T | null> {
+        const rows = getNeonTable(table)
+        let updated: Record<string, unknown> | null = null
+        for (const row of rows) {
+          const match = Object.entries(filters).every(
+            ([col, val]) => String(row[col] ?? '') === String(val),
+          )
+          if (match) {
+            Object.assign(row, body)
+            updated = { ...row }
+          }
+        }
+        return updated as T | null
+      },
+      async remove(table: string, filters: Record<string, string>): Promise<void> {
+        const rows = getNeonTable(table)
+        const kept = rows.filter(
+          (row) => !Object.entries(filters).every(([col, val]) => String(row[col] ?? '') === String(val)),
+        )
+        neonStore.set(table, kept)
+      },
     },
-    setSupabaseToken: vi.fn().mockResolvedValue(undefined),
   }
 })
 
-// ─── localStorage mock ────────────────────────────────────────────────────────
+const originalFetch = globalThis.fetch
+
+type AiFetchHandler = (body: Record<string, unknown>) => unknown
+
+const aiFetchDefaultHandler: AiFetchHandler = (body) => {
+  const action = body['action']
+  if (action === 'chat') return { reply: 'mock reply' }
+  return { analysis: {} }
+}
+
+let aiFetchHandler: AiFetchHandler = aiFetchDefaultHandler
+
+export function setAiFetchHandler(handler: AiFetchHandler): void {
+  aiFetchHandler = handler
+}
+
+export function resetAiFetchHandler(): void {
+  aiFetchHandler = aiFetchDefaultHandler
+}
+
+const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+  const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url
+  if (url === '/api/ai-insights') {
+    let body: Record<string, unknown> = {}
+    try {
+      body = init?.body ? (JSON.parse(String(init.body)) as Record<string, unknown>) : {}
+    } catch {
+      body = {}
+    }
+    const payload = aiFetchHandler(body)
+    return new Response(JSON.stringify(payload), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    })
+  }
+  if (typeof originalFetch === 'function') {
+    return originalFetch(input as RequestInfo, init)
+  }
+  return new Response('Not Found', { status: 404 })
+})
+
+Object.defineProperty(globalThis, 'fetch', {
+  value: fetchMock,
+  writable: true,
+  configurable: true,
+})
+
 const localStorageStore: Record<string, string> = {}
 
 const localStorageMock = {
@@ -243,7 +222,6 @@ const localStorageMock = {
   key: (index: number): string | null => Object.keys(localStorageStore)[index] ?? null,
 }
 
-// ─── sessionStorage mock ──────────────────────────────────────────────────────
 const sessionStorageStore: Record<string, string> = {}
 
 const sessionStorageMock = {
@@ -275,7 +253,6 @@ Object.defineProperty(globalThis, 'sessionStorage', {
   configurable: true,
 })
 
-// ─── crypto.randomUUID mock ───────────────────────────────────────────────────
 let uuidCounter = 0
 
 Object.defineProperty(globalThis, 'crypto', {
@@ -286,16 +263,14 @@ Object.defineProperty(globalThis, 'crypto', {
   configurable: true,
 })
 
-// ─── Reset entre tests ────────────────────────────────────────────────────────
 beforeEach(() => {
   localStorageMock.clear()
   sessionStorageMock.clear()
-  clearTables()
+  clearNeonStore()
   uuidCounter = 0
-  insertSeq = 0
+  resetAiFetchHandler()
   setActivePinia(createPinia())
   vi.clearAllMocks()
 })
 
-// ─── Vue Test Utils global config ─────────────────────────────────────────────
 config.global.stubs = {}

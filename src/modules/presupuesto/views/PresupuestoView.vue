@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { ref, reactive, computed, watch } from 'vue'
+import { ref, reactive, computed, watch, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import {
   Wallet,
   ChevronDown,
@@ -43,6 +44,8 @@ const {
 const { startLoading, finishLoading, showToast } = useAppFeedback()
 const auth = useAuthStore()
 const userId = computed(() => auth.userId)
+const route = useRoute()
+const router = useRouter()
 
 const form = reactive({ monto: '', descripcion: '', categoria: '' })
 const formError = ref<string | null>(null)
@@ -293,6 +296,14 @@ function openModal(): void {
   formError.value = null
   isModalOpen.value = true
 }
+
+onMounted(() => {
+  if (route.query.nuevo === '1') {
+    openModal()
+    const { nuevo: _nuevo, ...rest } = route.query
+    void router.replace({ query: rest })
+  }
+})
 
 watch(isAdding, (newVal, oldVal) => {
   if (oldVal && !newVal) {

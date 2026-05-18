@@ -1,9 +1,30 @@
-import { supabase } from '~/config/supabase'
-import { mapDbGasto, mapGastoToDb } from '~/config/mappers'
-import type { GastoPresupuesto, NuevoGasto } from '../types'
+import { neon } from '~/config/neon'
+import type { GastoPresupuesto } from '../types'
+import type { NuevoGasto } from '~/shared/types'
 
 const DEMO_USER_ID = 'demo'
+const TABLE = 'gastos_presupuesto'
 const storageKey = (userId: string) => `finance_${userId}_presupuesto`
+
+interface GastoRow {
+  id: string
+  user_id: string
+  monto: number | string
+  descripcion: string | null
+  categoria: string | null
+  created_at: string
+}
+
+function mapRow(row: GastoRow): GastoPresupuesto {
+  return {
+    id: String(row.id),
+    monto: Number(row.monto ?? 0),
+    descripcion: String(row.descripcion ?? ''),
+    categoria: String(row.categoria ?? ''),
+    userId: String(row.user_id ?? ''),
+    createdAt: String(row.created_at ?? new Date().toISOString()),
+  }
+}
 
 export const presupuestoApi = {
   async getAll(userId: string, filter?: { year: number; month: number }): Promise<GastoPresupuesto[]> {
@@ -16,15 +37,17 @@ export const presupuestoApi = {
         return d.getFullYear() === filter.year && d.getMonth() + 1 === filter.month
       })
     }
-    let q = supabase.from('gastos_presupuesto').select('*').eq('user_id', userId)
+    const params: Record<string, string | string[]> = {
+      user_id: `eq.${userId}`,
+      order: 'created_at.desc',
+    }
     if (filter) {
       const start = new Date(filter.year, filter.month - 1, 1).toISOString()
       const end = new Date(filter.year, filter.month, 0, 23, 59, 59, 999).toISOString()
-      q = q.gte('created_at', start).lte('created_at', end)
+      params.created_at = [`gte.${start}`, `lte.${end}`]
     }
-    const { data, error } = await q.order('created_at', { ascending: false })
-    if (error) throw error
-    return (data ?? []).map(mapDbGasto)
+    const rows = await neon.select<GastoRow>(TABLE, params)
+    return rows.map(mapRow)
   },
 
   async create(userId: string, data: NuevoGasto): Promise<GastoPresupuesto> {
@@ -40,13 +63,13 @@ export const presupuestoApi = {
       localStorage.setItem(storageKey(userId), JSON.stringify(all))
       return newItem
     }
-    const { data: row, error } = await supabase
-      .from('gastos_presupuesto')
-      .insert(mapGastoToDb(data, userId))
-      .select()
-      .single()
-    if (error) throw error
-    return mapDbGasto(row)
+    const row = await neon.insert<GastoRow>(TABLE, {
+      user_id: userId,
+      monto: data.monto,
+      descripcion: data.descripcion,
+      categoria: data.categoria,
+    })
+    return mapRow(row)
   },
 
   async update(
@@ -62,27 +85,13 @@ export const presupuestoApi = {
       localStorage.setItem(storageKey(userId), JSON.stringify(all))
       return all[idx]!
     }
-    const { data: current, error: fetchError } = await supabase
-      .from('gastos_presupuesto')
-      .select('*')
-      .eq('id', id)
-      .single()
-    if (fetchError || !current) throw new Error('Gasto not found')
-
-    const { data: row, error } = await supabase
-      .from('gastos_presupuesto')
-      .upsert({
-        id,
-        user_id: userId,
-        monto: data.monto ?? current.monto,
-        descripcion: data.descripcion ?? current.descripcion,
-        categoria: data.categoria ?? current.categoria,
-        created_at: current.created_at,
-      })
-      .select()
-      .single()
-    if (error) throw new Error('Gasto not found')
-    return mapDbGasto(row)
+    const payload: Record<string, unknown> = {}
+    if (data.monto !== undefined) payload.monto = data.monto
+    if (data.descripcion !== undefined) payload.descripcion = data.descripcion
+    if (data.categoria !== undefined) payload.categoria = data.categoria
+    const row = await neon.update<GastoRow>(TABLE, { id, user_id: userId }, payload)
+    if (!row) throw new Error('Gasto not found')
+    return mapRow(row)
   },
 
   async remove(userId: string, id: string): Promise<void> {
@@ -92,7 +101,6 @@ export const presupuestoApi = {
       localStorage.setItem(storageKey(userId), JSON.stringify(filtered))
       return
     }
-    const { error } = await supabase.rpc('delete_gasto_presupuesto', { p_id: id })
-    if (error) throw error
+    await neon.remove(TABLE, { id, user_id: userId })
   },
 }

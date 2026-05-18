@@ -25,7 +25,7 @@ describe('should DashboardView', () => {
   function mountAuthenticated(username = 'jugaz') {
     const { wrapper, pinia } = mountWithPlugins(DashboardView)
     const auth = useAuthStore(pinia)
-    auth.$patch({ user: { id: username, username, displayName: 'Test', provider: 'demo' }, isAuthenticated: true })
+    auth.$patch({ user: { id: username, username, displayName: 'Test', provider: 'demo' }, isAuthenticated: true, isTokenReady: true })
     return { wrapper }
   }
 

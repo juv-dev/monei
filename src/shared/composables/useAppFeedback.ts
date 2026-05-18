@@ -8,7 +8,6 @@ interface Toast {
   type: ToastType
 }
 
-// Module-level singleton state (shared across all components)
 const isLoading = ref(false)
 const loadingColor = ref('#3E6F73')
 const toasts = ref<Toast[]>([])

@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { ref, reactive, watch, computed } from 'vue'
+import { ref, reactive, watch, computed, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { TrendingUp, Trash2, Inbox, Pencil, Check, X, ArrowUpDown, Search, Plus } from 'lucide-vue-next'
 import { useIngresos } from '../composables/useIngresos'
 import { useAppFeedback } from '~/shared/composables/useAppFeedback'
@@ -10,6 +11,9 @@ import ConfirmDialog from '~/shared/components/ui/ConfirmDialog.vue'
 import { formatMoneyDisplay, parseMoneyInput, onDecimalInput } from '~/shared/utils/format'
 import { validateMonto, validateDescripcion, sanitize } from '~/shared/utils/validation'
 import type { Ingreso } from '../types'
+
+const route = useRoute()
+const router = useRouter()
 
 const { ingresos, isLoading, isError, totalIngresos, addIngreso, updateIngreso, removeIngreso, isAdding, isUpdating, isRemoving } =
   useIngresos()
@@ -77,6 +81,14 @@ function openModal(): void {
   formError.value = null
   isModalOpen.value = true
 }
+
+onMounted(() => {
+  if (route.query.nuevo === '1') {
+    openModal()
+    const { nuevo: _nuevo, ...rest } = route.query
+    void router.replace({ query: rest })
+  }
+})
 
 watch(isAdding, (newVal, oldVal) => {
   if (oldVal && !newVal) {

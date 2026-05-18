@@ -1,0 +1,22 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "entry": [
+    "api/**/*.ts",
+    "scripts/**/*.{ts,js}",
+    "test/**/*.spec.ts"
+  ],
+  "project": [
+    "src/**/*.{ts,vue}",
+    "test/**/*.ts",
+    "api/**/*.ts",
+    "scripts/**/*.{ts,js}"
+  ],
+  "ignore": [
+    "src/shims-vue.d.ts"
+  ],
+  "ignoreDependencies": [
+    "dev-utils",
+    "tailwindcss"
+  ],
+  "ignoreExportsUsedInFile": true
+}

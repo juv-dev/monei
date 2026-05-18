@@ -6,6 +6,7 @@ import { useAppFeedback } from '~/shared/composables/useAppFeedback'
 import LoadingBar from '~/shared/components/ui/LoadingBar.vue'
 import AppToast from '~/shared/components/ui/AppToast.vue'
 import NetworkBanner from '~/shared/components/ui/NetworkBanner.vue'
+import InstallPrompt from '~/shared/components/ui/InstallPrompt.vue'
 
 const auth = useAuthStore()
 const { isLoading, loadingColor, toasts, dismissToast } = useAppFeedback()
@@ -20,4 +21,5 @@ onMounted(() => {
   <NetworkBanner />
   <LoadingBar :active="isLoading" :color="loadingColor" />
   <AppToast :toasts="toasts" @dismiss="dismissToast" />
+  <InstallPrompt />
 </template>

@@ -16,7 +16,7 @@ export function useTarjetaPagos() {
   const query = useQuery({
     queryKey: computed(() => PAGOS_QUERY_KEY(userId.value)),
     queryFn: () => pagosApi.getAll(userId.value),
-    enabled: computed(() => !!userId.value),
+    enabled: computed(() => auth.isTokenReady && !!userId.value),
   })
 
   const addMutation = useMutation({

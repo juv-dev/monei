@@ -36,3 +36,4 @@ coverage
 .continue/
 skills-lock.json
 .vercel
+.env*.local

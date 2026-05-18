@@ -207,7 +207,6 @@ function confirmDelete(): void {
   pendingDeleteId.value = null
 }
 
-// ─── Payment ──────────────────────────────────────────────────────────────────
 const payingId = ref<string | null>(null)
 const payAmount = ref('')
 
@@ -346,7 +345,6 @@ defineExpose({ openModal })
   >
     <form data-testid="tarjetas-form" novalidate autocomplete="off" @submit.prevent="handleSubmit">
       <div class="space-y-5">
-        <!-- Sección: Identificación -->
         <div class="space-y-2">
           <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Identificación</p>
           <div>
@@ -368,7 +366,6 @@ defineExpose({ openModal })
           </div>
         </div>
 
-        <!-- Sección: Línea de crédito -->
         <div class="space-y-2">
           <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Línea de crédito</p>
           <div class="grid grid-cols-3 gap-1 p-1 bg-slate-100 rounded-xl" role="tablist" data-testid="linea-currency-tabs">
@@ -430,7 +427,6 @@ defineExpose({ openModal })
           </div>
         </div>
 
-        <!-- Sección: Gastos -->
         <div class="space-y-2">
           <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Gastos / Deuda</p>
           <div class="grid grid-cols-2 gap-2">
@@ -458,7 +454,6 @@ defineExpose({ openModal })
             </button>
           </div>
 
-          <!-- Gastos PEN -->
           <div v-if="hasGastosPen" class="space-y-2 rounded-xl border border-emerald-200 bg-emerald-50/30 p-3">
             <div class="flex items-center gap-2">
               <span class="text-[11px] font-semibold text-emerald-700 uppercase tracking-wider">En Soles</span>
@@ -527,7 +522,6 @@ defineExpose({ openModal })
             </div>
           </div>
 
-          <!-- Gastos USD -->
           <div v-if="hasGastosUsd" class="space-y-2 rounded-xl border border-sky-200 bg-sky-50/40 p-3">
             <div class="flex items-center gap-2">
               <span class="text-[11px] font-semibold text-sky-700 uppercase tracking-wider">En Dólares</span>
@@ -597,7 +591,6 @@ defineExpose({ openModal })
           </div>
         </div>
 
-        <!-- Saldo disponible (auto) -->
         <div
           class="px-4 py-3 rounded-xl border"
           style="background: linear-gradient(135deg, #FDF2F8 0%, #FCE7F3 100%); border-color: rgba(190, 24, 93, 0.15);"

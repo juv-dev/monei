@@ -3,13 +3,7 @@ import { ref, computed, watch } from 'vue'
 import { useClerk, useUser, useSignIn } from '@clerk/vue'
 import type { User } from '~/shared/types'
 import { populateDemoData } from '~/modules/demo/services/populateDemo'
-import { setSupabaseToken } from '~/config/supabase'
-
-// NOTE: Existing Supabase DB records have Supabase UUIDs as user_id.
-// New Clerk user IDs are in the format "user_XXXXX" (different format).
-// New records created after this migration will use the Clerk user ID.
-// Historical records with Supabase UUIDs will need a one-time data migration
-// if you need to link them to the new Clerk users.
+import { setNeonToken } from '~/config/neon'
 
 function resolveAuthError(err: unknown): string {
   const msg = err instanceof Error ? err.message.toLowerCase() : ''
@@ -27,7 +21,7 @@ const DEMO_USER: User = {
 }
 
 const DEMO_SESSION_KEY = 'monei_demo_session'
-const INACTIVITY_TIMEOUT_MS = 30 * 60 * 1000 // 30 minutes for financial apps
+const INACTIVITY_TIMEOUT_MS = 30 * 60 * 1000
 
 export const useAuthStore = defineStore('auth', () => {
   const clerk = useClerk()
@@ -37,8 +31,22 @@ export const useAuthStore = defineStore('auth', () => {
   const user = ref<User | null>(null)
   const isAuthenticated = ref(false)
   const isLoading = ref(true)
+  const isTokenReady = ref(false)
   let inactivityTimer: ReturnType<typeof setTimeout> | null = null
   let tokenRefreshInterval: ReturnType<typeof setInterval> | null = null
+
+  async function fetchAndSetToken(): Promise<boolean> {
+    try {
+      const token = await clerk.value?.session?.getToken({ template: 'neon' })
+      setNeonToken(token ?? null)
+      isTokenReady.value = !!token
+      return !!token
+    } catch {
+      setNeonToken(null)
+      isTokenReady.value = false
+      return false
+    }
+  }
 
   function mapClerkUserToAppUser(): User | null {
     const cu = clerkUser.value
@@ -71,7 +79,6 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  // Watch Clerk user state and sync to local user ref
   watch(
     [clerkLoaded, clerkUser],
     async ([loaded]) => {
@@ -79,20 +86,17 @@ export const useAuthStore = defineStore('auth', () => {
 
       const demoSession = sessionStorage.getItem(DEMO_SESSION_KEY)
       if (demoSession) {
-        // Demo mode takes priority — don't overwrite with Clerk state
         return
       }
 
       const mapped = mapClerkUserToAppUser()
 
       if (mapped) {
-        // Fetch the Supabase token BEFORE setting the user so queries don't
-        // fire before RLS auth is ready (race condition on page reload)
-        const token = await clerk.value?.session?.getToken({ template: 'supabase' })
-        setSupabaseToken(token ?? null)
+        await fetchAndSetToken()
         startTokenRefresh()
       } else {
-        setSupabaseToken(null)
+        setNeonToken(null)
+        isTokenReady.value = false
         stopTokenRefresh()
       }
 
@@ -105,24 +109,27 @@ export const useAuthStore = defineStore('auth', () => {
   async function initialize(): Promise<void> {
     isLoading.value = true
 
-    // Check demo session first
     const demoSession = sessionStorage.getItem(DEMO_SESSION_KEY)
     if (demoSession) {
+      isTokenReady.value = true
       setUser(DEMO_USER)
       isLoading.value = false
       return
     }
 
-    // If Clerk is already loaded, sync immediately
     if (clerkLoaded.value) {
       const mapped = mapClerkUserToAppUser()
+      if (mapped) {
+        await fetchAndSetToken()
+        startTokenRefresh()
+      } else {
+        setNeonToken(null)
+        isTokenReady.value = false
+      }
       setUser(mapped)
       isLoading.value = false
       return
     }
-
-    // Otherwise wait for Clerk to load (the watcher above will handle it)
-    // isLoading will be set to false by the watcher once clerkLoaded becomes true
   }
 
   async function signInWithGoogle(): Promise<{ error?: string }> {
@@ -159,7 +166,6 @@ export const useAuthStore = defineStore('auth', () => {
       })
       if (!result) return { error: 'Clerk no está disponible' }
 
-      // Prepare email verification
       await clerk.value?.client?.signUp.prepareEmailAddressVerification({ strategy: 'email_code' })
 
       return {}
@@ -181,7 +187,6 @@ export const useAuthStore = defineStore('auth', () => {
       })
       if (!result) return { error: 'Clerk no está disponible' }
 
-      // Set the active session after successful sign-in
       if (result.status === 'complete') {
         await clerk.value?.setActive({ session: result.createdSessionId })
       }
@@ -199,6 +204,7 @@ export const useAuthStore = defineStore('auth', () => {
 
   async function signInAsDemo(): Promise<void> {
     sessionStorage.setItem(DEMO_SESSION_KEY, '1')
+    isTokenReady.value = true
     setUser(DEMO_USER)
     await populateDemoData()
   }
@@ -229,10 +235,9 @@ export const useAuthStore = defineStore('auth', () => {
 
   function startTokenRefresh(): void {
     stopTokenRefresh()
-    tokenRefreshInterval = setInterval(async () => {
-      const token = await clerk.value?.session?.getToken({ template: 'supabase' })
-      setSupabaseToken(token ?? null)
-    }, 50_000) // refresca cada 50s (el token dura 60s)
+    tokenRefreshInterval = setInterval(() => {
+      void fetchAndSetToken()
+    }, 50_000)
   }
 
   function stopTokenRefresh(): void {
@@ -263,7 +268,6 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  // Listen for user activity to reset the timer
   if (typeof window !== 'undefined') {
     const activityEvents = ['mousedown', 'keydown', 'touchstart', 'scroll']
     activityEvents.forEach((event) => {
@@ -274,7 +278,8 @@ export const useAuthStore = defineStore('auth', () => {
   async function logout(): Promise<void> {
     stopInactivityTimer()
     stopTokenRefresh()
-    setSupabaseToken(null)
+    setNeonToken(null)
+    isTokenReady.value = false
     const wasDemo = user.value?.provider === 'demo'
     setUser(null)
     if (wasDemo) {
@@ -282,7 +287,6 @@ export const useAuthStore = defineStore('auth', () => {
     } else {
       await clerk.value?.signOut()
     }
-    // Clean up query cache on logout
     sessionStorage.clear()
   }
 
@@ -294,6 +298,7 @@ export const useAuthStore = defineStore('auth', () => {
     user,
     isAuthenticated,
     isLoading,
+    isTokenReady,
     currentUser,
     isLoggedIn,
     userId,
