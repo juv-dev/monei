@@ -9,29 +9,23 @@ export const sampleIngresos: NuevoIngreso[] = [
 ]
 
 export const sampleGastos: NuevoGasto[] = [
-  // Vivienda
   { monto: 1400, descripcion: 'Alquiler departamento', categoria: 'Vivienda' },
   { monto: 120, descripcion: 'Servicio de luz y agua', categoria: 'Vivienda' },
   { monto: 85, descripcion: 'Internet fibra óptica', categoria: 'Vivienda' },
 
-  // Alimentación
   { monto: 680, descripcion: 'Supermercado Wong', categoria: 'Alimentación' },
   { monto: 220, descripcion: 'Delivery Rappi / PedidosYa', categoria: 'Alimentación' },
   { monto: 95, descripcion: 'Cafetería y snacks trabajo', categoria: 'Alimentación' },
 
-  // Transporte
   { monto: 180, descripcion: 'Gasolina del mes', categoria: 'Transporte' },
   { monto: 90, descripcion: 'Estacionamiento y peajes', categoria: 'Transporte' },
 
-  // Servicios
   { monto: 45, descripcion: 'Plan celular Claro', categoria: 'Servicios' },
   { monto: 38, descripcion: 'Netflix + Spotify', categoria: 'Servicios' },
 
-  // Salud
   { monto: 150, descripcion: 'Gym Smartfit mensual', categoria: 'Salud' },
   { monto: 80, descripcion: 'Consulta médica particular', categoria: 'Salud' },
 
-  // Personal
   { monto: 320, descripcion: 'Salidas y entretenimiento', categoria: 'Personal' },
   { monto: 190, descripcion: 'Ropa y calzado', categoria: 'Personal' },
 ]

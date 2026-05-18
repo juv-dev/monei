@@ -28,7 +28,6 @@ export function useAiInsights() {
   const isAiError = ref(false)
   const aiError = ref<string | null>(null)
 
-  // Chat state
   const chatMessages = ref<ChatMessage[]>([])
   const isSendingChat = ref(false)
   const chatError = ref<string | null>(null)

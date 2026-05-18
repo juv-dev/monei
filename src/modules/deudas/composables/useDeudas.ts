@@ -14,7 +14,7 @@ export function useDeudas() {
   const query = useQuery({
     queryKey: computed(() => DEUDAS_QUERY_KEY(userId.value)),
     queryFn: () => deudasApi.getAll(userId.value),
-    enabled: computed(() => !!userId.value),
+    enabled: computed(() => auth.isTokenReady && !!userId.value),
   })
 
   const totalDeudas = computed(() => query.data.value?.reduce((sum, item) => sum + item.totalDeuda, 0) ?? 0)

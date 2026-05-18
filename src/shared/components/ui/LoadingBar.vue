@@ -12,14 +12,12 @@ watch(
     if (val) {
       visible.value = true
       width.value = 0
-      // Allow DOM to render at 0% then animate to 85%
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
           width.value = 85
         })
       })
     } else {
-      // Complete the bar
       width.value = 100
       setTimeout(() => {
         visible.value = false

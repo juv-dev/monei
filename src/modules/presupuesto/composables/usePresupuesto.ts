@@ -19,7 +19,7 @@ export function usePresupuesto() {
     queryKey: computed(() => PRESUPUESTO_QUERY_KEY(userId.value, selectedYear.value, selectedMonth.value)),
     queryFn: () =>
       presupuestoApi.getAll(userId.value, { year: selectedYear.value, month: selectedMonth.value }),
-    enabled: computed(() => !!userId.value),
+    enabled: computed(() => auth.isTokenReady && !!userId.value),
   })
 
   const gastos = computed(() => query.data.value ?? [])

@@ -57,12 +57,9 @@ export function useInsights() {
     () => totalIngresos.value > 0 || totalGastado.value > 0 || deudas.value.length > 0 || tarjetas.value.length > 0,
   )
 
-  // ─── Score Financiero ──────────────────────────────────────────────────────
-
   const score = computed<FinancialScore>(() => {
     const ingresos = totalIngresos.value
 
-    // Savings ratio (25 pts)
     let savingsRatio = 0
     if (ingresos > 0) {
       const savings = (ingresos - totalGastado.value - compromisosFijos.value) / ingresos
@@ -71,7 +68,6 @@ export function useInsights() {
       else if (savings >= 0) savingsRatio = 10
     }
 
-    // Credit utilization (25 pts)
     let creditUtilization = 25
     if (lineaTotalCombinada.value > 0) {
       const pct = totalTarjetas.value / lineaTotalCombinada.value
@@ -80,7 +76,6 @@ export function useInsights() {
       else if (pct >= 0.3) creditUtilization = 15
     }
 
-    // Expense control (25 pts)
     let expenseControl = 25
     if (margenParaGastos.value > 0) {
       const ratio = totalGastado.value / margenParaGastos.value
@@ -91,7 +86,6 @@ export function useInsights() {
       expenseControl = 0
     }
 
-    // Debt management (25 pts)
     let debtManagement = 25
     if (ingresos > 0 && totalCuotaMensual.value > 0) {
       const ratio = totalCuotaMensual.value / ingresos
@@ -112,8 +106,6 @@ export function useInsights() {
       color: getScoreColor(total),
     }
   })
-
-  // ─── Alertas ───────────────────────────────────────────────────────────────
 
   const alerts = computed<InsightAlert[]>(() => {
     const result: InsightAlert[] = []
@@ -183,8 +175,6 @@ export function useInsights() {
     return result
   })
 
-  // ─── Análisis de Gastos ────────────────────────────────────────────────────
-
   const categoryAnalysis = computed<CategoryAnalysis[]>(() => {
     const total = totalGastado.value
     if (total === 0) return []
@@ -198,8 +188,6 @@ export function useInsights() {
       .sort((a, b) => b.monto - a.monto)
   })
 
-  // ─── Proyección de Deudas ─────────────────────────────────────────────────
-
   const debtProjections = computed<DebtProjection[]>(() => {
     return deudas.value
       .filter((d) => d.montoActualPendiente > 0 && (d.cuotaMensual ?? 0) > 0)
@@ -210,10 +198,8 @@ export function useInsights() {
         let totalIntereses: number
 
         if (tasaMensual > 0) {
-          // Amortization with interest
           const pendiente = d.montoActualPendiente
           if (cuota <= pendiente * tasaMensual) {
-            // Payment doesn't cover interest — infinite
             mesesRestantes = Infinity
             totalIntereses = Infinity
           } else {
@@ -239,8 +225,6 @@ export function useInsights() {
       })
   })
 
-  // ─── Salud Crediticia ──────────────────────────────────────────────────────
-
   const creditHealth = computed<CreditHealth[]>(() => {
     return tarjetas.value.map((t) => {
       const utilizacion = t.lineaTotal > 0 ? (t.montoDeudaActual / t.lineaTotal) * 100 : 0
@@ -260,8 +244,6 @@ export function useInsights() {
     return (totalTarjetas.value / lineaTotalCombinada.value) * 100
   })
 
-  // ─── Tips Personalizados ───────────────────────────────────────────────────
-
   const tips = computed<PersonalizedTip[]>(() => {
     const result: PersonalizedTip[] = []
     const ingresos = totalIngresos.value
@@ -278,7 +260,6 @@ export function useInsights() {
       }
     }
 
-    // Top expensive category tip
     const cats = categoryAnalysis.value
     const topCat = cats[0]
     if (cats.length > 0 && topCat && topCat.porcentaje > 40) {
@@ -289,7 +270,6 @@ export function useInsights() {
       })
     }
 
-    // Debt optimization
     const highInterest = deudas.value
       .filter((d) => d.tasaInteres > 15 && d.montoActualPendiente > 0)
       .sort((a, b) => b.tasaInteres - a.tasaInteres)
@@ -302,7 +282,6 @@ export function useInsights() {
       })
     }
 
-    // Credit utilization tip
     if (creditUtilizationTotal.value > 30) {
       result.push({
         id: 'tip-credit',
@@ -311,7 +290,6 @@ export function useInsights() {
       })
     }
 
-    // Positive reinforcement
     if (ingresos > 0 && totalGastado.value < margenParaGastos.value * 0.7) {
       result.push({
         id: 'tip-good-control',

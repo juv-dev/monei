@@ -1,24 +1,36 @@
-import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
+interface VercelRequest {
+  method?: string
+  headers: Record<string, string | string[] | undefined>
+  body: unknown
+}
 
-const corsHeaders = {
+interface VercelResponse {
+  status: (code: number) => VercelResponse
+  setHeader: (name: string, value: string) => void
+  json: (data: unknown) => void
+  send: (data: unknown) => void
+  end: () => void
+}
+
+const CORS_HEADERS: Record<string, string> = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, content-type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
 }
 
-function jsonResponse(data: unknown, status = 200) {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-  })
+function applyCors(res: VercelResponse): void {
+  for (const [k, v] of Object.entries(CORS_HEADERS)) res.setHeader(k, v)
 }
 
-function verifyUser(req: Request): { id: string } | null {
-  const authHeader = req.headers.get('Authorization')
+function verifyUser(authHeader: string | undefined): { id: string } | null {
   if (!authHeader?.startsWith('Bearer ')) return null
-
   try {
     const token = authHeader.slice(7)
-    const payload = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')))
+    const parts = token.split('.')
+    if (parts.length < 2 || !parts[1]) return null
+    const payload = JSON.parse(
+      Buffer.from(parts[1].replace(/-/g, '+').replace(/_/g, '/'), 'base64').toString('utf-8'),
+    )
     if (!payload?.sub) return null
     if (payload.exp && payload.exp < Math.floor(Date.now() / 1000)) return null
     return { id: payload.sub }
@@ -91,7 +103,7 @@ async function callGemini(
   systemPrompt: string,
   contents: { role: string; parts: { text: string }[] }[],
   useJsonMode = false,
-) {
+): Promise<string> {
   const body: Record<string, unknown> = {
     system_instruction: { parts: [{ text: systemPrompt }] },
     contents,
@@ -113,62 +125,80 @@ async function callGemini(
     throw new Error(`Gemini ${response.status}: ${errorText}`)
   }
 
-  const result = await response.json()
-  // Find the last text part (skips thinking parts in models that support it)
-  const parts: { text?: string; thought?: boolean }[] = result.candidates?.[0]?.content?.parts ?? []
+  const result = (await response.json()) as {
+    candidates?: { content?: { parts?: { text?: string; thought?: boolean }[] } }[]
+  }
+  const parts = result.candidates?.[0]?.content?.parts ?? []
   const textPart = parts.filter((p) => !p.thought && p.text).at(-1)
   return textPart?.text ?? ''
 }
 
-serve(async (req: Request) => {
+export default async function handler(req: VercelRequest, res: VercelResponse): Promise<void> {
+  applyCors(res)
+
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+    res.status(204).end()
+    return
+  }
+
+  if (req.method !== 'POST') {
+    res.status(405).json({ error: 'Method not allowed' })
+    return
+  }
+
+  const authHeader = req.headers.authorization
+  const auth = typeof authHeader === 'string' ? authHeader : undefined
+  const user = verifyUser(auth)
+  if (!user) {
+    res.status(401).json({ error: 'Unauthorized' })
+    return
+  }
+
+  const geminiApiKey = process.env.GEMINI_API_KEY
+  if (!geminiApiKey) {
+    res.status(500).json({ error: 'AI service not configured' })
+    return
   }
 
   try {
-    const user = await verifyUser(req)
-    if (!user) {
-      return jsonResponse({ error: 'Unauthorized' }, 401)
+    const body = req.body as {
+      financialData?: unknown
+      action?: 'analyze' | 'chat'
+      message?: string
+      conversationHistory?: { role: string; content: string }[]
     }
-
-    const geminiApiKey = Deno.env.get('GEMINI_API_KEY')
-    if (!geminiApiKey) {
-      return jsonResponse({ error: 'AI service not configured' }, 500)
-    }
-
-    const body = await req.json()
     const { financialData, action = 'analyze', message, conversationHistory = [] } = body
 
     if (action === 'chat') {
       const systemPrompt = `${CHAT_SYSTEM_PROMPT}\n\nDatos financieros del usuario:\n${JSON.stringify(financialData, null, 2)}`
-
-      // Map conversation history: Anthropic "assistant" → Gemini "model"
       const contents = [
-        ...conversationHistory.map((m: { role: string; content: string }) => ({
+        ...conversationHistory.map((m) => ({
           role: m.role === 'assistant' ? 'model' : 'user',
           parts: [{ text: m.content }],
         })),
-        { role: 'user', parts: [{ text: message }] },
+        { role: 'user', parts: [{ text: message ?? '' }] },
       ]
-
       const reply = await callGemini(geminiApiKey, systemPrompt, contents, false)
-      return jsonResponse({ reply })
+      res.status(200).json({ reply })
+      return
     }
 
-    // action === 'analyze'
     const contents = [
       {
         role: 'user',
-        parts: [{ text: `Analiza estos datos financieros y genera un análisis completo:\n${JSON.stringify(financialData, null, 2)}` }],
+        parts: [
+          {
+            text: `Analiza estos datos financieros y genera un análisis completo:\n${JSON.stringify(financialData, null, 2)}`,
+          },
+        ],
       },
     ]
-
     const text = await callGemini(geminiApiKey, SYSTEM_PROMPT, contents, true)
     const jsonMatch = text.match(/\{[\s\S]*\}/)
     if (!jsonMatch) throw new Error('No JSON in response')
     const analysis = JSON.parse(jsonMatch[0])
-    return jsonResponse({ analysis })
+    res.status(200).json({ analysis })
   } catch {
-    return jsonResponse({ error: 'Internal server error' }, 500)
+    res.status(500).json({ error: 'Internal server error' })
   }
-})
+}

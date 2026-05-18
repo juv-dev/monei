@@ -1,9 +1,27 @@
-import { supabase } from '~/config/supabase'
-import { mapDbIngreso, mapIngresoToDb } from '~/config/mappers'
+import { neon } from '~/config/neon'
 import type { Ingreso, NuevoIngreso } from '../types'
 
 const DEMO_USER_ID = 'demo'
+const TABLE = 'ingresos'
 const storageKey = (userId: string) => `finance_${userId}_ingresos`
+
+interface IngresoRow {
+  id: string
+  user_id: string
+  monto: number | string
+  descripcion: string | null
+  created_at: string
+}
+
+function mapRow(row: IngresoRow): Ingreso {
+  return {
+    id: String(row.id),
+    monto: Number(row.monto ?? 0),
+    descripcion: String(row.descripcion ?? ''),
+    userId: String(row.user_id ?? ''),
+    createdAt: String(row.created_at ?? new Date().toISOString()),
+  }
+}
 
 export const ingresosApi = {
   async getAll(userId: string, filter?: { year: number; month: number }): Promise<Ingreso[]> {
@@ -16,15 +34,17 @@ export const ingresosApi = {
         return d.getFullYear() === filter.year && d.getMonth() + 1 === filter.month
       })
     }
-    let q = supabase.from('ingresos').select('*').eq('user_id', userId)
+    const params: Record<string, string | string[]> = {
+      user_id: `eq.${userId}`,
+      order: 'created_at.desc',
+    }
     if (filter) {
       const start = new Date(filter.year, filter.month - 1, 1).toISOString()
       const end = new Date(filter.year, filter.month, 0, 23, 59, 59, 999).toISOString()
-      q = q.gte('created_at', start).lte('created_at', end)
+      params.created_at = [`gte.${start}`, `lte.${end}`]
     }
-    const { data, error } = await q.order('created_at', { ascending: false })
-    if (error) throw error
-    return (data ?? []).map(mapDbIngreso)
+    const rows = await neon.select<IngresoRow>(TABLE, params)
+    return rows.map(mapRow)
   },
 
   async create(userId: string, data: NuevoIngreso): Promise<Ingreso> {
@@ -40,9 +60,12 @@ export const ingresosApi = {
       localStorage.setItem(storageKey(userId), JSON.stringify(all))
       return newItem
     }
-    const { data: row, error } = await supabase.from('ingresos').insert(mapIngresoToDb(data, userId)).select().single()
-    if (error) throw error
-    return mapDbIngreso(row)
+    const row = await neon.insert<IngresoRow>(TABLE, {
+      user_id: userId,
+      monto: data.monto,
+      descripcion: data.descripcion,
+    })
+    return mapRow(row)
   },
 
   async update(userId: string, id: string, data: Partial<NuevoIngreso>): Promise<Ingreso> {
@@ -54,26 +77,12 @@ export const ingresosApi = {
       localStorage.setItem(storageKey(userId), JSON.stringify(all))
       return all[idx]!
     }
-    const { data: current, error: fetchErr } = await supabase
-      .from('ingresos')
-      .select('*')
-      .eq('id', id)
-      .single()
-    if (fetchErr || !current) throw new Error('Ingreso not found')
-    const payload = {
-      id,
-      user_id: userId,
-      monto: data.monto ?? current.monto,
-      descripcion: data.descripcion ?? current.descripcion,
-      created_at: current.created_at,
-    }
-    const { data: row, error } = await supabase
-      .from('ingresos')
-      .upsert(payload, { onConflict: 'id' })
-      .select()
-      .single()
-    if (error) throw error
-    return mapDbIngreso(row)
+    const payload: Record<string, unknown> = {}
+    if (data.monto !== undefined) payload.monto = data.monto
+    if (data.descripcion !== undefined) payload.descripcion = data.descripcion
+    const row = await neon.update<IngresoRow>(TABLE, { id, user_id: userId }, payload)
+    if (!row) throw new Error('Ingreso not found')
+    return mapRow(row)
   },
 
   async remove(userId: string, id: string): Promise<void> {
@@ -83,7 +92,6 @@ export const ingresosApi = {
       localStorage.setItem(storageKey(userId), JSON.stringify(filtered))
       return
     }
-    const { error } = await supabase.rpc('delete_ingreso', { p_id: id })
-    if (error) throw error
+    await neon.remove(TABLE, { id, user_id: userId })
   },
 }

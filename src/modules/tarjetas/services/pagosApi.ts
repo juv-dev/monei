@@ -1,9 +1,29 @@
-import { supabase } from '~/config/supabase'
-import { mapDbPago, mapPagoToDb } from '~/config/mappers'
+import { neon } from '~/config/neon'
 import type { TarjetaPago, NuevoTarjetaPago } from '../types'
 
 const DEMO_USER_ID = 'demo'
+const TABLE = 'tarjeta_pagos'
 const storageKey = (userId: string) => `finance_${userId}_tarjeta_pagos`
+
+interface PagoRow {
+  id: string
+  user_id: string
+  tarjeta_id: string
+  monto: number | string
+  fecha: string
+  created_at: string
+}
+
+function mapRow(row: PagoRow): TarjetaPago {
+  return {
+    id: String(row.id),
+    tarjetaId: String(row.tarjeta_id ?? ''),
+    monto: Number(row.monto ?? 0),
+    fecha: String(row.fecha ?? ''),
+    userId: String(row.user_id ?? ''),
+    createdAt: String(row.created_at ?? new Date().toISOString()),
+  }
+}
 
 export const pagosApi = {
   async getAll(userId: string): Promise<TarjetaPago[]> {
@@ -11,9 +31,11 @@ export const pagosApi = {
       const raw = localStorage.getItem(storageKey(userId))
       return raw ? (JSON.parse(raw) as TarjetaPago[]) : []
     }
-    const { data, error } = await supabase.from('tarjeta_pagos').select('*').eq('user_id', userId).order('created_at', { ascending: false })
-    if (error) throw error
-    return (data ?? []).map(mapDbPago)
+    const rows = await neon.select<PagoRow>(TABLE, {
+      user_id: `eq.${userId}`,
+      order: 'created_at.desc',
+    })
+    return rows.map(mapRow)
   },
 
   async getByTarjeta(userId: string, tarjetaId: string): Promise<TarjetaPago[]> {
@@ -21,14 +43,12 @@ export const pagosApi = {
       const all = await pagosApi.getAll(userId)
       return all.filter((p) => p.tarjetaId === tarjetaId)
     }
-    const { data, error } = await supabase
-      .from('tarjeta_pagos')
-      .select('*')
-      .eq('user_id', userId)
-      .eq('tarjeta_id', tarjetaId)
-      .order('created_at', { ascending: false })
-    if (error) throw error
-    return (data ?? []).map(mapDbPago)
+    const rows = await neon.select<PagoRow>(TABLE, {
+      user_id: `eq.${userId}`,
+      tarjeta_id: `eq.${tarjetaId}`,
+      order: 'created_at.desc',
+    })
+    return rows.map(mapRow)
   },
 
   async create(userId: string, data: NuevoTarjetaPago): Promise<TarjetaPago> {
@@ -44,13 +64,13 @@ export const pagosApi = {
       localStorage.setItem(storageKey(userId), JSON.stringify(all))
       return newItem
     }
-    const { data: row, error } = await supabase
-      .from('tarjeta_pagos')
-      .insert(mapPagoToDb(data, userId))
-      .select()
-      .single()
-    if (error) throw error
-    return mapDbPago(row)
+    const row = await neon.insert<PagoRow>(TABLE, {
+      user_id: userId,
+      tarjeta_id: data.tarjetaId,
+      monto: data.monto,
+      fecha: data.fecha,
+    })
+    return mapRow(row)
   },
 
   async remove(userId: string, pagoId: string): Promise<void> {
@@ -60,7 +80,6 @@ export const pagosApi = {
       localStorage.setItem(storageKey(userId), JSON.stringify(filtered))
       return
     }
-    const { error } = await supabase.rpc('delete_tarjeta_pago', { p_id: pagoId })
-    if (error) throw error
+    await neon.remove(TABLE, { id: pagoId, user_id: userId })
   },
 }

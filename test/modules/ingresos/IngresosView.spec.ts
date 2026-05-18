@@ -14,7 +14,7 @@ describe('should IngresosView', () => {
   function mountAuthenticated(username = 'jugaz') {
     const { wrapper, pinia } = mountWithPlugins(IngresosView)
     const auth = useAuthStore(pinia)
-    auth.$patch({ user: { id: username, username, displayName: 'Test', provider: 'demo' }, isAuthenticated: true })
+    auth.$patch({ user: { id: username, username, displayName: 'Test', provider: 'demo' }, isAuthenticated: true, isTokenReady: true })
     return { wrapper }
   }
 

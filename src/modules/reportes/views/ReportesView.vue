@@ -67,8 +67,6 @@ async function handleExport(): Promise<void> {
   }
 }
 
-// ─── Import ───────────────────────────────────────────────────────────────────
-
 type ImportStep = 'idle' | 'parsing' | 'preview' | 'importing' | 'success' | 'error'
 
 interface SkippedCounts {
@@ -196,7 +194,6 @@ function resetImport(): void {
         <p class="text-sm text-[#64748B] mt-0.5">Exportá e importá tu información financiera</p>
       </div>
 
-      <!-- Resumen de datos -->
       <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <div
           v-for="stat in stats"
@@ -214,7 +211,6 @@ function resetImport(): void {
         </div>
       </div>
 
-      <!-- Export card -->
       <div class="bg-white rounded-2xl border border-[#E5E0D5] shadow-sm overflow-hidden">
         <div class="p-6 lg:p-8">
           <div class="flex items-start gap-4">
@@ -265,7 +261,6 @@ function resetImport(): void {
         </div>
       </div>
 
-      <!-- Import card -->
       <div class="bg-white rounded-2xl border border-[#E5E0D5] shadow-sm overflow-hidden" data-testid="import-card">
         <input
           ref="fileInputRef"
@@ -277,7 +272,6 @@ function resetImport(): void {
         />
 
         <div class="p-6 lg:p-8">
-          <!-- idle -->
           <template v-if="importStep === 'idle'">
             <div class="flex items-start gap-4">
               <div
@@ -295,7 +289,6 @@ function resetImport(): void {
             </div>
           </template>
 
-          <!-- parsing -->
           <template v-else-if="importStep === 'parsing'">
             <div class="flex items-center gap-3 py-1">
               <Loader2 :size="20" class="animate-spin text-[#9A9690] shrink-0" />
@@ -303,7 +296,6 @@ function resetImport(): void {
             </div>
           </template>
 
-          <!-- error -->
           <template v-else-if="importStep === 'error'">
             <div class="flex items-start gap-3">
               <AlertCircle :size="20" class="text-[#EF4444] shrink-0 mt-0.5" />
@@ -314,7 +306,6 @@ function resetImport(): void {
             </div>
           </template>
 
-          <!-- preview -->
           <template v-else-if="importStep === 'preview'">
             <div class="flex items-center gap-3 mb-4">
               <div class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 bg-[#F0EFFF]">
@@ -342,7 +333,6 @@ function resetImport(): void {
             </div>
           </template>
 
-          <!-- importing -->
           <template v-else-if="importStep === 'importing'">
             <div class="flex items-center gap-3 py-1">
               <Loader2 :size="20" class="animate-spin shrink-0" style="color: #4F46E5" />
@@ -350,7 +340,6 @@ function resetImport(): void {
             </div>
           </template>
 
-          <!-- success -->
           <template v-else-if="importStep === 'success'">
             <div class="flex items-start gap-3">
               <CheckCircle :size="20" class="text-[#10B981] shrink-0 mt-0.5" />
@@ -362,7 +351,6 @@ function resetImport(): void {
           </template>
         </div>
 
-        <!-- Footer actions -->
         <div class="px-6 pb-6 lg:px-8 lg:pb-8">
           <button
             v-if="importStep === 'idle'"

@@ -62,9 +62,41 @@ export default defineConfig(({ mode }) => {
             purpose: 'maskable',
           },
         ],
+        shortcuts: [
+          {
+            name: 'Agregar ingreso',
+            short_name: 'Ingreso',
+            description: 'Registrar un nuevo ingreso',
+            url: '/ingresos?nuevo=1',
+            icons: [{ src: '/icon-192.png', sizes: '192x192', type: 'image/png' }],
+          },
+          {
+            name: 'Agregar egreso',
+            short_name: 'Egreso',
+            description: 'Registrar un nuevo egreso',
+            url: '/egresos?nuevo=1',
+            icons: [{ src: '/icon-192.png', sizes: '192x192', type: 'image/png' }],
+          },
+          {
+            name: 'Insights',
+            short_name: 'Insights',
+            description: 'Ver el análisis de tu salud financiera',
+            url: '/insights',
+            icons: [{ src: '/icon-192.png', sizes: '192x192', type: 'image/png' }],
+          },
+          {
+            name: 'Reportes',
+            short_name: 'Reportes',
+            description: 'Importar y exportar datos',
+            url: '/reportes',
+            icons: [{ src: '/icon-192.png', sizes: '192x192', type: 'image/png' }],
+          },
+        ],
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
+        cleanupOutdatedCaches: true,
+        navigateFallbackDenylist: [/^\/api\//],
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
@@ -82,16 +114,6 @@ export default defineConfig(({ mode }) => {
               cacheName: 'google-fonts-webfonts',
               expiration: { maxEntries: 30, maxAgeSeconds: 60 * 60 * 24 * 365 },
               cacheableResponse: { statuses: [0, 200] },
-            },
-          },
-          {
-            urlPattern: /^https:\/\/.*\.supabase\.co\/rest\/v1\/.*/i,
-            handler: 'NetworkFirst',
-            options: {
-              cacheName: 'supabase-api-cache',
-              expiration: { maxEntries: 50, maxAgeSeconds: 60 * 60 },
-              cacheableResponse: { statuses: [0, 200] },
-              networkTimeoutSeconds: 10,
             },
           },
         ],

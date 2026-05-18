@@ -18,7 +18,7 @@ export function useTarjetas() {
   const query = useQuery({
     queryKey: computed(() => TARJETAS_QUERY_KEY(userId.value)),
     queryFn: () => tarjetasApi.getAll(userId.value),
-    enabled: computed(() => !!userId.value),
+    enabled: computed(() => auth.isTokenReady && !!userId.value),
   })
 
   const totalTarjetas = computed(

@@ -14,7 +14,7 @@ describe('should PresupuestoView', () => {
   function mountAuthenticated(username = 'demo') {
     const { wrapper, pinia } = mountWithPlugins(PresupuestoView)
     const auth = useAuthStore(pinia)
-    auth.$patch({ user: { id: username, username, displayName: 'Test', provider: 'demo' }, isAuthenticated: true })
+    auth.$patch({ user: { id: username, username, displayName: 'Test', provider: 'demo' }, isAuthenticated: true, isTokenReady: true })
     return { wrapper }
   }
 

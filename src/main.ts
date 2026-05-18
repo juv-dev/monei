@@ -33,25 +33,15 @@ window.addEventListener('unhandledrejection', (event) => {
   }
 })
 
-// Extract the Clerk Frontend API host from the publishable key.
-// Format: pk_(test|live)_<base64>  →  base64 decodes to "<host>$"
 const CLERK_FAPI_HOST = (() => {
   try {
     const b64 = PUBLISHABLE_KEY.replace(/^pk_(test|live)_/, '')
-    return atob(b64).replace(/\$$/, '') // e.g. "pro-phoenix-61.clerk.accounts.dev"
+    return atob(b64).replace(/\$$/, '')
   } catch {
     return ''
   }
 })()
 
-// Patch window.fetch to:
-//  1. In DEV: rewrite Clerk FAPI calls to /api/__clerk/* so they go through the
-//     Vite proxy (vite.config.ts) instead of reaching clerk.accounts.dev directly.
-//     This bypasses ad-blockers and network filters transparently — the browser
-//     only ever sees localhost, never clerk.accounts.dev.
-//     NOTE: only API calls (fetch) are rewritten; script loading (<script> tags)
-//     is unaffected, so Clerk's JS bundles load normally.
-//  2. In all envs: report auth network errors for UI feedback.
 const _originalFetch = window.fetch.bind(window)
 window.fetch = async (...args) => {
   const req = args[0]
@@ -81,6 +71,10 @@ window.fetch = async (...args) => {
     }
     throw err
   }
+}
+
+if (typeof window !== 'undefined' && 'caches' in window) {
+  void caches.delete('supabase-api-cache').catch(() => {})
 }
 
 app.use(clerkPlugin, { publishableKey: PUBLISHABLE_KEY })

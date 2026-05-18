@@ -171,7 +171,6 @@ function toggleGroup(key: TxGroup['key']) {
   else tarjetasSectionOpen.value = !tarjetasSectionOpen.value
 }
 
-// Transactions UX: filter tabs + search + sort
 type FilterKey = 'all' | 'Ingreso' | 'Gasto' | 'Deuda' | 'Tarjeta'
 const activeFilter = ref<FilterKey>('all')
 const searchQuery = ref('')
@@ -225,7 +224,6 @@ function percentOfGroup(monto: number, tipo: string): number {
   <div class="min-h-screen bg-[#F8F6F1]" data-testid="dashboard-view">
     <OnboardingModal v-if="showOnboarding" @close="showOnboarding = false" />
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-10">
-      <!-- Header -->
       <div class="flex items-center justify-between mb-8">
         <div>
           <p class="text-sm text-[#9A9690] mb-1 capitalize">{{ todayDate }}</p>
@@ -263,9 +261,7 @@ function percentOfGroup(monto: number, tipo: string): number {
       </div>
 
       <template v-else>
-        <!-- Balance + stat grid -->
         <div class="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-6" data-testid="card-balance">
-          <!-- Balance (highlighted, wide) -->
           <div
             class="col-span-2 rounded-2xl p-4 lg:p-5 border shadow-sm"
             :style="isPositive
@@ -362,7 +358,6 @@ function percentOfGroup(monto: number, tipo: string): number {
           </div>
         </div>
 
-        <!-- Plan cierre + Donut -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6 mb-6">
           <div
             v-if="showCierreDeMes"
@@ -472,7 +467,6 @@ function percentOfGroup(monto: number, tipo: string): number {
           </div>
         </div>
 
-        <!-- Forecast tarjetas -->
         <div
           v-if="showForecastTarjetas"
           class="bg-white rounded-2xl p-6 border border-[#E5E0D5] shadow-[0_1px_3px_rgba(28,27,24,0.04),0_4px_16px_rgba(28,27,24,0.05)] mb-6"
@@ -538,9 +532,7 @@ function percentOfGroup(monto: number, tipo: string): number {
           </div>
         </div>
 
-        <!-- Transacciones -->
         <div class="bg-white rounded-2xl border border-[#E5E0D5] shadow-[0_1px_3px_rgba(28,27,24,0.04),0_4px_16px_rgba(28,27,24,0.05)] overflow-hidden">
-          <!-- Header + Summary bar -->
           <div class="px-6 py-5 border-b border-slate-100">
             <div class="flex items-start justify-between mb-4">
               <div>
@@ -555,7 +547,6 @@ function percentOfGroup(monto: number, tipo: string): number {
               </span>
             </div>
 
-            <!-- Net flow bar (visual summary) -->
             <div v-if="todasLasDescripciones.length > 0" class="mb-4">
               <div class="flex items-center justify-between text-[11px] mb-1.5">
                 <span class="text-slate-500">
@@ -586,7 +577,6 @@ function percentOfGroup(monto: number, tipo: string): number {
               </div>
             </div>
 
-            <!-- Filter tabs + search + sort -->
             <div v-if="todasLasDescripciones.length > 0" class="flex flex-col lg:flex-row gap-3">
               <div class="flex gap-1 bg-slate-100 p-1 rounded-xl overflow-x-auto scrollbar-hide">
                 <button
@@ -643,7 +633,6 @@ function percentOfGroup(monto: number, tipo: string): number {
             <p class="text-xs text-slate-500 mt-1">Registrá ingresos o gastos para verlos acá.</p>
           </div>
 
-          <!-- Flat filtered view (when filter or search active) -->
           <div v-else-if="hasActiveFilterOrSearch" data-testid="descriptions-list">
             <div
               v-if="filteredFlatItems.length === 0"
@@ -694,7 +683,6 @@ function percentOfGroup(monto: number, tipo: string): number {
             </div>
           </div>
 
-          <!-- Grouped view (default) -->
           <div v-else data-testid="descriptions-list">
             <template v-for="group in transactionGroups" :key="group.key">
               <div

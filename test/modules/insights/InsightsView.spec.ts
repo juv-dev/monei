@@ -18,6 +18,7 @@ describe('should InsightsView', () => {
     auth.$patch({
       user: { id: 'demo', username: 'test@monei.app', displayName: 'Test', provider: 'demo' },
       isAuthenticated: true,
+      isTokenReady: true,
     })
     return { wrapper, auth, router }
   }

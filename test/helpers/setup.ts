@@ -4,7 +4,6 @@ import { VueQueryPlugin, QueryClient } from '@tanstack/vue-query'
 import { createRouter, createMemoryHistory } from 'vue-router'
 import type { Component } from 'vue'
 
-// ─── QueryClient para tests (sin retry, sin caché) ────────────────────────────
 export function createTestQueryClient(): QueryClient {
   return new QueryClient({
     defaultOptions: {
@@ -20,7 +19,6 @@ export function createTestQueryClient(): QueryClient {
   })
 }
 
-// ─── Router mínimo para tests (con nombres para RouterLink) ──────────────────
 export function createTestRouter() {
   const stub = { template: '<div/>' }
   return createRouter({
@@ -41,7 +39,6 @@ export function createTestRouter() {
   })
 }
 
-// ─── Helper para ejecutar composables con contexto completo ───────────────────
 export function withSetup<T>(composableFn: () => T): {
   result: T
   queryClient: QueryClient
@@ -78,7 +75,6 @@ export function withSetup<T>(composableFn: () => T): {
   }
 }
 
-// ─── Helper global de montaje con todos los plugins ───────────────────────────
 export function createGlobalMountOptions() {
   const pinia = createPinia()
   setActivePinia(pinia)
@@ -95,7 +91,6 @@ export function createGlobalMountOptions() {
   }
 }
 
-// ─── Monta un componente con todos los plugins ────────────────────────────────
 import { mount } from '@vue/test-utils'
 
 export function mountWithPlugins(component: Component, options: Record<string, unknown> = {}) {

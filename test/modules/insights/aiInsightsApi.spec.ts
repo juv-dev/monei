@@ -1,6 +1,5 @@
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { fetchAiInsights, sendAiChat } from '~/modules/insights/services/aiInsightsApi'
-import { supabase } from '~/config/supabase'
 import type { FinancialSummaryPayload } from '~/modules/insights/services/aiInsightsApi'
 
 const samplePayload: FinancialSummaryPayload = {
@@ -12,36 +11,49 @@ const samplePayload: FinancialSummaryPayload = {
   score: 65,
 }
 
+function jsonResponse(payload: unknown, init?: { status?: number; statusText?: string }): Response {
+  return new Response(JSON.stringify(payload), {
+    status: init?.status ?? 200,
+    statusText: init?.statusText ?? 'OK',
+    headers: { 'Content-Type': 'application/json' },
+  })
+}
+
 describe('aiInsightsApi', () => {
+  beforeEach(() => {
+    vi.mocked(globalThis.fetch).mockClear()
+  })
+
   describe('fetchAiInsights', () => {
-    it('calls supabase.functions.invoke with correct body', async () => {
+    it('should call fetch with the analyze body', async () => {
+      vi.mocked(globalThis.fetch).mockResolvedValueOnce(jsonResponse({ analysis: {} }))
+
       await fetchAiInsights(samplePayload)
 
-      expect(supabase.functions.invoke).toHaveBeenCalledWith('ai-insights', {
-        body: { financialData: samplePayload, action: 'analyze' },
-      })
+      expect(globalThis.fetch).toHaveBeenCalledWith(
+        '/api/ai-insights',
+        expect.objectContaining({
+          method: 'POST',
+          body: JSON.stringify({ financialData: samplePayload, action: 'analyze' }),
+        }),
+      )
     })
 
-    it('returns the analysis object from the response', async () => {
+    it('should return the analysis object from the response', async () => {
       const mockAnalysis = { score: 80, summary: 'Good financial health' }
-      vi.mocked(supabase.functions.invoke).mockResolvedValueOnce({
-        data: { analysis: mockAnalysis },
-        error: null,
-      })
+      vi.mocked(globalThis.fetch).mockResolvedValueOnce(jsonResponse({ analysis: mockAnalysis }))
 
       const result = await fetchAiInsights(samplePayload)
 
       expect(result).toEqual(mockAnalysis)
     })
 
-    it('throws when error is returned', async () => {
-      const mockError = new Error('Network error')
-      vi.mocked(supabase.functions.invoke).mockResolvedValueOnce({
-        data: null,
-        error: mockError,
-      })
+    it('should throw when fetch returns a non-ok response', async () => {
+      vi.mocked(globalThis.fetch).mockResolvedValueOnce(
+        new Response('Network error', { status: 500, statusText: 'Server Error' }),
+      )
 
-      await expect(fetchAiInsights(samplePayload)).rejects.toThrow('Network error')
+      await expect(fetchAiInsights(samplePayload)).rejects.toThrow(/AI API 500/)
     })
   })
 
@@ -52,45 +64,41 @@ describe('aiInsightsApi', () => {
       { role: 'assistant' as const, content: 'Hi there!' },
     ]
 
-    it('calls supabase.functions.invoke with correct body', async () => {
-      vi.mocked(supabase.functions.invoke).mockResolvedValueOnce({
-        data: { reply: 'Some reply' },
-        error: null,
-      })
+    it('should call fetch with the chat body', async () => {
+      vi.mocked(globalThis.fetch).mockResolvedValueOnce(jsonResponse({ reply: 'Some reply' }))
 
       await sendAiChat(samplePayload, message, conversationHistory)
 
-      expect(supabase.functions.invoke).toHaveBeenCalledWith('ai-insights', {
-        body: {
-          financialData: samplePayload,
-          action: 'chat',
-          message,
-          conversationHistory,
-        },
-      })
+      expect(globalThis.fetch).toHaveBeenCalledWith(
+        '/api/ai-insights',
+        expect.objectContaining({
+          method: 'POST',
+          body: JSON.stringify({
+            financialData: samplePayload,
+            action: 'chat',
+            message,
+            conversationHistory,
+          }),
+        }),
+      )
     })
 
-    it('returns the reply string', async () => {
+    it('should return the reply string', async () => {
       const mockReply = 'You could reduce spending on dining out.'
-      vi.mocked(supabase.functions.invoke).mockResolvedValueOnce({
-        data: { reply: mockReply },
-        error: null,
-      })
+      vi.mocked(globalThis.fetch).mockResolvedValueOnce(jsonResponse({ reply: mockReply }))
 
       const result = await sendAiChat(samplePayload, message, conversationHistory)
 
       expect(result).toBe(mockReply)
     })
 
-    it('throws when error is returned', async () => {
-      const mockError = new Error('Service unavailable')
-      vi.mocked(supabase.functions.invoke).mockResolvedValueOnce({
-        data: null,
-        error: mockError,
-      })
+    it('should throw when fetch returns a non-ok response', async () => {
+      vi.mocked(globalThis.fetch).mockResolvedValueOnce(
+        new Response('Service unavailable', { status: 503, statusText: 'Service Unavailable' }),
+      )
 
       await expect(sendAiChat(samplePayload, message, conversationHistory)).rejects.toThrow(
-        'Service unavailable',
+        /AI API 503/,
       )
     })
   })
