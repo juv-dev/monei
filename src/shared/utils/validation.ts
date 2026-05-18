@@ -1,7 +1,6 @@
 const MAX_MONEY_AMOUNT = 999_999_999
 const MAX_DESCRIPTION_LENGTH = 200
 const MAX_INTEREST_RATE = 100
-const MIN_PASSWORD_LENGTH = 6
 
 export interface ValidationResult {
   valid: boolean
@@ -49,20 +48,6 @@ export function validateTasaInteres(value: number): ValidationResult {
   }
   if (value > MAX_INTEREST_RATE) {
     return fail(`La tasa de interés no puede superar ${MAX_INTEREST_RATE}%`)
-  }
-  return ok()
-}
-
-export function validatePassword(password: string): ValidationResult {
-  if (password.length < MIN_PASSWORD_LENGTH) {
-    return fail(`La contraseña debe tener al menos ${MIN_PASSWORD_LENGTH} caracteres`)
-  }
-  return ok()
-}
-
-export function validatePasswordMatch(password: string, confirm: string): ValidationResult {
-  if (password !== confirm) {
-    return fail('Las contraseñas no coinciden')
   }
   return ok()
 }

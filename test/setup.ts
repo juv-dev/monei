@@ -109,7 +109,6 @@ function nextCreatedAt(): string {
 vi.mock('~/config/neon', () => {
   return {
     setNeonToken: vi.fn(),
-    isNeonConfigured: vi.fn(() => true),
     neon: {
       async select<T>(table: string, params?: Record<string, string | string[]>): Promise<T[]> {
         const rows = applyParams(getNeonTable(table), params)

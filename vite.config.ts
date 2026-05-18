@@ -131,7 +131,6 @@ export default defineConfig(({ mode }) => {
         manualChunks: {
           'vendor-vue': ['vue', 'vue-router', 'pinia'],
           'vendor-query': ['@tanstack/vue-query'],
-          'vendor-supabase': ['@supabase/supabase-js'],
           'vendor-charts': ['chart.js', 'vue-chartjs'],
         },
       },

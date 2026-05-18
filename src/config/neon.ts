@@ -6,10 +6,6 @@ export function setNeonToken(token: string | null): void {
   _authToken = token
 }
 
-export function isNeonConfigured(): boolean {
-  return true
-}
-
 type Op = 'select' | 'selectOne' | 'insert' | 'update' | 'remove'
 
 interface DbPayload {

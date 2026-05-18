@@ -1,0 +1,28 @@
+name: Workflow PR
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  Security:
+    name: Security
+    uses: juv-dev/workflows-frontend/.github/workflows/frontend-security-scan.yml@main
+    secrets: inherit
+
+  Validate_Tag:
+    name: Validate Tag
+    needs: Security
+    uses: juv-dev/workflows-frontend/.github/workflows/frontend-pr-validate-tag.yml@main
+
+  Load_Values:
+    name: Load Values
+    needs: Validate_Tag
+    uses: juv-dev/workflows-frontend/.github/workflows/frontend-pr-load-values.yml@main
+    secrets: inherit
+
+  Unit_Tests:
+    name: Unit Tests
+    needs: Load_Values
+    uses: juv-dev/workflows-frontend/.github/workflows/frontend-pr-unit-test.yml@main
+    secrets: inherit
