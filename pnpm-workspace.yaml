@@ -8,7 +8,20 @@ allowBuilds:
   protobufjs: false
   vue-demi: true
 
-pnpm:
-  minimumReleaseAge: 1440
-  blockExoticSubdeps: true
-  trustPolicy: no-downgrade
+overrides:
+  serialize-javascript: ">=7.0.5"
+  minimatch: ">=9.0.7"
+  uuid: ">=14.0.0"
+  flatted: ">=3.4.2"
+  defu: ">=6.1.7"
+  postcss: ">=8.5.12"
+  picomatch: ">=4.0.4"
+  lodash: "4.18.1"
+  brace-expansion: ">=5.0.5"
+  fast-uri: ">=3.1.2"
+  "@babel/plugin-transform-modules-systemjs": ">=7.29.4"
+  js-cookie: "3.0.7"
+
+minimumReleaseAge: 4320
+blockExoticSubdeps: true
+strictDepBuilds: true

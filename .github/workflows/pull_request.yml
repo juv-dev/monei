@@ -15,9 +15,18 @@ jobs:
     steps:
       - uses: juv-dev/workflows-frontend/.github/actions/vulnerability-scan@main
 
+  supply-chain:
+    name: supply-chain
+    needs: vulnerability-scan
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: juv-dev/workflows-frontend/.github/actions/supply-chain@main
+
   load-values:
     name: load-values
-    needs: vulnerability-scan
+    needs: supply-chain
     runs-on: ubuntu-latest
     permissions:
       contents: read
