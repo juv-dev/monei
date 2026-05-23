@@ -1,0 +1,7 @@
+{
+  "ed6c97dbc9c28f58aee394199e8c5926_0": {
+    "author": "juv-dev",
+    "comment": "Firebase Web SDK apiKey in service worker is public by design. Identifies the Firebase project, not a credential. Security is enforced via Firebase Security Rules. See https://firebase.google.com/docs/projects/api-keys",
+    "ignored_at": "2026-05-23T07:00:00.000Z"
+  }
+}
