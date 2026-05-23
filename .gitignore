@@ -29,11 +29,12 @@ coverage
 .env
 .env.*
 
-# AI tools
+# Extra Rules
 .agent/
 .agents/
 .claude/
 .continue/
-skills-lock.json
 .vercel
 .env*.local
+skills/
+skills-lock.json
