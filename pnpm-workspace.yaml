@@ -8,7 +8,6 @@ allowBuilds:
   protobufjs: false
   vue-demi: true
 
-pnpm:
-  minimumReleaseAge: 1440
-  blockExoticSubdeps: true
-  trustPolicy: no-downgrade
+minimumReleaseAge: 4320
+blockExoticSubdeps: true
+strictDepBuilds: true
