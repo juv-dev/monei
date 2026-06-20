@@ -36,15 +36,14 @@ describe('should DashboardView', () => {
     expect(wrapper.find('[data-testid="dashboard-view"]').exists()).toBe(true)
   })
 
-  it('should render all summary cards when data is loaded', async () => {
+  it('should render the always-present summary cards', async () => {
     const { wrapper } = mountAuthenticated()
     await flushPromises()
 
+    expect(wrapper.find('[data-testid="card-balance"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="card-ingresos"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="card-gastado"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="card-deudas"]').exists()).toBe(true)
-    expect(wrapper.find('[data-testid="card-tarjetas"]').exists()).toBe(true)
-    expect(wrapper.find('[data-testid="card-balance"]').exists()).toBe(true)
   })
 
   it('should render resumen ingresos value', async () => {
@@ -68,11 +67,11 @@ describe('should DashboardView', () => {
     expect(wrapper.find('[data-testid="descriptions-list"]').exists()).toBe(false)
   })
 
-  it('should show S/ 0.00 balance when all modules are empty', async () => {
+  it('should show S/ 0 balance when all modules are empty', async () => {
     const { wrapper } = mountAuthenticated()
     await flushPromises()
 
-    expect(wrapper.find('[data-testid="resumen-balance"]').text()).toContain('0.00')
+    expect(wrapper.find('[data-testid="resumen-balance"]').text()).toContain('S/ 0')
   })
 
   // ─── Con datos ───────────────────────────────────────────────────────────
@@ -100,7 +99,7 @@ describe('should DashboardView', () => {
     expect(items).toHaveLength(4)
   })
 
-  it('should display tipo badges for each description item', async () => {
+  it('should display tipo for each description item', async () => {
     await ingresosApi.create('jugaz', { monto: 500, descripcion: 'Salario' })
     await presupuestoApi.create('jugaz', { monto: 100, descripcion: 'Comida', categoria: 'General' })
 
@@ -123,162 +122,34 @@ describe('should DashboardView', () => {
     expect(wrapper.find('[data-testid="resumen-ingresos"]').text()).toContain('4.0k')
   })
 
-  it('should show positive balance with green styling', async () => {
+  it('should show positive balance copy', async () => {
     await ingresosApi.create('jugaz', { monto: 5000, descripcion: 'Salario' })
 
     const { wrapper } = mountAuthenticated()
     await flushPromises()
 
-    // When balance is positive the card shows this message
-    expect(wrapper.find('[data-testid="card-balance"]').text()).toContain('Llegás bien a fin de mes')
+    expect(wrapper.find('[data-testid="card-balance"]').text()).toContain('Te queda margen después de cubrir todo')
   })
 
-  it('should show negative balance with red styling', async () => {
+  it('should show negative balance copy', async () => {
     await presupuestoApi.create('jugaz', { monto: 9000, descripcion: 'Muchos gastos', categoria: 'General' })
 
     const { wrapper } = mountAuthenticated()
     await flushPromises()
 
-    // When balance is negative the card shows this message
-    expect(wrapper.find('[data-testid="card-balance"]').text()).toContain('Revisá tus compromisos')
+    expect(wrapper.find('[data-testid="card-balance"]').text()).toContain('Tus compromisos superan tus ingresos')
   })
 
-  it('should show deudas total pendiente in card-deudas', async () => {
-    await deudasApi.create('jugaz', { ...deudaBase, montoActualPendiente: 3000 })
-
-    const { wrapper } = mountAuthenticated()
-    await flushPromises()
-
-    expect(wrapper.find('[data-testid="resumen-deudas"]').text()).toContain('3.0k')
-  })
-
-  it('should show card-deudas-total with bruto amount', async () => {
+  it('should show deudas total in card-deudas', async () => {
     await deudasApi.create('jugaz', { ...deudaBase, totalDeuda: 5000 })
 
     const { wrapper } = mountAuthenticated()
     await flushPromises()
 
-    expect(wrapper.find('[data-testid="resumen-deudas-total"]').text()).toContain('5.0k')
+    expect(wrapper.find('[data-testid="resumen-deudas"]').text()).toContain('5.0k')
   })
 
-  // ─── Section toggle handlers ──────────────────────────────────────────
-  it('should toggle ingresos section open and closed', async () => {
-    await ingresosApi.create('jugaz', { monto: 1000, descripcion: 'Salario' })
-
-    const { wrapper } = mountAuthenticated()
-    await flushPromises()
-
-    // Ingresos section should be open by default
-    const items = wrapper.findAll('[data-testid="description-item"]')
-    expect(items.length).toBeGreaterThan(0)
-
-    // Find the ingresos section toggle button (first section button)
-    const buttons = wrapper.findAll('[data-testid="descriptions-list"] button')
-    const ingresosBtn = buttons[0]
-    await ingresosBtn.trigger('click')
-    await flushPromises()
-
-    // After toggle, items should be hidden
-    const itemsAfter = wrapper.findAll('[data-testid="description-item"]')
-    expect(itemsAfter.length).toBe(0)
-  })
-
-  it('should toggle gastos section', async () => {
-    await presupuestoApi.create('jugaz', { monto: 500, descripcion: 'Comida', categoria: 'General' })
-
-    const { wrapper } = mountAuthenticated()
-    await flushPromises()
-
-    // Gastos section open by default
-    expect(wrapper.findAll('[data-testid="description-item"]').length).toBeGreaterThan(0)
-
-    // Toggle gastos section closed
-    const buttons = wrapper.findAll('[data-testid="descriptions-list"] button')
-    const gastosBtn = buttons[0]
-    await gastosBtn.trigger('click')
-    await flushPromises()
-
-    expect(wrapper.findAll('[data-testid="description-item"]').length).toBe(0)
-  })
-
-  it('should toggle deudas section', async () => {
-    await deudasApi.create('jugaz', deudaBase)
-
-    const { wrapper } = mountAuthenticated()
-    await flushPromises()
-
-    expect(wrapper.findAll('[data-testid="description-item"]').length).toBeGreaterThan(0)
-
-    const buttons = wrapper.findAll('[data-testid="descriptions-list"] button')
-    const deudasBtn = buttons[0]
-    await deudasBtn.trigger('click')
-    await flushPromises()
-
-    expect(wrapper.findAll('[data-testid="description-item"]').length).toBe(0)
-  })
-
-  it('should toggle tarjetas section', async () => {
-    await tarjetasApi.create('jugaz', { lineaTotal: 5000, montoDeudaActual: 1000, descripcion: 'Visa' })
-
-    const { wrapper } = mountAuthenticated()
-    await flushPromises()
-
-    expect(wrapper.findAll('[data-testid="description-item"]').length).toBeGreaterThan(0)
-
-    const buttons = wrapper.findAll('[data-testid="descriptions-list"] button')
-    const tarjetasBtn = buttons[0]
-    await tarjetasBtn.trigger('click')
-    await flushPromises()
-
-    expect(wrapper.findAll('[data-testid="description-item"]').length).toBe(0)
-  })
-
-  it('should toggle all four sections independently', async () => {
-    await ingresosApi.create('jugaz', { monto: 1000, descripcion: 'Salario' })
-    await presupuestoApi.create('jugaz', { monto: 200, descripcion: 'Comida', categoria: 'General' })
-    await deudasApi.create('jugaz', deudaBase)
-    await tarjetasApi.create('jugaz', { lineaTotal: 5000, montoDeudaActual: 1000, descripcion: 'Visa' })
-
-    const { wrapper } = mountAuthenticated()
-    await flushPromises()
-
-    // All 4 items visible initially
-    expect(wrapper.findAll('[data-testid="description-item"]').length).toBe(4)
-
-    // Close all sections one by one
-    const buttons = wrapper.findAll('[data-testid="descriptions-list"] button')
-    for (const btn of buttons) {
-      await btn.trigger('click')
-      await flushPromises()
-    }
-
-    expect(wrapper.findAll('[data-testid="description-item"]').length).toBe(0)
-  })
-
-  // ─── Forecast tarjetas section ────────────────────────────────────────
-  it('should show forecast section when tarjetas have data', async () => {
-    await tarjetasApi.create('jugaz', {
-      lineaTotal: 10000,
-      montoDeudaActual: 3000,
-      descripcion: 'Visa',
-      pagoMinimo: 500,
-    })
-
-    const { wrapper } = mountAuthenticated()
-    await flushPromises()
-
-    expect(wrapper.find('[data-testid="forecast-tarjetas"]').exists()).toBe(true)
-    expect(wrapper.find('[data-testid="forecast-pago-total"]').exists()).toBe(true)
-    expect(wrapper.find('[data-testid="forecast-pago-minimo"]').exists()).toBe(true)
-  })
-
-  it('should not show forecast section when no tarjetas', async () => {
-    const { wrapper } = mountAuthenticated()
-    await flushPromises()
-
-    expect(wrapper.find('[data-testid="forecast-tarjetas"]').exists()).toBe(false)
-  })
-
+  // ─── Plan de cierre del mes ────────────────────────────────────────────
   it('should show cierre de mes section when ingresos exist', async () => {
     await ingresosApi.create('jugaz', { monto: 5000, descripcion: 'Salario' })
     await presupuestoApi.create('jugaz', { monto: 1000, descripcion: 'Gastos', categoria: 'General' })
@@ -286,34 +157,7 @@ describe('should DashboardView', () => {
     const { wrapper } = mountAuthenticated()
     await flushPromises()
 
-    // The cierre de mes section should be visible
-    expect(wrapper.text()).toContain('Gastado')
-  })
-
-  it('should show forecast sin deudas when deudas and tarjetas exist', async () => {
-    await ingresosApi.create('jugaz', { monto: 5000, descripcion: 'Salario' })
-    await deudasApi.create('jugaz', deudaBase)
-    await tarjetasApi.create('jugaz', { lineaTotal: 5000, montoDeudaActual: 1000, descripcion: 'Visa' })
-
-    const { wrapper } = mountAuthenticated()
-    await flushPromises()
-
-    expect(wrapper.find('[data-testid="forecast-tarjetas"]').exists()).toBe(true)
-    expect(wrapper.find('[data-testid="forecast-sin-deudas"]').exists()).toBe(true)
-  })
-
-  // ─── Cierre de mes branches ─────────────────────────────────────────
-  it('should show negative diferencia gastos when overspending', async () => {
-    await ingresosApi.create('jugaz', { monto: 1000, descripcion: 'Salario' })
-    await presupuestoApi.create('jugaz', { monto: 5000, descripcion: 'Gastos altos', categoria: 'General' })
-
-    const { wrapper } = mountAuthenticated()
-    await flushPromises()
-
-    // diferenciaGastos < 0, porcentajeGastos > 100
-    const cierreText = wrapper.text()
-    expect(cierreText).toContain('Revisar gastos')
-    expect(cierreText).toContain('Necesitás reducir')
+    expect(wrapper.find('[data-testid="cierre-de-mes"]').exists()).toBe(true)
   })
 
   it('should show cierre de mes with compromisos only (no ingresos)', async () => {
@@ -322,74 +166,57 @@ describe('should DashboardView', () => {
     const { wrapper } = mountAuthenticated()
     await flushPromises()
 
-    // showCierreDeMes = totalIngresos > 0 || compromisosFijos > 0
     expect(wrapper.find('[data-testid="cierre-de-mes"]').exists()).toBe(true)
   })
 
-  it('should show forecast pago minimo else branch when no pago minimo set', async () => {
-    await tarjetasApi.create('jugaz', { lineaTotal: 5000, montoDeudaActual: 2000, descripcion: 'Visa' })
+  it('should show negative plan copy when overspending', async () => {
+    await ingresosApi.create('jugaz', { monto: 1000, descripcion: 'Salario' })
+    await presupuestoApi.create('jugaz', { monto: 5000, descripcion: 'Gastos altos', categoria: 'General' })
 
     const { wrapper } = mountAuthenticated()
     await flushPromises()
 
-    // totalPagoMinimo === 0, so the else template renders
-    const pagoMinSection = wrapper.find('[data-testid="forecast-pago-minimo"]')
-    expect(pagoMinSection.exists()).toBe(true)
-    expect(pagoMinSection.text()).toContain('Definí pagos mínimos')
+    const cierreText = wrapper.find('[data-testid="cierre-de-mes"]').text()
+    expect(cierreText).toContain('Revisar gastos')
+    expect(cierreText).toContain('Necesitás recortar')
   })
 
-  it('should show negative balance styling in forecast sections', async () => {
-    await presupuestoApi.create('jugaz', { monto: 8000, descripcion: 'Mucho gasto', categoria: 'General' })
-    await tarjetasApi.create('jugaz', {
-      lineaTotal: 5000,
-      montoDeudaActual: 3000,
-      descripcion: 'Visa',
-      pagoMinimo: 500,
-    })
-    await deudasApi.create('jugaz', deudaBase)
+  // ─── Filtros de movimientos ────────────────────────────────────────────
+  it('should filter movements when a filter chip is clicked', async () => {
+    await ingresosApi.create('jugaz', { monto: 1000, descripcion: 'Salario' })
+    await presupuestoApi.create('jugaz', { monto: 500, descripcion: 'Comida', categoria: 'General' })
 
     const { wrapper } = mountAuthenticated()
     await flushPromises()
 
-    // With no income and lots of expenses, balance should be negative
-    expect(wrapper.find('[data-testid="forecast-tarjetas"]').exists()).toBe(true)
+    expect(wrapper.findAll('[data-testid="description-item"]').length).toBe(2)
+
+    const gastosChip = wrapper.findAll('button').find((b) => b.text() === 'Gastos')
+    expect(gastosChip).toBeTruthy()
+    await gastosChip!.trigger('click')
+    await flushPromises()
+
+    const items = wrapper.findAll('[data-testid="description-item"]')
+    expect(items.length).toBe(1)
+    expect(items[0].text()).toContain('Comida')
   })
 
-  it('should render chart section when data exists', async () => {
-    await ingresosApi.create('jugaz', { monto: 5000, descripcion: 'Salario' })
-    await presupuestoApi.create('jugaz', { monto: 1000, descripcion: 'Comida', categoria: 'General' })
-    await deudasApi.create('jugaz', deudaBase)
-    await tarjetasApi.create('jugaz', { lineaTotal: 5000, montoDeudaActual: 1000, descripcion: 'Visa' })
+  it('should show all movements again when Todo filter is reselected', async () => {
+    await ingresosApi.create('jugaz', { monto: 1000, descripcion: 'Salario' })
+    await presupuestoApi.create('jugaz', { monto: 500, descripcion: 'Comida', categoria: 'General' })
 
     const { wrapper } = mountAuthenticated()
     await flushPromises()
 
-    // hasChartData should be true - chart section renders
-    expect(wrapper.find('[data-testid="descriptions-list"]').exists()).toBe(true)
-    expect(wrapper.findAll('[data-testid="description-item"]').length).toBe(4)
-  })
-
-  it('should show margen negative styling when compromisos exceed ingresos', async () => {
-    await ingresosApi.create('jugaz', { monto: 500, descripcion: 'Poco ingreso' })
-    await tarjetasApi.create('jugaz', { lineaTotal: 5000, montoDeudaActual: 3000, descripcion: 'Visa' })
-    await deudasApi.create('jugaz', { ...deudaBase, montoActualPendiente: 2000 })
-
-    const { wrapper } = mountAuthenticated()
+    const ingresosChip = wrapper.findAll('button').find((b) => b.text() === 'Ingresos')
+    await ingresosChip!.trigger('click')
     await flushPromises()
+    expect(wrapper.findAll('[data-testid="description-item"]').length).toBe(1)
 
-    // margenParaGastos < 0
-    expect(wrapper.find('[data-testid="cierre-de-mes"]').exists()).toBe(true)
-  })
-
-  it('should handle porcentajeGastos 999 when totalGastado > 0 and margen <= 0', async () => {
-    await tarjetasApi.create('jugaz', { lineaTotal: 5000, montoDeudaActual: 3000, descripcion: 'Visa' })
-    await presupuestoApi.create('jugaz', { monto: 500, descripcion: 'Gasto', categoria: 'General' })
-
-    const { wrapper } = mountAuthenticated()
+    const todoChip = wrapper.findAll('button').find((b) => b.text() === 'Todo')
+    await todoChip!.trigger('click')
     await flushPromises()
-
-    // No ingresos → margen = 0 - 3000 < 0, totalGastado > 0 → porcentajeGastos = 999
-    expect(wrapper.find('[data-testid="cierre-de-mes"]').exists()).toBe(true)
+    expect(wrapper.findAll('[data-testid="description-item"]').length).toBe(2)
   })
 
   it('should display description-monto for each item', async () => {
@@ -403,125 +230,54 @@ describe('should DashboardView', () => {
     expect(montos.length).toBeGreaterThan(0)
   })
 
-  it('should render deudas section items when deudas exist', async () => {
+  it('should render deudas items when deudas exist', async () => {
     await deudasApi.create('jugaz', deudaBase)
     await deudasApi.create('jugaz', { ...deudaBase, nombrePersona: 'Otro', descripcion: 'Deuda 2' })
 
     const { wrapper } = mountAuthenticated()
     await flushPromises()
 
-    // Deudas section should be visible with items (deudasSectionOpen=true by default)
     const items = wrapper.findAll('[data-testid="description-item"]')
     expect(items.length).toBe(2)
-    // Verify deuda description format (ordered by created_at desc)
     const texts = items.map((i) => i.text())
     expect(texts.some((t) => t.includes('Test'))).toBe(true)
-    expect(texts.some((t) => t.includes('Deuda'))).toBe(true)
   })
 
-  it('should render tarjetas section items when tarjetas exist', async () => {
-    await tarjetasApi.create('jugaz', { lineaTotal: 5000, montoDeudaActual: 1000, descripcion: 'Visa' })
-    await tarjetasApi.create('jugaz', { lineaTotal: 8000, montoDeudaActual: 3000, descripcion: 'Mastercard' })
+  // ─── Tarjetas ──────────────────────────────────────────────────────────
+  it('should render tarjetas carousel when tarjetas exist', async () => {
+    await tarjetasApi.create('jugaz', { lineaTotal: 10000, montoDeudaActual: 3600, descripcion: 'Visa BCP' })
 
     const { wrapper } = mountAuthenticated()
     await flushPromises()
 
-    const items = wrapper.findAll('[data-testid="description-item"]')
-    expect(items.length).toBe(2)
-    expect(items[0].text()).toContain('Tarjeta')
+    const carousel = wrapper.find('[data-testid="card-tarjetas"]')
+    expect(carousel.exists()).toBe(true)
+    expect(carousel.text()).toContain('Visa BCP')
   })
 
-  it('should re-open section after closing it', async () => {
-    await deudasApi.create('jugaz', deudaBase)
-
+  it('should toggle tarjeta pago mode and persist it', async () => {
     const { wrapper } = mountAuthenticated()
     await flushPromises()
 
-    expect(wrapper.findAll('[data-testid="description-item"]').length).toBe(1)
+    const minBtn = wrapper.find('[data-testid="tarjeta-mode-minimo"]')
+    expect(minBtn.exists()).toBe(true)
 
-    // Close the deudas section
-    const buttons = wrapper.findAll('[data-testid="descriptions-list"] button')
-    await buttons[0].trigger('click')
+    await minBtn.trigger('click')
     await flushPromises()
-    expect(wrapper.findAll('[data-testid="description-item"]').length).toBe(0)
+    expect(localStorage.getItem('monei_tarjeta_pago_mode')).toBe('minimo')
 
-    // Re-open it
-    await buttons[0].trigger('click')
+    const totalBtn = wrapper.find('[data-testid="tarjeta-mode-total"]')
+    await totalBtn.trigger('click')
     await flushPromises()
-    expect(wrapper.findAll('[data-testid="description-item"]').length).toBe(1)
+    expect(localStorage.getItem('monei_tarjeta_pago_mode')).toBe('total')
   })
 
-  it('should show descriptions count badge when data exists', async () => {
+  it('should show descriptions count', async () => {
     await ingresosApi.create('jugaz', { monto: 1000, descripcion: 'Salario' })
 
     const { wrapper } = mountAuthenticated()
     await flushPromises()
 
-    // The badge shows total count
-    const text = wrapper.find('[data-testid="descriptions-list"]').text()
-    expect(text).toContain('1')
-  })
-
-  it('should show both deudas and tarjetas sections together', async () => {
-    await ingresosApi.create('jugaz', { monto: 10000, descripcion: 'Salario' })
-    await presupuestoApi.create('jugaz', { monto: 500, descripcion: 'Gasto', categoria: 'General' })
-    await deudasApi.create('jugaz', { ...deudaBase, cuotaMensual: 300 })
-    await tarjetasApi.create('jugaz', {
-      lineaTotal: 5000,
-      montoDeudaActual: 1000,
-      descripcion: 'Visa',
-      pagoMinimo: 200,
-    })
-
-    const { wrapper } = mountAuthenticated()
-    await flushPromises()
-
-    // All 4 sections should have items
-    expect(wrapper.findAll('[data-testid="description-item"]').length).toBe(4)
-
-    // All section buttons should be present (4 sections)
-    const buttons = wrapper.findAll('[data-testid="descriptions-list"] button')
-    expect(buttons.length).toBe(4)
-
-    // Close deudas section (3rd button) and verify
-    await buttons[2].trigger('click')
-    await flushPromises()
-    expect(wrapper.findAll('[data-testid="description-item"]').length).toBe(3)
-
-    // Close tarjetas section (4th button) and verify
-    await buttons[3].trigger('click')
-    await flushPromises()
-    expect(wrapper.findAll('[data-testid="description-item"]').length).toBe(2)
-
-    // Re-open deudas
-    await buttons[2].trigger('click')
-    await flushPromises()
-    expect(wrapper.findAll('[data-testid="description-item"]').length).toBe(3)
-
-    // Re-open tarjetas
-    await buttons[3].trigger('click')
-    await flushPromises()
-    expect(wrapper.findAll('[data-testid="description-item"]').length).toBe(4)
-  })
-
-  it('should show cierre de mes with both positive and negative scenarios', async () => {
-    // Scenario: gastos > ingresos
-    await ingresosApi.create('jugaz', { monto: 100, descripcion: 'Poco' })
-    await presupuestoApi.create('jugaz', { monto: 5000, descripcion: 'Mucho', categoria: 'General' })
-    await deudasApi.create('jugaz', { ...deudaBase, cuotaMensual: 500 })
-    await tarjetasApi.create('jugaz', {
-      lineaTotal: 5000,
-      montoDeudaActual: 2000,
-      descripcion: 'Visa',
-      pagoMinimo: 300,
-    })
-
-    const { wrapper } = mountAuthenticated()
-    await flushPromises()
-
-    // Should show all forecast sections with negative balance
-    expect(wrapper.find('[data-testid="cierre-de-mes"]').exists()).toBe(true)
-    expect(wrapper.find('[data-testid="forecast-tarjetas"]').exists()).toBe(true)
-    expect(wrapper.find('[data-testid="forecast-sin-deudas"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="dashboard-view"]').text()).toContain('1 este mes')
   })
 })

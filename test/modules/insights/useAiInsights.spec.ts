@@ -4,7 +4,6 @@ import { withSetup } from '../../helpers/setup'
 import { useAuthStore } from '~/stores/auth'
 import { useAiInsights } from '~/modules/insights/composables/useAiInsights'
 import { ingresosApi } from '~/modules/ingresos/services/api'
-import { presupuestoApi } from '~/modules/presupuesto/services/api'
 import * as aiInsightsApi from '~/modules/insights/services/aiInsightsApi'
 import type { AiAnalysis } from '~/modules/insights/services/aiInsightsApi'
 

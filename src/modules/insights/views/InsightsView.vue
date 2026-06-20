@@ -12,7 +12,6 @@ import {
 } from 'lucide-vue-next'
 import { useInsights } from '../composables/useInsights'
 import { formatMoneyDisplay } from '~/shared/utils/format'
-import PageHeader from '~/shared/components/layout/PageHeader.vue'
 import EmptyState from '~/shared/components/ui/EmptyState.vue'
 import LoadingBar from '~/shared/components/ui/LoadingBar.vue'
 import AiInsightsPanel from '../components/AiInsightsPanel.vue'
@@ -58,42 +57,57 @@ function formatMonth(iso: string): string {
 </script>
 
 <template>
-  <div class="min-h-screen bg-[#F8F6F1]" data-testid="insights-view">
-    <div class="max-w-4xl mx-auto p-5 lg:p-8 space-y-5">
-      <PageHeader title="Insights" subtitle="Análisis inteligente de tus finanzas" />
+  <div
+    class="min-h-screen"
+    style="background: #f1ece1; font-family: 'Manrope', system-ui, sans-serif; color: #1c1a15"
+    data-testid="insights-view"
+  >
+    <div class="mx-auto w-full max-w-[460px] px-[18px] pb-28 pt-6">
+      <div class="mb-5">
+        <h1 class="m-0 text-[26px] font-extrabold" style="letter-spacing: -0.02em">Insights</h1>
+        <p class="m-0 mt-1 text-[13px] font-medium" style="color: #9a9384">
+          Análisis inteligente de tus finanzas
+        </p>
+      </div>
 
-      <LoadingBar :active="isLoading" color="#2D9F8F" />
+      <LoadingBar :active="isLoading" color="#B8893A" />
 
       <EmptyState
         v-if="!isLoading && !hasData"
         :icon="Lightbulb"
-        color="#2D9F8F"
+        color="#B8893A"
         title="Sin datos para analizar"
         subtitle="Agrega ingresos, gastos, deudas o tarjetas para ver tus insights"
         testid="insights-empty"
       />
 
-      <template v-if="!isLoading && hasData">
-        <!-- Score Financiero -->
-        <div class="bg-white rounded-2xl shadow-sm border border-[#EEEEF0] p-6 lg:p-8" data-testid="score-section">
-          <div class="flex items-center gap-3 mb-6">
+      <div v-if="!isLoading && hasData" class="space-y-[14px]">
+        <div
+          class="rounded-[22px] border bg-white p-[18px]"
+          style="border-color: #e7e0d2; box-shadow: 0 1px 3px rgba(28, 26, 21, 0.05)"
+          data-testid="score-section"
+        >
+          <div class="mb-5 flex items-center gap-3">
             <div
-              class="w-10 h-10 rounded-xl flex items-center justify-center"
-              style="background: rgba(45, 159, 143, 0.12)"
+              class="flex h-9 w-9 shrink-0 items-center justify-center rounded-[11px]"
+              style="background: #f4eedf"
             >
-              <Lightbulb :size="18" style="color: #2d9f8f" aria-hidden="true" />
+              <Lightbulb :size="16" style="color: #b8893a" aria-hidden="true" />
             </div>
             <div>
-              <h2 class="text-sm font-bold text-[#1A1A2E]">Score Financiero</h2>
-              <p class="text-xs text-[#94A3B8]">Evaluación general de tu salud financiera</p>
+              <p class="m-0 text-[14px] font-extrabold" style="letter-spacing: -0.01em">
+                Score Financiero
+              </p>
+              <p class="m-0 mt-0.5 text-[11px] font-medium" style="color: #9a9384">
+                Evaluación general de tu salud financiera
+              </p>
             </div>
           </div>
 
-          <div class="flex flex-col sm:flex-row items-center gap-8">
-            <!-- Score circle -->
-            <div class="relative w-36 h-36 shrink-0">
-              <svg viewBox="0 0 120 120" class="w-full h-full -rotate-90">
-                <circle cx="60" cy="60" r="52" fill="none" stroke="#EEEEF0" stroke-width="8" />
+          <div class="flex items-center gap-5">
+            <div class="relative h-32 w-32 shrink-0">
+              <svg viewBox="0 0 120 120" class="h-full w-full -rotate-90">
+                <circle cx="60" cy="60" r="52" fill="none" stroke="#F0EBE0" stroke-width="8" />
                 <circle
                   cx="60"
                   cy="60"
@@ -106,15 +120,20 @@ function formatMonth(iso: string): string {
                 />
               </svg>
               <div class="absolute inset-0 flex flex-col items-center justify-center">
-                <span class="text-3xl font-black text-[#1A1A2E]" data-testid="score-value">{{ score.total }}</span>
-                <span class="text-xs font-semibold" :style="{ color: score.color }" data-testid="score-label">{{
-                  score.label
-                }}</span>
+                <span
+                  class="text-[28px] font-black leading-none"
+                  style="font-family: 'Space Grotesk', sans-serif; color: #1c1a15"
+                  data-testid="score-value"
+                >{{ score.total }}</span>
+                <span
+                  class="mt-0.5 text-[10px] font-bold"
+                  :style="{ color: score.color }"
+                  data-testid="score-label"
+                >{{ score.label }}</span>
               </div>
             </div>
 
-            <!-- Score breakdown -->
-            <div class="flex-1 w-full space-y-3">
+            <div class="flex-1 space-y-3">
               <div
                 v-for="item in [
                   { label: 'Tasa de ahorro', value: score.savingsRatio, max: 25 },
@@ -125,13 +144,20 @@ function formatMonth(iso: string): string {
                 :key="item.label"
                 data-testid="score-breakdown-item"
               >
-                <div class="flex justify-between text-xs mb-1">
-                  <span class="text-[#64748B] font-medium">{{ item.label }}</span>
-                  <span class="font-bold text-[#1A1A2E]">{{ item.value }}/{{ item.max }}</span>
+                <div class="mb-1 flex justify-between text-[11px]">
+                  <span class="font-medium" style="color: #6e6757">{{ item.label }}</span>
+                  <span
+                    class="font-bold"
+                    style="font-family: 'Space Grotesk', sans-serif; color: #1c1a15"
+                  >{{ item.value }}/{{ item.max }}</span>
                 </div>
-                <div class="h-2 bg-[#F0F2F5] rounded-full overflow-hidden">
+                <div
+                  class="overflow-hidden"
+                  style="height: 7px; border-radius: 999px; background: #f0ebe0"
+                >
                   <div
-                    class="h-full rounded-full transition-all"
+                    class="h-full transition-all duration-500"
+                    style="border-radius: 999px"
                     :style="{ width: `${(item.value / item.max) * 100}%`, backgroundColor: score.color }"
                   />
                 </div>
@@ -140,151 +166,205 @@ function formatMonth(iso: string): string {
           </div>
         </div>
 
-        <!-- Alertas -->
-        <div v-if="alerts.length > 0" class="space-y-3" data-testid="alerts-section">
-          <h2 class="text-sm font-bold text-[#1A1A2E] px-1">Alertas</h2>
-          <div
-            v-for="alert in alerts"
-            :key="alert.id"
-            class="flex items-start gap-3 p-4 rounded-xl border"
-            :class="[severityConfig[alert.severity].bg, severityConfig[alert.severity].border]"
-            data-testid="alert-card"
-          >
-            <component
-              :is="severityConfig[alert.severity].icon"
-              :size="18"
-              :style="{ color: severityConfig[alert.severity].color }"
-              class="shrink-0 mt-0.5"
-              aria-hidden="true"
-            />
-            <div>
-              <p class="text-sm font-semibold text-[#1A1A2E]">{{ alert.title }}</p>
-              <p class="text-xs text-[#64748B] mt-0.5">{{ alert.description }}</p>
+        <div v-if="alerts.length > 0" data-testid="alerts-section">
+          <p class="m-0 mb-2 text-[15px] font-extrabold" style="letter-spacing: -0.01em">Alertas</p>
+          <div class="space-y-2">
+            <div
+              v-for="alert in alerts"
+              :key="alert.id"
+              class="flex items-start gap-3 rounded-[18px] border p-4"
+              :class="[severityConfig[alert.severity].bg, severityConfig[alert.severity].border]"
+              data-testid="alert-card"
+            >
+              <component
+                :is="severityConfig[alert.severity].icon"
+                :size="16"
+                :style="{ color: severityConfig[alert.severity].color }"
+                class="mt-0.5 shrink-0"
+                aria-hidden="true"
+              />
+              <div>
+                <p class="m-0 text-[13px] font-bold" style="color: #1c1a15">{{ alert.title }}</p>
+                <p class="m-0 mt-0.5 text-[11px] font-medium" style="color: #6e6757">
+                  {{ alert.description }}
+                </p>
+              </div>
             </div>
           </div>
         </div>
 
-        <!-- Análisis de Gastos -->
         <details
           v-if="categoryAnalysis.length > 0"
-          class="group bg-white rounded-2xl shadow-sm border border-[#EEEEF0]"
+          class="group overflow-hidden rounded-[22px] border bg-white"
+          style="border-color: #e7e0d2; box-shadow: 0 1px 3px rgba(28, 26, 21, 0.05)"
           data-testid="category-section"
         >
-          <summary class="p-6 cursor-pointer list-none flex items-center justify-between gap-3">
+          <summary class="flex cursor-pointer list-none items-center justify-between gap-3 px-[18px] py-4">
             <div class="flex items-center gap-3">
               <div
-                class="w-10 h-10 rounded-xl flex items-center justify-center"
-                style="background: rgba(198, 90, 58, 0.12)"
+                class="flex h-9 w-9 shrink-0 items-center justify-center rounded-[11px]"
+                style="background: #fbefe0"
               >
-                <Target :size="18" style="color: #c65a3a" aria-hidden="true" />
+                <Target :size="16" style="color: #d98a3d" aria-hidden="true" />
               </div>
               <div>
-                <h2 class="text-sm font-bold text-[#1A1A2E]">Distribución de Gastos</h2>
-                <p class="text-xs text-[#94A3B8]">{{ categoryAnalysis.length }} categorías</p>
+                <p class="m-0 text-[14px] font-extrabold" style="letter-spacing: -0.01em">
+                  Distribución de Gastos
+                </p>
+                <p class="m-0 mt-0.5 text-[11px] font-medium" style="color: #9a9384">
+                  {{ categoryAnalysis.length }} categorías
+                </p>
               </div>
             </div>
-            <ChevronRight :size="16" class="text-[#94A3B8] transition-transform group-open:rotate-90" />
+            <ChevronRight
+              :size="15"
+              style="color: #9a9384"
+              class="shrink-0 transition-transform group-open:rotate-90"
+            />
           </summary>
 
-          <div class="px-6 pb-6 space-y-4">
-            <div v-for="cat in categoryAnalysis" :key="cat.nombre" data-testid="category-item">
-              <div class="flex justify-between text-sm mb-1.5">
-                <span class="font-medium text-[#1A1A2E]">{{ cat.nombre }}</span>
-                <div class="flex items-center gap-3">
-                  <span class="text-xs text-[#94A3B8]">{{ cat.porcentaje.toFixed(1) }}%</span>
-                  <span class="font-bold text-[#1A1A2E]">S/{{ formatMoneyDisplay(cat.monto) }}</span>
+          <div style="border-top: 1px solid #f0ebe0">
+            <div class="space-y-4 px-[18px] pb-[18px] pt-4">
+              <div v-for="cat in categoryAnalysis" :key="cat.nombre" data-testid="category-item">
+                <div class="mb-1.5 flex justify-between text-[12px]">
+                  <span class="font-semibold" style="color: #1c1a15">{{ cat.nombre }}</span>
+                  <div class="flex items-center gap-3">
+                    <span class="font-medium" style="color: #9a9384">
+                      {{ cat.porcentaje.toFixed(1) }}%
+                    </span>
+                    <span
+                      class="font-bold"
+                      style="font-family: 'Space Grotesk', sans-serif; color: #1c1a15"
+                    >S/{{ formatMoneyDisplay(cat.monto) }}</span>
+                  </div>
                 </div>
-              </div>
-              <div class="h-2.5 bg-[#F0F2F5] rounded-full overflow-hidden">
                 <div
-                  class="h-full rounded-full"
-                  style="background: linear-gradient(90deg, #c65a3a, #c65a3acc)"
-                  :style="{ width: `${cat.porcentaje}%` }"
-                />
+                  class="overflow-hidden"
+                  style="height: 7px; border-radius: 999px; background: #f0ebe0"
+                >
+                  <div
+                    class="h-full transition-all duration-500"
+                    style="border-radius: 999px; background: linear-gradient(90deg, #d98a3d, #c65a3a)"
+                    :style="{ width: `${cat.porcentaje}%` }"
+                  />
+                </div>
               </div>
             </div>
           </div>
         </details>
 
-        <!-- Proyección de Deudas -->
         <details
           v-if="debtProjections.length > 0"
-          class="group bg-white rounded-2xl shadow-sm border border-[#EEEEF0]"
+          class="group overflow-hidden rounded-[22px] border bg-white"
+          style="border-color: #e7e0d2; box-shadow: 0 1px 3px rgba(28, 26, 21, 0.05)"
           data-testid="debt-section"
         >
-          <summary class="p-6 cursor-pointer list-none flex items-center justify-between gap-3">
+          <summary class="flex cursor-pointer list-none items-center justify-between gap-3 px-[18px] py-4">
             <div class="flex items-center gap-3">
               <div
-                class="w-10 h-10 rounded-xl flex items-center justify-center"
-                style="background: rgba(212, 160, 23, 0.12)"
+                class="flex h-9 w-9 shrink-0 items-center justify-center rounded-[11px]"
+                style="background: #f6eedd"
               >
-                <TrendingDown :size="18" style="color: #d4a017" aria-hidden="true" />
+                <TrendingDown :size="16" style="color: #b8893a" aria-hidden="true" />
               </div>
               <div>
-                <h2 class="text-sm font-bold text-[#1A1A2E]">Proyección de Deudas</h2>
-                <p class="text-xs text-[#94A3B8]">{{ debtProjections.length }} deudas activas</p>
+                <p class="m-0 text-[14px] font-extrabold" style="letter-spacing: -0.01em">
+                  Proyección de Deudas
+                </p>
+                <p class="m-0 mt-0.5 text-[11px] font-medium" style="color: #9a9384">
+                  {{ debtProjections.length }} deudas activas
+                </p>
               </div>
             </div>
-            <ChevronRight :size="16" class="text-[#94A3B8] transition-transform group-open:rotate-90" />
+            <ChevronRight
+              :size="15"
+              style="color: #9a9384"
+              class="shrink-0 transition-transform group-open:rotate-90"
+            />
           </summary>
 
-          <div class="px-6 pb-6 space-y-4">
-            <div
-              v-for="proj in debtProjections"
-              :key="proj.deudaId"
-              class="p-4 bg-[#FAFAFA] rounded-xl border border-[#EEEEF0]"
-              data-testid="debt-projection-card"
-            >
-              <div class="flex items-center justify-between mb-2">
-                <span class="text-sm font-semibold text-[#1A1A2E]">{{ proj.nombrePersona }}</span>
-                <span
-                  class="text-xs font-bold px-2.5 py-1 rounded-full"
-                  :class="
-                    proj.mesesRestantes <= 6
-                      ? 'bg-green-50 text-green-700'
-                      : proj.mesesRestantes <= 12
-                        ? 'bg-amber-50 text-amber-700'
-                        : 'bg-red-50 text-red-700'
-                  "
-                >
-                  {{ proj.mesesRestantes === Infinity ? '∞' : proj.mesesRestantes }} meses
-                </span>
-              </div>
-              <div class="grid grid-cols-3 gap-3 text-xs">
-                <div>
-                  <p class="text-[#94A3B8]">Pendiente</p>
-                  <p class="font-bold text-[#1A1A2E]">S/{{ formatMoneyDisplay(proj.montoActualPendiente) }}</p>
+          <div style="border-top: 1px solid #f0ebe0">
+            <div class="space-y-3 px-[18px] pb-[18px] pt-4">
+              <div
+                v-for="proj in debtProjections"
+                :key="proj.deudaId"
+                class="rounded-[16px] border p-4"
+                style="background: #f8f5ef; border-color: #e7e0d2"
+                data-testid="debt-projection-card"
+              >
+                <div class="mb-3 flex items-center justify-between">
+                  <span class="text-[13px] font-bold" style="color: #1c1a15">
+                    {{ proj.nombrePersona }}
+                  </span>
+                  <span
+                    class="rounded-full px-2.5 py-[3px] text-[11px] font-bold"
+                    :class="
+                      proj.mesesRestantes <= 6
+                        ? 'bg-green-50 text-green-700'
+                        : proj.mesesRestantes <= 12
+                          ? 'bg-amber-50 text-amber-700'
+                          : 'bg-red-50 text-red-700'
+                    "
+                  >
+                    {{ proj.mesesRestantes === Infinity ? '∞' : proj.mesesRestantes }} meses
+                  </span>
                 </div>
-                <div>
-                  <p class="text-[#94A3B8]">Intereses</p>
-                  <p class="font-bold text-[#1A1A2E]">S/{{ formatMoneyDisplay(proj.totalIntereses) }}</p>
-                </div>
-                <div>
-                  <p class="text-[#94A3B8]">Libre en</p>
-                  <p class="font-bold text-[#1A1A2E]">{{ formatMonth(proj.fechaEstimada) }}</p>
+                <div class="grid grid-cols-3 gap-2">
+                  <div>
+                    <p
+                      class="m-0 text-[10px] font-semibold uppercase"
+                      style="letter-spacing: 0.04em; color: #9a9384"
+                    >Pendiente</p>
+                    <p
+                      class="m-0 mt-1 text-[13px] font-bold"
+                      style="font-family: 'Space Grotesk', sans-serif; color: #1c1a15"
+                    >S/{{ formatMoneyDisplay(proj.montoActualPendiente) }}</p>
+                  </div>
+                  <div>
+                    <p
+                      class="m-0 text-[10px] font-semibold uppercase"
+                      style="letter-spacing: 0.04em; color: #9a9384"
+                    >Intereses</p>
+                    <p
+                      class="m-0 mt-1 text-[13px] font-bold"
+                      style="font-family: 'Space Grotesk', sans-serif; color: #1c1a15"
+                    >S/{{ formatMoneyDisplay(proj.totalIntereses) }}</p>
+                  </div>
+                  <div>
+                    <p
+                      class="m-0 text-[10px] font-semibold uppercase"
+                      style="letter-spacing: 0.04em; color: #9a9384"
+                    >Libre en</p>
+                    <p
+                      class="m-0 mt-1 text-[13px] font-bold"
+                      style="font-family: 'Space Grotesk', sans-serif; color: #1c1a15"
+                    >{{ formatMonth(proj.fechaEstimada) }}</p>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         </details>
 
-        <!-- Salud Crediticia -->
         <details
           v-if="creditHealth.length > 0"
-          class="group bg-white rounded-2xl shadow-sm border border-[#EEEEF0]"
+          class="group overflow-hidden rounded-[22px] border bg-white"
+          style="border-color: #e7e0d2; box-shadow: 0 1px 3px rgba(28, 26, 21, 0.05)"
           data-testid="credit-section"
         >
-          <summary class="p-6 cursor-pointer list-none flex items-center justify-between gap-3">
+          <summary class="flex cursor-pointer list-none items-center justify-between gap-3 px-[18px] py-4">
             <div class="flex items-center gap-3">
               <div
-                class="w-10 h-10 rounded-xl flex items-center justify-center"
-                style="background: rgba(106, 30, 45, 0.1)"
+                class="flex h-9 w-9 shrink-0 items-center justify-center rounded-[11px]"
+                style="background: #fbe9e6"
               >
-                <CreditCard :size="18" style="color: #6a1e2d" aria-hidden="true" />
+                <CreditCard :size="16" style="color: #c25a4e" aria-hidden="true" />
               </div>
               <div>
-                <h2 class="text-sm font-bold text-[#1A1A2E]">Salud Crediticia</h2>
-                <p class="text-xs text-[#94A3B8]">
+                <p class="m-0 text-[14px] font-extrabold" style="letter-spacing: -0.01em">
+                  Salud Crediticia
+                </p>
+                <p class="m-0 mt-0.5 text-[11px] font-medium" style="color: #9a9384">
                   Utilización:
                   <span
                     class="font-bold"
@@ -300,83 +380,112 @@ function formatMonth(iso: string): string {
                                 : 'critico'
                         ],
                     }"
-                  >
-                    {{ creditUtilizationTotal.toFixed(0) }}%
-                  </span>
+                  >{{ creditUtilizationTotal.toFixed(0) }}%</span>
                 </p>
               </div>
             </div>
-            <ChevronRight :size="16" class="text-[#94A3B8] transition-transform group-open:rotate-90" />
+            <ChevronRight
+              :size="15"
+              style="color: #9a9384"
+              class="shrink-0 transition-transform group-open:rotate-90"
+            />
           </summary>
 
-          <div class="px-6 pb-6 space-y-4">
-            <div v-for="card in creditHealth" :key="card.tarjetaId" data-testid="credit-card-item">
-              <div class="flex justify-between text-sm mb-1.5">
-                <span class="font-medium text-[#1A1A2E]">{{ card.descripcion }}</span>
-                <span class="text-xs font-bold" :style="{ color: creditStatusColor[card.status] }">
-                  {{ card.utilizacion.toFixed(0) }}%
-                </span>
-              </div>
-              <div class="h-2.5 bg-[#F0F2F5] rounded-full overflow-hidden">
+          <div style="border-top: 1px solid #f0ebe0">
+            <div class="space-y-4 px-[18px] pb-[18px] pt-4">
+              <div v-for="card in creditHealth" :key="card.tarjetaId" data-testid="credit-card-item">
+                <div class="mb-1.5 flex justify-between text-[12px]">
+                  <span class="font-semibold" style="color: #1c1a15">{{ card.descripcion }}</span>
+                  <span
+                    class="font-bold"
+                    style="font-family: 'Space Grotesk', sans-serif"
+                    :style="{ color: creditStatusColor[card.status] }"
+                  >{{ card.utilizacion.toFixed(0) }}%</span>
+                </div>
                 <div
-                  class="h-full rounded-full transition-all"
-                  :style="{
-                    width: `${Math.min(card.utilizacion, 100)}%`,
-                    backgroundColor: creditStatusColor[card.status],
-                  }"
-                />
-              </div>
-              <div class="flex justify-between text-[10px] text-[#94A3B8] mt-1">
-                <span>S/{{ formatMoneyDisplay(card.deudaActual) }} usado</span>
-                <span>Línea: S/{{ formatMoneyDisplay(card.lineaTotal) }}</span>
+                  class="overflow-hidden"
+                  style="height: 7px; border-radius: 999px; background: #f0ebe0"
+                >
+                  <div
+                    class="h-full transition-all duration-500"
+                    style="border-radius: 999px"
+                    :style="{
+                      width: `${Math.min(card.utilizacion, 100)}%`,
+                      backgroundColor: creditStatusColor[card.status],
+                    }"
+                  />
+                </div>
+                <div
+                  class="mt-1.5 flex justify-between"
+                  style="font-size: 10px; color: #9a9384"
+                >
+                  <span>S/{{ formatMoneyDisplay(card.deudaActual) }} usado</span>
+                  <span>Línea: S/{{ formatMoneyDisplay(card.lineaTotal) }}</span>
+                </div>
               </div>
             </div>
           </div>
         </details>
 
-        <!-- Tips Personalizados -->
         <details
           v-if="tips.length > 0"
-          class="group bg-white rounded-2xl shadow-sm border border-[#EEEEF0]"
+          class="group overflow-hidden rounded-[22px] border bg-white"
+          style="border-color: #e7e0d2; box-shadow: 0 1px 3px rgba(28, 26, 21, 0.05)"
           data-testid="tips-section"
         >
-          <summary class="p-6 cursor-pointer list-none flex items-center justify-between gap-3">
+          <summary class="flex cursor-pointer list-none items-center justify-between gap-3 px-[18px] py-4">
             <div class="flex items-center gap-3">
               <div
-                class="w-10 h-10 rounded-xl flex items-center justify-center"
-                style="background: rgba(45, 159, 143, 0.12)"
+                class="flex h-9 w-9 shrink-0 items-center justify-center rounded-[11px]"
+                style="background: #ebf5f5"
               >
-                <Sparkles :size="18" style="color: #2d9f8f" aria-hidden="true" />
+                <Sparkles :size="16" style="color: #4d9b97" aria-hidden="true" />
               </div>
               <div>
-                <h2 class="text-sm font-bold text-[#1A1A2E]">Recomendaciones</h2>
-                <p class="text-xs text-[#94A3B8]">{{ tips.length }} tips personalizados</p>
+                <p class="m-0 text-[14px] font-extrabold" style="letter-spacing: -0.01em">
+                  Recomendaciones
+                </p>
+                <p class="m-0 mt-0.5 text-[11px] font-medium" style="color: #9a9384">
+                  {{ tips.length }} tips personalizados
+                </p>
               </div>
             </div>
-            <ChevronRight :size="16" class="text-[#94A3B8] transition-transform group-open:rotate-90" />
+            <ChevronRight
+              :size="15"
+              style="color: #9a9384"
+              class="shrink-0 transition-transform group-open:rotate-90"
+            />
           </summary>
 
-          <div class="px-6 pb-6 space-y-3">
-            <div
-              v-for="tip in tips"
-              :key="tip.id"
-              class="flex items-start gap-3 p-3 rounded-xl bg-[#FAFAFA]"
-              data-testid="tip-card"
-            >
-              <component
-                :is="tipIcons[tip.category] ?? Sparkles"
-                :size="16"
-                style="color: #2d9f8f"
-                class="shrink-0 mt-0.5"
-                aria-hidden="true"
-              />
-              <p class="text-sm text-[#1A1A2E]">{{ tip.text }}</p>
+          <div style="border-top: 1px solid #f0ebe0">
+            <div class="px-[18px] pb-[18px]">
+              <div
+                v-for="tip in tips"
+                :key="tip.id"
+                class="flex items-start gap-3 pt-4"
+                data-testid="tip-card"
+              >
+                <div
+                  class="flex h-8 w-8 shrink-0 items-center justify-center rounded-[10px]"
+                  style="background: #ebf5f5"
+                >
+                  <component
+                    :is="tipIcons[tip.category] ?? Sparkles"
+                    :size="14"
+                    style="color: #4d9b97"
+                    aria-hidden="true"
+                  />
+                </div>
+                <p class="m-0 pt-1 text-[13px] font-medium leading-snug" style="color: #1c1a15">
+                  {{ tip.text }}
+                </p>
+              </div>
             </div>
           </div>
         </details>
-        <!-- Análisis con IA -->
+
         <AiInsightsPanel />
-      </template>
+      </div>
     </div>
   </div>
 </template>

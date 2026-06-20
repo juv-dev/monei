@@ -1,116 +1,72 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import {
+  Bell,
+  ChevronLeft,
+  ChevronRight,
+  ChevronUp,
+  ChevronDown,
   TrendingUp,
   ShoppingBag,
   Clock,
-  CreditCard,
-  Inbox,
-  Loader2,
-  ArrowUpRight,
-  ArrowDownRight,
-  ChevronDown,
-  ChevronUp,
+  Check,
   AlertTriangle,
-  CheckCircle2,
-  Search,
-  X,
-  ArrowUpDown,
-  Download,
+  Loader2,
 } from 'lucide-vue-next'
-import type { Component } from 'vue'
 import { useDashboard } from '../composables/useDashboard'
-import DoughnutChart from '~/shared/components/charts/DoughnutChart.vue'
 import OnboardingModal from '~/modules/demo/components/OnboardingModal.vue'
-import MonthSelector from '~/shared/components/ui/MonthSelector.vue'
 import { useAuthStore } from '~/stores/auth'
-import { useIngresos } from '~/modules/ingresos/composables/useIngresos'
-import { usePresupuesto } from '~/modules/presupuesto/composables/usePresupuesto'
-import { useDeudas } from '~/modules/deudas/composables/useDeudas'
 import { useTarjetas } from '~/modules/tarjetas/composables/useTarjetas'
-import { useExchangeRate } from '~/shared/composables/useExchangeRate'
-import { exportReporteToExcel } from '~/modules/reportes/services/exportService'
+import { useSelectedMonth } from '~/shared/composables/useSelectedMonth'
+import { useDragScroll } from '~/shared/composables/useDragScroll'
+import type { DescripcionResumen, TarjetaCredito } from '~/shared/types'
 
 const auth = useAuthStore()
-const showOnboarding = ref(auth.currentUser?.provider === 'demo' && !localStorage.getItem('monei_demo_onboarding_done'))
-const { resumen, todasLasDescripciones, totalPagoMinimo, totalPagoMes, totalArrastre, isLoading } = useDashboard()
-const { ingresos } = useIngresos()
-const { gastos } = usePresupuesto()
-const { deudas } = useDeudas()
-const { tarjetas } = useTarjetas()
-const { rate: usdRate } = useExchangeRate()
+const showOnboarding = ref(
+  auth.currentUser?.provider === 'demo' && !localStorage.getItem('monei_demo_onboarding_done'),
+)
 
-const isExporting = ref(false)
-async function handleExport(): Promise<void> {
-  if (isExporting.value) return
-  isExporting.value = true
-  try {
-    await exportReporteToExcel({
-      ingresos: ingresos.value,
-      gastos: gastos.value,
-      deudas: deudas.value,
-      tarjetas: tarjetas.value,
-      usdRate: usdRate.value,
-      userDisplayName: auth.currentUser?.displayName,
-    })
-  } finally {
-    isExporting.value = false
-  }
-}
+const { resumen, todasLasDescripciones, totalPagoMinimo, totalPagoMes, isLoading } = useDashboard()
+const { tarjetas } = useTarjetas()
+const { monthLabel, isCurrentMonth, prevMonth, nextMonth } = useSelectedMonth()
+
+const tarjetasScrollRef = ref<HTMLElement | null>(null)
+const chipsScrollRef = ref<HTMLElement | null>(null)
+useDragScroll(tarjetasScrollRef)
+useDragScroll(chipsScrollRef)
+
+const userName = computed(() => auth.currentUser?.displayName?.split(' ')[0] ?? 'Usuario')
+const userInitial = computed(() => (auth.currentUser?.displayName?.charAt(0) ?? 'U').toUpperCase())
+
+const todayDate = new Intl.DateTimeFormat('es-PE', {
+  weekday: 'short',
+  day: 'numeric',
+  month: 'long',
+}).format(new Date())
 
 const TARJETA_MODE_KEY = 'monei_tarjeta_pago_mode'
 const tarjetaPagoMode = ref<'total' | 'minimo'>(
   (localStorage.getItem(TARJETA_MODE_KEY) as 'total' | 'minimo' | null) ?? 'total',
 )
 watch(tarjetaPagoMode, (v) => localStorage.setItem(TARJETA_MODE_KEY, v))
+const isMinimo = computed(() => tarjetaPagoMode.value === 'minimo')
 
 const tarjetasCompromiso = computed(() =>
-  tarjetaPagoMode.value === 'minimo' ? totalPagoMinimo.value : totalPagoMes.value,
+  isMinimo.value ? totalPagoMinimo.value : totalPagoMes.value,
 )
-
+const compromisosFijos = computed(
+  () => resumen.value.totalCuotaMensualDeudas + tarjetasCompromiso.value,
+)
 const balanceNeto = computed(
-  () =>
-    resumen.value.totalIngresos -
-    resumen.value.totalGastado -
-    resumen.value.totalCuotaMensualDeudas -
-    tarjetasCompromiso.value,
+  () => resumen.value.totalIngresos - resumen.value.totalGastado - compromisosFijos.value,
 )
+const isPositive = computed(() => balanceNeto.value >= 0)
+const totalSalidas = computed(() => resumen.value.totalGastado + compromisosFijos.value)
+const inflowWidth = computed(() => {
+  const denom = resumen.value.totalIngresos + totalSalidas.value
+  return denom > 0 ? Math.round((resumen.value.totalIngresos / denom) * 100) + '%' : '50%'
+})
 
-const ingresosSectionOpen = ref(true)
-const gastosSectionOpen = ref(true)
-const deudasSectionOpen = ref(true)
-const tarjetasSectionOpen = ref(true)
-
-const ingresosItems = computed(() => todasLasDescripciones.value.filter((i) => i.tipo === 'Ingreso'))
-const gastosItems = computed(() => todasLasDescripciones.value.filter((i) => i.tipo === 'Gasto'))
-const deudasItems = computed(() => todasLasDescripciones.value.filter((i) => i.tipo === 'Deuda'))
-const tarjetasItems = computed(() => todasLasDescripciones.value.filter((i) => i.tipo === 'Tarjeta'))
-
-function formatCurrency(value: number): string {
-  return new Intl.NumberFormat('es-PE', { style: 'currency', currency: 'PEN' }).format(value)
-}
-
-function formatShort(value: number): string {
-  if (value >= 1_000_000) return `S/ ${(value / 1_000_000).toFixed(1)}M`
-  if (value >= 1000) return `S/ ${(value / 1000).toFixed(1)}k`
-  return formatCurrency(value)
-}
-
-const todayDate = new Intl.DateTimeFormat('es-PE', {
-  weekday: 'long',
-  day: 'numeric',
-  month: 'long',
-  year: 'numeric',
-}).format(new Date())
-
-const typeConfig: Record<string, { hex: string; icon: Component }> = {
-  Ingreso: { hex: '#10B981', icon: TrendingUp },
-  Gasto: { hex: '#F97316', icon: ShoppingBag },
-  Deuda: { hex: '#F59E0B', icon: Clock },
-  Tarjeta: { hex: '#F43F5E', icon: CreditCard },
-}
-
-const compromisosFijos = computed(() => resumen.value.totalCuotaMensualDeudas + tarjetasCompromiso.value)
 const margenParaGastos = computed(() => resumen.value.totalIngresos - compromisosFijos.value)
 const diferenciaGastos = computed(() => margenParaGastos.value - resumen.value.totalGastado)
 const porcentajeGastos = computed(() =>
@@ -120,629 +76,602 @@ const porcentajeGastos = computed(() =>
       ? 999
       : 0,
 )
+const planOk = computed(() => diferenciaGastos.value >= 0)
 const barGastosWidth = computed(() => Math.min(porcentajeGastos.value, 100) + '%')
-const showCierreDeMes = computed(() => resumen.value.totalIngresos > 0 || compromisosFijos.value > 0)
-
-const showForecastTarjetas = computed(() => resumen.value.totalTarjetas > 0)
-const ahorroPagoMinimo = computed(() => resumen.value.totalTarjetas - totalPagoMinimo.value)
-const balancePagoMinimo = computed(() => resumen.value.balance + ahorroPagoMinimo.value)
-const balanceSinDeudas = computed(() => resumen.value.balance + resumen.value.totalCuotaMensualDeudas)
-
-const isPositive = computed(() => balanceNeto.value >= 0)
-
-const hasChartData = computed(
-  () =>
-    resumen.value.totalIngresos > 0 ||
-    resumen.value.totalGastado > 0 ||
-    resumen.value.totalPendienteDeudas > 0 ||
-    resumen.value.totalTarjetas > 0,
+const showCierreDeMes = computed(
+  () => resumen.value.totalIngresos > 0 || compromisosFijos.value > 0,
 )
 
-const chartLabels = computed(() => ['Ingresos', 'Gastos', 'Deudas', 'Tarjetas'])
-const chartValues = computed(() => [
-  resumen.value.totalIngresos,
-  resumen.value.totalGastado,
-  resumen.value.totalPendienteDeudas,
-  resumen.value.totalTarjetas,
-])
-const modernChartColors = ['#10B981', '#F97316', '#F59E0B', '#F43F5E']
-
-type TxGroup = {
-  key: 'i' | 'g' | 'd' | 't'
-  label: string
-  color: string
-  sign: '+' | '−'
-  items: ReturnType<typeof todasLasDescripciones.value.filter>
-  total: number
-  open: boolean
+function fmt(n: number): string {
+  return 'S/ ' + Math.round(Math.abs(n)).toLocaleString('es-PE')
+}
+function fmtShort(n: number): string {
+  const v = Math.abs(n)
+  if (v >= 1_000_000) return `S/ ${(v / 1_000_000).toFixed(1)}M`
+  if (v >= 1000) return `S/ ${(v / 1000).toFixed(1)}k`
+  return 'S/ ' + Math.round(v).toLocaleString('es-PE')
 }
 
-const transactionGroups = computed<TxGroup[]>(() => [
-  { key: 'i', label: 'Ingresos', color: '#10B981', sign: '+', items: ingresosItems.value, total: resumen.value.totalIngresos, open: ingresosSectionOpen.value },
-  { key: 'g', label: 'Gastos', color: '#F97316', sign: '−', items: gastosItems.value, total: resumen.value.totalGastado, open: gastosSectionOpen.value },
-  { key: 'd', label: 'Deudas', color: '#F59E0B', sign: '−', items: deudasItems.value, total: resumen.value.totalCuotaMensualDeudas, open: deudasSectionOpen.value },
-  { key: 't', label: 'Tarjetas', color: '#F43F5E', sign: '−', items: tarjetasItems.value, total: resumen.value.totalTarjetas, open: tarjetasSectionOpen.value },
-])
+const balanceStr = computed(() => (isPositive.value ? '' : '−') + fmt(balanceNeto.value))
+const heroSubtitle = computed(() =>
+  isPositive.value
+    ? 'Te queda margen después de cubrir todo'
+    : 'Tus compromisos superan tus ingresos',
+)
+const planNoteText = computed(() =>
+  planOk.value
+    ? `Te sobran ${fmt(diferenciaGastos.value)} después de cubrir gastos, deudas y tarjetas.`
+    : `Necesitás recortar ${fmt(Math.abs(diferenciaGastos.value))} para cerrar el mes en azul.`,
+)
 
-function toggleGroup(key: TxGroup['key']) {
-  if (key === 'i') ingresosSectionOpen.value = !ingresosSectionOpen.value
-  else if (key === 'g') gastosSectionOpen.value = !gastosSectionOpen.value
-  else if (key === 'd') deudasSectionOpen.value = !deudasSectionOpen.value
-  else tarjetasSectionOpen.value = !tarjetasSectionOpen.value
-}
-
-type FilterKey = 'all' | 'Ingreso' | 'Gasto' | 'Deuda' | 'Tarjeta'
-const activeFilter = ref<FilterKey>('all')
-const searchQuery = ref('')
-const sortDesc = ref(true)
-
-const filterTabs: { key: FilterKey; label: string; color: string }[] = [
-  { key: 'all', label: 'Todo', color: '#6366F1' },
-  { key: 'Ingreso', label: 'Ingresos', color: '#10B981' },
-  { key: 'Gasto', label: 'Gastos', color: '#F97316' },
-  { key: 'Deuda', label: 'Deudas', color: '#F59E0B' },
-  { key: 'Tarjeta', label: 'Tarjetas', color: '#F43F5E' },
-]
-
-const hasActiveFilterOrSearch = computed(() => activeFilter.value !== 'all' || searchQuery.value.trim() !== '')
-
-const filteredFlatItems = computed(() => {
-  const q = searchQuery.value.trim().toLowerCase()
-  let list = todasLasDescripciones.value.slice()
-  if (activeFilter.value !== 'all') list = list.filter((i) => i.tipo === activeFilter.value)
-  if (q) list = list.filter((i) => i.descripcion.toLowerCase().includes(q))
-  list.sort((a, b) => (sortDesc.value ? b.monto - a.monto : a.monto - b.monto))
-  return list
+const donut = computed(() => {
+  const income = resumen.value.totalIngresos
+  const gasto = resumen.value.totalGastado
+  const deuda = resumen.value.totalCuotaMensualDeudas
+  const tarj = tarjetasCompromiso.value
+  const denom = Math.max(income, gasto + deuda + tarj)
+  const disponible = Math.max(balanceNeto.value, 0)
+  if (denom <= 0) return { bg: '#F0EBE0', disponible }
+  const a = (gasto / denom) * 100
+  const b = a + (deuda / denom) * 100
+  const c = b + (tarj / denom) * 100
+  const dispPart = isPositive.value ? disponible : 0
+  const d = c + (dispPart / denom) * 100
+  const bg = `conic-gradient(#D98A3D 0 ${a}%, #B8893A ${a}% ${b}%, #C25A4E ${b}% ${c}%, #1E9E6A ${c}% ${d}%, #F0EBE0 ${d}% 100%)`
+  return { bg, disponible }
 })
 
-const netoMes = computed(() => resumen.value.totalIngresos - resumen.value.totalGastado - compromisosFijos.value)
-const totalSalidasMes = computed(() => resumen.value.totalGastado + compromisosFijos.value)
+const donutLegend = computed(() => [
+  { label: 'Gastos', color: '#D98A3D', value: resumen.value.totalGastado },
+  { label: 'Deudas', color: '#B8893A', value: resumen.value.totalCuotaMensualDeudas },
+  { label: 'Tarjetas', color: '#C25A4E', value: tarjetasCompromiso.value },
+  { label: 'Disponible', color: '#1E9E6A', value: donut.value.disponible },
+])
 
-function colorFor(tipo: string): string {
-  return typeConfig[tipo]?.hex ?? '#64748B'
+const cardGrads = [
+  'linear-gradient(145deg,#1F4A45 0%,#0F2B28 100%)',
+  'linear-gradient(145deg,#3A332A 0%,#211C16 100%)',
+  'linear-gradient(145deg,#1C3357 0%,#0E1C32 100%)',
+]
+const cardOrbs = [
+  'radial-gradient(circle,rgba(95,208,168,.25),transparent 70%)',
+  'radial-gradient(circle,rgba(200,170,114,.22),transparent 70%)',
+  'radial-gradient(circle,rgba(120,160,220,.25),transparent 70%)',
+]
+
+function tarjetaView(t: TarjetaCredito, i: number) {
+  const usd = (t.montoDeudaActualUsd ?? 0) > 0 || (t.lineaTotalUsd ?? 0) > 0
+  const sym = usd ? '$' : 'S/'
+  const pay = isMinimo.value
+    ? usd
+      ? (t.pagoMinimoUsd ?? 0)
+      : (t.pagoMinimo ?? 0)
+    : usd
+      ? (t.montoDeudaActualUsd ?? 0)
+      : (t.montoDeudaActual ?? 0)
+  const linea = usd ? (t.lineaTotalUsd ?? 0) : t.lineaTotal
+  return {
+    grad: cardGrads[i % cardGrads.length],
+    orb: cardOrbs[i % cardOrbs.length],
+    label: t.descripcion,
+    amount: `${sym} ${Math.round(pay).toLocaleString('es-PE')}`,
+    linea: `Línea ${sym} ${Math.round(linea).toLocaleString('es-PE')}`,
+  }
 }
 
-function signFor(tipo: string): '+' | '−' {
-  return tipo === 'Ingreso' ? '+' : '−'
+type Grp = {
+  key: DescripcionResumen['tipo']
+  label: string
+  color: string
+  avatarBg: string
+  sign: '+' | '−'
+  total: number
+  items: DescripcionResumen[]
 }
 
-function groupTotalFor(tipo: string): number {
-  if (tipo === 'Ingreso') return resumen.value.totalIngresos
-  if (tipo === 'Gasto') return resumen.value.totalGastado
-  if (tipo === 'Deuda') return resumen.value.totalCuotaMensualDeudas
-  return resumen.value.totalTarjetas
-}
+const ingresosItems = computed(() => todasLasDescripciones.value.filter((i) => i.tipo === 'Ingreso'))
+const gastosItems = computed(() => todasLasDescripciones.value.filter((i) => i.tipo === 'Gasto'))
+const deudasItems = computed(() => todasLasDescripciones.value.filter((i) => i.tipo === 'Deuda'))
+const tarjetasItems = computed(() => todasLasDescripciones.value.filter((i) => i.tipo === 'Tarjeta'))
 
-function percentOfGroup(monto: number, tipo: string): number {
-  const total = groupTotalFor(tipo)
-  if (total <= 0) return 0
-  return Math.min(100, Math.round((monto / total) * 100))
+const groups = computed<Grp[]>(() => [
+  { key: 'Ingreso', label: 'Ingresos', color: '#1E9E6A', avatarBg: '#E6F4EC', sign: '+', total: resumen.value.totalIngresos, items: ingresosItems.value },
+  { key: 'Gasto', label: 'Gastos', color: '#D98A3D', avatarBg: '#FBEFE0', sign: '−', total: resumen.value.totalGastado, items: gastosItems.value },
+  { key: 'Deuda', label: 'Deudas · cuota', color: '#B8893A', avatarBg: '#F6EEDD', sign: '−', total: resumen.value.totalCuotaMensualDeudas, items: deudasItems.value },
+  { key: 'Tarjeta', label: 'Tarjetas', color: '#C25A4E', avatarBg: '#FBE9E6', sign: '−', total: tarjetasCompromiso.value, items: tarjetasItems.value },
+])
+
+type FilterKey = 'all' | DescripcionResumen['tipo']
+const activeFilter = ref<FilterKey>('all')
+const filterChips: { key: FilterKey; label: string; color: string }[] = [
+  { key: 'all', label: 'Todo', color: '#16332F' },
+  { key: 'Ingreso', label: 'Ingresos', color: '#1E9E6A' },
+  { key: 'Gasto', label: 'Gastos', color: '#D98A3D' },
+  { key: 'Deuda', label: 'Deudas', color: '#B8893A' },
+  { key: 'Tarjeta', label: 'Tarjetas', color: '#C25A4E' },
+]
+
+const visibleGroups = computed(() =>
+  groups.value.filter(
+    (g) => g.items.length > 0 && (activeFilter.value === 'all' || activeFilter.value === g.key),
+  ),
+)
+const hasData = computed(() => todasLasDescripciones.value.length > 0)
+
+function avatarLetter(text: string): string {
+  return (text.trim().charAt(0) || '·').toUpperCase()
 }
 </script>
 
 <template>
-  <div class="min-h-screen bg-[#F8F6F1]" data-testid="dashboard-view">
+  <div
+    class="min-h-screen"
+    style="background: #f1ece1; font-family: 'Manrope', system-ui, sans-serif; color: #1c1a15"
+    data-testid="dashboard-view"
+  >
     <OnboardingModal v-if="showOnboarding" @close="showOnboarding = false" />
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-10">
-      <div class="flex items-center justify-between mb-8">
-        <div>
-          <p class="text-sm text-[#9A9690] mb-1 capitalize">{{ todayDate }}</p>
-          <h1 class="text-2xl lg:text-3xl font-bold text-[#1C1B18] tracking-tight">
-            Hola, {{ auth.currentUser?.displayName?.split(' ')[0] ?? 'Usuario' }}
-          </h1>
+
+    <div style="padding: 62px 18px 110px;" class="mx-auto w-full max-w-[460px]">
+      <div class="mb-[18px] flex items-center justify-between">
+        <div class="flex items-center gap-[11px]">
+          <div
+            class="flex h-[38px] w-[38px] items-center justify-center rounded-[11px]"
+            style="background: linear-gradient(140deg, #c8aa72, #8a6840); box-shadow: 0 4px 12px rgba(138, 104, 64, 0.28)"
+          >
+            <span
+              class="font-bold text-white"
+              style="font-family: 'Space Grotesk', sans-serif; font-size: 16px; letter-spacing: -0.02em"
+              aria-hidden="true"
+            >S/</span>
+          </div>
+          <div>
+            <p class="m-0 text-[11px] font-semibold" style="color: #9a9384; letter-spacing: 0.02em">
+              {{ todayDate }}
+            </p>
+            <p class="m-0 mt-px whitespace-nowrap text-[17px] font-extrabold" style="letter-spacing: -0.02em">
+              Hola, {{ userName }}
+            </p>
+          </div>
         </div>
-        <div class="flex items-center gap-2 flex-wrap justify-end">
-          <MonthSelector />
+        <div class="flex items-center gap-2">
           <button
             type="button"
-            class="flex items-center gap-2 bg-white border border-[#E5E0D5] hover:border-[#A8D4D2] hover:bg-[#EBF5F5] text-[#5A5854] hover:text-[#356E6B] rounded-full px-4 py-2 text-xs font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-            :disabled="isExporting || isLoading"
-            data-testid="export-excel-btn"
-            @click="handleExport"
+            class="relative flex h-[38px] w-[38px] items-center justify-center rounded-full border-none bg-white"
+            style="box-shadow: 0 1px 3px rgba(28, 26, 21, 0.08)"
+            aria-label="Notificaciones"
           >
-            <Loader2 v-if="isExporting" :size="14" class="animate-spin" />
-            <Download v-else :size="14" />
-            <span>{{ isExporting ? 'Generando...' : 'Exportar Excel' }}</span>
+            <Bell :size="17" style="color: #5a5448" />
+            <span
+              class="absolute"
+              style="top: 9px; right: 10px; width: 7px; height: 7px; border-radius: 50%; background: #c25a4e; border: 1.5px solid #fff"
+            ></span>
           </button>
-          <div class="hidden sm:flex items-center gap-2 bg-white border border-[#E5E0D5] rounded-full px-4 py-2 text-xs text-[#9A9690]">
-            <span class="w-2 h-2 rounded-full bg-[#3D9970] animate-pulse"></span>
-            Actualizado
+          <div
+            class="flex h-[38px] w-[38px] items-center justify-center rounded-full text-[15px] font-extrabold"
+            style="background: linear-gradient(140deg, #2c5e58, #16332f); color: #f1ece1; font-family: 'Space Grotesk', sans-serif; box-shadow: 0 2px 8px rgba(22, 51, 47, 0.3)"
+          >
+            {{ userInitial }}
           </div>
         </div>
       </div>
 
       <div
+        class="mb-4 flex items-center justify-between rounded-[14px] border bg-white p-[7px]"
+        style="border-color: #e7e0d2; box-shadow: 0 1px 2px rgba(28, 26, 21, 0.04)"
+      >
+        <button
+          type="button"
+          class="flex h-[30px] w-[30px] items-center justify-center rounded-[9px] border-none"
+          style="background: #f4efe5"
+          aria-label="Mes anterior"
+          @click="prevMonth"
+        >
+          <ChevronLeft :size="15" style="color: #8a8273" />
+        </button>
+        <div class="text-center">
+          <p class="m-0 text-[14px] font-bold capitalize" style="letter-spacing: -0.01em">{{ monthLabel }}</p>
+          <p class="m-0 text-[10px] font-semibold" style="color: #9a9384">
+            {{ isCurrentMonth ? 'Mes en curso' : 'Mes seleccionado' }}
+          </p>
+        </div>
+        <button
+          type="button"
+          class="flex h-[30px] w-[30px] items-center justify-center rounded-[9px] border-none disabled:opacity-40"
+          style="background: #f4efe5"
+          :disabled="isCurrentMonth"
+          aria-label="Mes siguiente"
+          @click="nextMonth"
+        >
+          <ChevronRight :size="15" style="color: #8a8273" />
+        </button>
+      </div>
+
+      <div
         v-if="isLoading"
-        class="flex items-center justify-center gap-3 py-24 text-slate-400"
+        class="flex items-center justify-center gap-3 py-24"
+        style="color: #9a9384"
         data-testid="loading-state"
       >
-        <Loader2 :size="28" class="animate-spin" aria-hidden="true" />
+        <Loader2 :size="26" class="animate-spin" />
         <span class="text-sm">Cargando tu resumen...</span>
       </div>
 
       <template v-else>
-        <div class="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-6" data-testid="card-balance">
+        <div
+          class="relative mb-[14px] overflow-hidden rounded-[26px]"
+          style="padding: 22px 22px 20px; background: linear-gradient(150deg, #26241c 0%, #141309 100%); box-shadow: 0 18px 40px -12px rgba(20, 19, 13, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.06)"
+          data-testid="card-balance"
+        >
           <div
-            class="col-span-2 rounded-2xl p-4 lg:p-5 border shadow-sm"
-            :style="isPositive
-              ? 'background: linear-gradient(135deg, #EBF5F5 0%, #D5EDED 100%); border-color: rgba(77, 155, 151, 0.25);'
-              : 'background: linear-gradient(135deg, #FEF1F0 0%, #FDE4E2 100%); border-color: rgba(192, 91, 82, 0.25);'"
-          >
-            <div class="flex items-center gap-2 mb-2">
-              <div
-                class="w-7 h-7 rounded-lg flex items-center justify-center"
+            class="pointer-events-none absolute mn-orb"
+            style="top: -60px; right: -50px; width: 200px; height: 200px; border-radius: 50%; background: radial-gradient(circle, #c8aa72, transparent 65%); filter: blur(20px); opacity: 0.5"
+          ></div>
+          <div class="relative">
+            <div class="mb-[14px] flex items-center justify-between">
+              <div class="flex items-center gap-[7px]">
+                <span
+                  style="width: 6px; height: 6px; border-radius: 50%"
+                  :style="{ background: isPositive ? '#5FD0A8' : '#E89A8E' }"
+                ></span>
+                <p
+                  class="m-0 text-[11px] font-bold uppercase"
+                  style="letter-spacing: 0.09em; color: rgba(241, 236, 225, 0.62)"
+                >
+                  Disponible este mes
+                </p>
+              </div>
+              <span
+                class="inline-flex items-center gap-1 rounded-full px-[9px] py-1 text-[11px] font-bold"
                 :style="isPositive
-                  ? 'background: rgba(77, 155, 151, 0.14);'
-                  : 'background: rgba(192, 91, 82, 0.12);'"
+                  ? { background: 'rgba(95,208,168,.16)', color: '#7FE0BC' }
+                  : { background: 'rgba(232,154,142,.18)', color: '#F0B5AB' }"
               >
-                <component :is="isPositive ? ArrowUpRight : ArrowDownRight" :size="14" :style="{ color: isPositive ? '#356E6B' : '#C05B52' }" aria-hidden="true" />
-              </div>
-              <p class="text-[10px] font-semibold uppercase tracking-wider" :style="{ color: isPositive ? '#356E6B' : '#C05B52' }">Balance neto</p>
+                <component :is="isPositive ? ChevronUp : ChevronDown" :size="11" />
+                {{ isPositive ? 'En control' : 'Revisar' }}
+              </span>
             </div>
-            <p class="text-2xl lg:text-3xl font-black tabular-nums tracking-tight text-[#1C1B18]" data-testid="resumen-balance">
-              {{ formatCurrency(balanceNeto) }}
-            </p>
-            <p class="text-[11px] mt-1 font-medium" :style="{ color: isPositive ? '#356E6B' : '#C05B52' }">
-              {{ isPositive ? 'Llegás bien a fin de mes' : 'Revisá tus compromisos' }}
-            </p>
-          </div>
 
-          <div class="rounded-2xl p-4 bg-white border border-[#E5E0D5] shadow-[0_1px_3px_rgba(28,27,24,0.04),0_4px_16px_rgba(28,27,24,0.05)]" data-testid="card-ingresos">
-            <div class="flex items-center gap-2 mb-2.5">
-              <div class="w-7 h-7 rounded-lg bg-[#EDFAF4] flex items-center justify-center">
-                <TrendingUp :size="14" class="text-[#3D9970]" />
-              </div>
-              <p class="text-xs font-medium text-[#9A9690]">Ingresos</p>
-            </div>
-            <p class="text-xl lg:text-2xl font-bold text-[#1C1B18] tabular-nums tracking-tight" data-testid="resumen-ingresos">{{ formatShort(resumen.totalIngresos) }}</p>
-          </div>
-
-          <div class="rounded-2xl p-4 bg-white border border-[#E5E0D5] shadow-[0_1px_3px_rgba(28,27,24,0.04),0_4px_16px_rgba(28,27,24,0.05)]" data-testid="card-gastado">
-            <div class="flex items-center gap-2 mb-2.5">
-              <div class="w-7 h-7 rounded-lg bg-[#FEF7E6] flex items-center justify-center">
-                <ShoppingBag :size="14" class="text-[#C4870D]" />
-              </div>
-              <p class="text-xs font-medium text-[#9A9690]">Gastado</p>
-            </div>
-            <p class="text-xl lg:text-2xl font-bold text-[#1C1B18] tabular-nums tracking-tight" data-testid="resumen-gastado">{{ formatShort(resumen.totalGastado) }}</p>
-          </div>
-
-          <div class="rounded-2xl p-4 bg-white border border-[#E5E0D5] shadow-[0_1px_3px_rgba(28,27,24,0.04),0_4px_16px_rgba(28,27,24,0.05)]" data-testid="card-deudas">
-            <div class="flex items-center gap-2 mb-2.5">
-              <div class="w-7 h-7 rounded-lg bg-[#FEF1F0] flex items-center justify-center">
-                <Clock :size="14" class="text-[#C05B52]" />
-              </div>
-              <p class="text-xs font-medium text-[#9A9690]">Cuota</p>
-            </div>
-            <p class="text-xl lg:text-2xl font-bold text-[#1C1B18] tabular-nums tracking-tight" data-testid="resumen-deudas">{{ formatShort(resumen.totalCuotaMensualDeudas) }}</p>
-            <p class="text-[11px] text-[#9A9690] tabular-nums mt-0.5" data-testid="resumen-deudas-total">{{ formatShort(resumen.totalDeudas) }} total</p>
-          </div>
-
-          <div class="rounded-2xl p-4 bg-white border border-[#E5E0D5] shadow-[0_1px_3px_rgba(28,27,24,0.04),0_4px_16px_rgba(28,27,24,0.05)] col-span-2 lg:col-span-5" data-testid="card-tarjetas">
-            <div class="flex items-center justify-between gap-3">
-              <div class="flex items-center gap-2">
-                <div class="w-7 h-7 rounded-lg bg-[#F0F2FB] flex items-center justify-center">
-                  <CreditCard :size="14" class="text-[#6B7FC4]" />
-                </div>
-                <p class="text-xs font-medium text-[#9A9690]">Tarjetas</p>
-                <div class="inline-flex rounded-full bg-slate-100 p-0.5 text-[10px] font-semibold" role="tablist" aria-label="Modo de pago de tarjetas">
-                  <button
-                    type="button"
-                    role="tab"
-                    :aria-selected="tarjetaPagoMode === 'total'"
-                    class="px-2.5 py-1 rounded-full transition-colors"
-                    :class="tarjetaPagoMode === 'total' ? 'bg-white text-[#356E6B] shadow-sm' : 'text-[#9A9690] hover:text-[#5A5854]'"
-                    data-testid="tarjeta-mode-total"
-                    @click="tarjetaPagoMode = 'total'"
-                  >Pago del mes</button>
-                  <button
-                    type="button"
-                    role="tab"
-                    :aria-selected="tarjetaPagoMode === 'minimo'"
-                    class="px-2.5 py-1 rounded-full transition-colors"
-                    :class="tarjetaPagoMode === 'minimo' ? 'bg-white text-[#356E6B] shadow-sm' : 'text-[#9A9690] hover:text-[#5A5854]'"
-                    data-testid="tarjeta-mode-minimo"
-                    @click="tarjetaPagoMode = 'minimo'"
-                  >Mínimo</button>
-                </div>
-              </div>
-              <p class="text-base lg:text-lg font-black text-slate-900 tabular-nums" data-testid="resumen-tarjetas">{{ formatCurrency(tarjetasCompromiso) }}</p>
-            </div>
             <p
-              v-if="tarjetaPagoMode === 'minimo' && totalArrastre > 0"
-              class="text-[11px] text-rose-700 mt-2 tabular-nums"
-              data-testid="tarjeta-arrastre"
+              class="m-0 leading-none"
+              style="font-family: 'Space Grotesk', sans-serif; font-size: 42px; font-weight: 600; letter-spacing: -0.03em; color: #fbf8f1"
+              data-testid="resumen-balance"
             >
-              Arrastrás <strong>{{ formatCurrency(totalArrastre) }}</strong> al próximo mes
+              {{ balanceStr }}
             </p>
+            <p class="m-0 mt-2 text-[12px] font-medium" style="color: rgba(241, 236, 225, 0.6)">
+              {{ heroSubtitle }}
+            </p>
+
+            <div class="mt-[18px]">
+              <div
+                class="flex overflow-hidden"
+                style="height: 6px; border-radius: 999px; background: rgba(255, 255, 255, 0.1)"
+              >
+                <div :style="{ width: inflowWidth, background: '#5FD0A8' }"></div>
+                <div style="flex: 1; background: #d98a3d"></div>
+              </div>
+              <div class="mt-[9px] flex justify-between">
+                <div>
+                  <p class="m-0 text-[10px] font-semibold" style="color: rgba(241, 236, 225, 0.5); letter-spacing: 0.04em">ENTRA</p>
+                  <p class="m-0 mt-0.5 whitespace-nowrap text-[14px] font-semibold" style="font-family: 'Space Grotesk', sans-serif; color: #9fe6c8">
+                    {{ fmt(resumen.totalIngresos) }}
+                  </p>
+                </div>
+                <div class="text-right">
+                  <p class="m-0 text-[10px] font-semibold" style="color: rgba(241, 236, 225, 0.5); letter-spacing: 0.04em">SALE</p>
+                  <p class="m-0 mt-0.5 whitespace-nowrap text-[14px] font-semibold" style="font-family: 'Space Grotesk', sans-serif; color: #ebb98a">
+                    {{ fmt(totalSalidas) }}
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6 mb-6">
+        <div class="mb-[18px] grid grid-cols-3 gap-[9px]">
           <div
-            v-if="showCierreDeMes"
-            class="lg:col-span-2 bg-white rounded-2xl p-6 border border-[#E5E0D5] shadow-[0_1px_3px_rgba(28,27,24,0.04),0_4px_16px_rgba(28,27,24,0.05)]"
-            data-testid="cierre-de-mes"
+            class="rounded-[16px] border bg-white p-3"
+            style="border-color: #e7e0d2; box-shadow: 0 1px 2px rgba(28, 26, 21, 0.04)"
+            data-testid="card-ingresos"
           >
-            <div class="flex items-center justify-between mb-5">
-              <div>
-                <h2 class="text-base font-bold text-slate-900">Plan de cierre del mes</h2>
-                <p class="text-xs text-slate-500 mt-0.5">Cómo vas llegando a fin de mes</p>
-              </div>
-              <span
-                class="inline-flex items-center gap-1.5 text-xs font-semibold rounded-full px-3 py-1"
-                :class="diferenciaGastos >= 0 ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'"
-              >
-                <component :is="diferenciaGastos >= 0 ? CheckCircle2 : AlertTriangle" :size="12" />
-                {{ diferenciaGastos >= 0 ? 'En control' : 'Revisar gastos' }}
-              </span>
+            <div class="mb-[9px] flex h-[26px] w-[26px] items-center justify-center rounded-lg" style="background: #e6f4ec">
+              <TrendingUp :size="14" style="color: #1e9e6a" />
             </div>
-
-            <div class="grid grid-cols-3 gap-3 mb-5">
-              <div class="bg-emerald-50/60 rounded-xl p-3">
-                <p class="text-[10px] font-semibold text-emerald-700 uppercase tracking-wider mb-1.5">Ingresos</p>
-                <p class="text-lg font-bold text-slate-900 tabular-nums">{{ formatShort(resumen.totalIngresos) }}</p>
-              </div>
-              <div class="bg-amber-50/60 rounded-xl p-3">
-                <p class="text-[10px] font-semibold text-amber-700 uppercase tracking-wider mb-1.5">Fijo</p>
-                <p class="text-lg font-bold text-slate-900 tabular-nums">{{ formatShort(compromisosFijos) }}</p>
-              </div>
-              <div
-                class="rounded-xl p-3"
-                :class="margenParaGastos >= 0 ? 'bg-indigo-50/60' : 'bg-red-50/60'"
-              >
-                <p
-                  class="text-[10px] font-semibold uppercase tracking-wider mb-1.5"
-                  :class="margenParaGastos >= 0 ? 'text-indigo-700' : 'text-red-700'"
-                >Margen</p>
-                <p class="text-lg font-bold text-slate-900 tabular-nums">{{ formatShort(Math.abs(margenParaGastos)) }}</p>
-              </div>
-            </div>
-
-            <div class="mb-3">
-              <div class="flex items-center justify-between text-xs mb-2">
-                <span class="text-slate-600">
-                  Gastaste <span class="font-semibold text-slate-900">{{ formatShort(resumen.totalGastado) }}</span>
-                  de <span class="font-semibold text-slate-900">{{ formatShort(Math.max(margenParaGastos, 0)) }}</span>
-                </span>
-                <span class="font-bold tabular-nums" :class="porcentajeGastos > 100 ? 'text-[#C05B52]' : 'text-[#356E6B]'">
-                  {{ porcentajeGastos }}%
-                </span>
-              </div>
-              <div class="h-2.5 rounded-full bg-slate-100 overflow-hidden">
-                <div
-                  class="h-full rounded-full transition-all duration-500"
-                  :style="{
-                    width: barGastosWidth,
-                    background: porcentajeGastos > 100
-                      ? 'linear-gradient(90deg, #C05B52, #A04540)'
-                      : 'linear-gradient(90deg, #4D9B97, #356E6B)',
-                  }"
-                ></div>
-              </div>
-            </div>
-
-            <div
-              class="flex items-start gap-2 mt-4 p-3 rounded-xl text-xs"
-              :class="diferenciaGastos >= 0 ? 'bg-emerald-50 text-emerald-800' : 'bg-red-50 text-red-800'"
-            >
-              <component :is="diferenciaGastos >= 0 ? CheckCircle2 : AlertTriangle" :size="14" class="shrink-0 mt-0.5" />
-              <span v-if="diferenciaGastos >= 0">
-                Te sobran <strong>{{ formatCurrency(diferenciaGastos) }}</strong> después de cubrir todo.
-              </span>
-              <span v-else>
-                Necesitás reducir <strong>{{ formatCurrency(Math.abs(diferenciaGastos)) }}</strong> para llegar a fin de mes.
-              </span>
-            </div>
+            <p class="m-0 text-[10px] font-semibold" style="color: #9a9384">Ingresos</p>
+            <p class="m-0 mt-[3px] text-[17px] font-semibold" style="font-family: 'Space Grotesk', sans-serif; letter-spacing: -0.02em" data-testid="resumen-ingresos">
+              {{ fmtShort(resumen.totalIngresos) }}
+            </p>
           </div>
-
           <div
-            v-if="hasChartData"
-            class="bg-white rounded-2xl p-6 border border-[#E5E0D5] shadow-[0_1px_3px_rgba(28,27,24,0.04),0_4px_16px_rgba(28,27,24,0.05)] flex flex-col"
+            class="rounded-[16px] border bg-white p-3"
+            style="border-color: #e7e0d2; box-shadow: 0 1px 2px rgba(28, 26, 21, 0.04)"
+            data-testid="card-gastado"
           >
-            <div class="mb-4">
-              <h2 class="text-base font-bold text-slate-900">Distribución</h2>
-              <p class="text-xs text-slate-500 mt-0.5">A qué va tu plata</p>
+            <div class="mb-[9px] flex h-[26px] w-[26px] items-center justify-center rounded-lg" style="background: #fbefe0">
+              <ShoppingBag :size="14" style="color: #d98a3d" />
             </div>
-            <div class="flex-1 flex flex-col items-center">
-              <div class="w-full max-w-[180px] mb-4">
-                <DoughnutChart
-                  :labels="chartLabels"
-                  :values="chartValues"
-                  :colors="modernChartColors"
-                  :center-value="formatShort(resumen.totalIngresos)"
-                  center-label="ingresos"
-                />
-              </div>
-              <ul class="w-full space-y-2">
-                <li v-for="(label, i) in chartLabels" :key="label" class="flex items-center justify-between text-xs">
-                  <div class="flex items-center gap-2">
-                    <span class="w-2 h-2 rounded-full shrink-0" :style="{ backgroundColor: modernChartColors[i] }"></span>
-                    <span class="text-slate-600">{{ label }}</span>
-                  </div>
-                  <span class="font-semibold text-slate-900 tabular-nums">{{ formatShort(chartValues[i] ?? 0) }}</span>
-                </li>
-              </ul>
+            <p class="m-0 text-[10px] font-semibold" style="color: #9a9384">Gastado</p>
+            <p class="m-0 mt-[3px] text-[17px] font-semibold" style="font-family: 'Space Grotesk', sans-serif; letter-spacing: -0.02em" data-testid="resumen-gastado">
+              {{ fmtShort(resumen.totalGastado) }}
+            </p>
+          </div>
+          <div
+            class="rounded-[16px] border bg-white p-3"
+            style="border-color: #e7e0d2; box-shadow: 0 1px 2px rgba(28, 26, 21, 0.04)"
+            data-testid="card-deudas"
+          >
+            <div class="mb-[9px] flex h-[26px] w-[26px] items-center justify-center rounded-lg" style="background: #f6eedd">
+              <Clock :size="14" style="color: #b8893a" />
             </div>
+            <p class="m-0 text-[10px] font-semibold" style="color: #9a9384">Deuda</p>
+            <p class="m-0 mt-[3px] text-[17px] font-semibold" style="font-family: 'Space Grotesk', sans-serif; letter-spacing: -0.02em" data-testid="resumen-deudas">
+              {{ fmtShort(resumen.totalDeudas) }}
+            </p>
           </div>
         </div>
 
         <div
-          v-if="showForecastTarjetas"
-          class="bg-white rounded-2xl p-6 border border-[#E5E0D5] shadow-[0_1px_3px_rgba(28,27,24,0.04),0_4px_16px_rgba(28,27,24,0.05)] mb-6"
-          data-testid="forecast-tarjetas"
+          v-if="showCierreDeMes"
+          class="mb-[14px] rounded-[22px] border bg-white p-[18px]"
+          style="border-color: #e7e0d2; box-shadow: 0 1px 3px rgba(28, 26, 21, 0.05)"
+          data-testid="cierre-de-mes"
         >
-          <div class="flex items-center gap-3 mb-5">
-            <div class="w-10 h-10 rounded-xl bg-rose-50 flex items-center justify-center">
-              <CreditCard :size="20" class="text-rose-600" />
-            </div>
+          <div class="mb-4 flex items-center justify-between">
             <div>
-              <h2 class="text-base font-bold text-slate-900">Escenarios de tarjetas</h2>
-              <p class="text-xs text-slate-500 mt-0.5">Tres caminos posibles este mes</p>
+              <p class="m-0 text-[14px] font-extrabold" style="letter-spacing: -0.01em">Plan de cierre del mes</p>
+              <p class="m-0 mt-0.5 text-[11px] font-medium" style="color: #9a9384">Cómo vas llegando a fin de mes</p>
+            </div>
+            <span
+              class="inline-flex items-center gap-1 rounded-full px-[9px] py-1 text-[11px] font-bold"
+              :style="planOk ? { background: '#E6F4EC', color: '#1E9E6A' } : { background: '#FBEDEB', color: '#C25A4E' }"
+            >
+              <component :is="planOk ? Check : AlertTriangle" :size="12" />
+              {{ planOk ? 'En control' : 'Revisar gastos' }}
+            </span>
+          </div>
+
+          <div class="mb-4 grid grid-cols-3 gap-2">
+            <div class="rounded-[13px] p-[11px]" style="background: #f2faf5">
+              <p class="m-0 text-[9px] font-bold uppercase" style="letter-spacing: 0.06em; color: #1e9e6a">Ingresos</p>
+              <p class="m-0 mt-[5px] text-[16px] font-semibold" style="font-family: 'Space Grotesk', sans-serif">{{ fmtShort(resumen.totalIngresos) }}</p>
+            </div>
+            <div class="rounded-[13px] p-[11px]" style="background: #fbf4e9">
+              <p class="m-0 text-[9px] font-bold uppercase" style="letter-spacing: 0.06em; color: #b8893a">Fijo</p>
+              <p class="m-0 mt-[5px] text-[16px] font-semibold" style="font-family: 'Space Grotesk', sans-serif">{{ fmtShort(compromisosFijos) }}</p>
+            </div>
+            <div class="rounded-[13px] p-[11px]" :style="margenParaGastos >= 0 ? { background: '#EEF2FB' } : { background: '#FBEDEB' }">
+              <p class="m-0 text-[9px] font-bold uppercase" style="letter-spacing: 0.06em" :style="{ color: margenParaGastos >= 0 ? '#5B6FB8' : '#C25A4E' }">Margen</p>
+              <p class="m-0 mt-[5px] text-[16px] font-semibold" style="font-family: 'Space Grotesk', sans-serif">{{ fmtShort(Math.abs(margenParaGastos)) }}</p>
             </div>
           </div>
 
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <div class="rounded-xl border border-rose-100 bg-rose-50/30 p-4" data-testid="forecast-pago-total">
-              <p class="text-[10px] font-bold text-rose-700 uppercase tracking-wider mb-2">Pago Completo</p>
-              <p class="text-xl font-bold text-slate-900 tabular-nums mb-1">{{ formatCurrency(resumen.totalTarjetas) }}</p>
-              <p class="text-[11px] text-slate-500 mb-3">Compromiso actual</p>
-              <div class="flex items-center justify-between pt-3 border-t border-rose-100">
-                <span class="text-[11px] text-slate-500">Balance</span>
-                <span class="text-xs font-bold tabular-nums" :class="resumen.balance >= 0 ? 'text-emerald-600' : 'text-red-600'">
-                  {{ formatCurrency(resumen.balance) }}
-                </span>
+          <div class="mb-2 flex items-center justify-between text-[11px]">
+            <span style="color: #6e6757">
+              Gastaste <strong style="color: #1c1a15">{{ fmtShort(resumen.totalGastado) }}</strong>
+              de <strong style="color: #1c1a15">{{ fmtShort(Math.max(margenParaGastos, 0)) }}</strong>
+            </span>
+            <span class="font-semibold" style="font-family: 'Space Grotesk', sans-serif" :style="{ color: porcentajeGastos > 100 ? '#C25A4E' : '#1E9E6A' }">
+              {{ porcentajeGastos > 100 ? '+100' : porcentajeGastos }}%
+            </span>
+          </div>
+          <div class="overflow-hidden" style="height: 9px; border-radius: 999px; background: #f0ebe0">
+            <div
+              class="h-full transition-all duration-500"
+              style="border-radius: 999px"
+              :style="{
+                width: barGastosWidth,
+                background: porcentajeGastos > 100 ? 'linear-gradient(90deg,#D98A3D,#C25A4E)' : 'linear-gradient(90deg,#3FB98C,#1E9E6A)',
+              }"
+            ></div>
+          </div>
+
+          <div
+            class="mt-[14px] flex items-start gap-2 rounded-[13px] p-[11px] text-[11.5px] leading-snug"
+            :style="planOk ? { background: '#F2FAF5', color: '#1E7A56' } : { background: '#FBF1EF', color: '#B0463C' }"
+          >
+            <component :is="planOk ? Check : AlertTriangle" :size="14" class="mt-px shrink-0" />
+            <span>{{ planNoteText }}</span>
+          </div>
+        </div>
+
+        <div
+          class="mb-[14px] rounded-[22px] border bg-white p-[18px]"
+          style="border-color: #e7e0d2; box-shadow: 0 1px 3px rgba(28, 26, 21, 0.05)"
+        >
+          <p class="m-0 mb-0.5 text-[14px] font-extrabold" style="letter-spacing: -0.01em">A qué va tu plata</p>
+          <p class="m-0 mb-4 text-[11px] font-medium" style="color: #9a9384">Distribución de tus ingresos</p>
+          <div class="flex items-center gap-5">
+            <div class="relative shrink-0" style="width: 128px; height: 128px">
+              <div class="absolute inset-0 rounded-full" :style="{ background: donut.bg }"></div>
+              <div class="absolute flex flex-col items-center justify-center rounded-full bg-white" style="inset: 17px">
+                <p class="m-0 text-[9px] font-semibold" style="color: #9a9384; letter-spacing: 0.04em">DISPONIBLE</p>
+                <p class="m-0 mt-0.5 text-[18px] font-semibold" style="font-family: 'Space Grotesk', sans-serif; letter-spacing: -0.02em">
+                  {{ fmt(donut.disponible) }}
+                </p>
               </div>
             </div>
-
-            <div class="rounded-xl border border-amber-100 bg-amber-50/30 p-4" data-testid="forecast-pago-minimo">
-              <p class="text-[10px] font-bold text-amber-700 uppercase tracking-wider mb-2">Solo Mínimos</p>
-              <template v-if="totalPagoMinimo > 0">
-                <p class="text-xl font-bold text-slate-900 tabular-nums mb-1">{{ formatCurrency(totalPagoMinimo) }}</p>
-                <p class="text-[11px] text-slate-500 mb-3">
-                  Ahorrás <span class="font-semibold text-emerald-600">{{ formatShort(ahorroPagoMinimo) }}</span>
-                </p>
-                <div class="flex items-center justify-between pt-3 border-t border-amber-100">
-                  <span class="text-[11px] text-slate-500">Balance</span>
-                  <span class="text-xs font-bold tabular-nums" :class="balancePagoMinimo >= 0 ? 'text-emerald-600' : 'text-red-600'">
-                    {{ formatCurrency(balancePagoMinimo) }}
-                  </span>
-                </div>
-              </template>
-              <template v-else>
-                <p class="text-xs text-slate-500 leading-relaxed mt-1">Definí pagos mínimos en tus tarjetas para activar este análisis.</p>
-              </template>
-            </div>
-
-            <div
-              v-if="resumen.totalCuotaMensualDeudas > 0"
-              class="rounded-xl border border-emerald-100 bg-emerald-50/30 p-4"
-              data-testid="forecast-sin-deudas"
-            >
-              <p class="text-[10px] font-bold text-emerald-700 uppercase tracking-wider mb-2">Sin Deudas</p>
-              <p class="text-xl font-bold text-slate-900 tabular-nums mb-1">{{ formatCurrency(resumen.totalCuotaMensualDeudas) }}</p>
-              <p class="text-[11px] text-slate-500 mb-3">Cuota que se libera</p>
-              <div class="flex items-center justify-between pt-3 border-t border-emerald-100">
-                <span class="text-[11px] text-slate-500">Balance</span>
-                <span class="text-xs font-bold tabular-nums" :class="balanceSinDeudas >= 0 ? 'text-emerald-600' : 'text-red-600'">
-                  {{ formatCurrency(balanceSinDeudas) }}
+            <div class="flex flex-1 flex-col gap-[11px]">
+              <div
+                v-for="row in donutLegend"
+                :key="row.label"
+                class="flex items-center justify-between"
+              >
+                <span class="flex items-center gap-2 text-[12px] font-medium" style="color: #5a5448">
+                  <span class="shrink-0" style="width: 9px; height: 9px; border-radius: 3px" :style="{ background: row.color }"></span>
+                  {{ row.label }}
                 </span>
+                <span class="text-[12px] font-semibold" style="font-family: 'Space Grotesk', sans-serif">{{ fmt(row.value) }}</span>
               </div>
             </div>
           </div>
         </div>
 
-        <div class="bg-white rounded-2xl border border-[#E5E0D5] shadow-[0_1px_3px_rgba(28,27,24,0.04),0_4px_16px_rgba(28,27,24,0.05)] overflow-hidden">
-          <div class="px-6 py-5 border-b border-slate-100">
-            <div class="flex items-start justify-between mb-4">
-              <div>
-                <h2 class="text-base font-bold text-slate-900">Transacciones</h2>
-                <p class="text-xs text-slate-500 mt-0.5">Todo el movimiento del mes</p>
-              </div>
-              <span
-                v-if="todasLasDescripciones.length > 0"
-                class="bg-[#EBF5F5] text-[#356E6B] text-xs font-bold rounded-full px-3 py-1 tabular-nums"
-              >
-                {{ todasLasDescripciones.length }} movimientos
+        <div class="mx-0.5 mb-[11px] flex items-center justify-between">
+          <p class="m-0 text-[15px] font-extrabold" style="letter-spacing: -0.01em">Tarjetas</p>
+          <div class="flex rounded-full p-[3px]" style="background: #e9e2d4">
+            <button
+              type="button"
+              class="rounded-full border-none px-[11px] py-[5px] text-[11px] font-bold transition-all"
+              :style="isMinimo
+                ? { background: '#fff', color: '#16332F', boxShadow: '0 1px 3px rgba(28,26,21,.12)' }
+                : { background: 'transparent', color: '#8C8578' }"
+              data-testid="tarjeta-mode-minimo"
+              @click="tarjetaPagoMode = 'minimo'"
+            >
+              Mínimo
+            </button>
+            <button
+              type="button"
+              class="rounded-full border-none px-[11px] py-[5px] text-[11px] font-bold transition-all"
+              :style="!isMinimo
+                ? { background: '#fff', color: '#16332F', boxShadow: '0 1px 3px rgba(28,26,21,.12)' }
+                : { background: 'transparent', color: '#8C8578' }"
+              data-testid="tarjeta-mode-total"
+              @click="tarjetaPagoMode = 'total'"
+            >
+              Pago del mes
+            </button>
+          </div>
+        </div>
+
+        <div
+          ref="tarjetasScrollRef"
+          v-if="tarjetas.length > 0"
+          class="mn-scroll mb-[18px] flex gap-3 overflow-x-auto px-0.5 pb-1.5 pt-0.5"
+          style="scroll-snap-type: x proximity"
+          data-testid="card-tarjetas"
+        >
+          <div
+            v-for="(t, i) in tarjetas"
+            :key="t.id"
+            class="relative shrink-0 overflow-hidden rounded-[20px] p-[17px]"
+            style="width: 240px; color: #f1ece1; scroll-snap-align: start"
+            :style="{ background: tarjetaView(t, i).grad, boxShadow: '0 10px 24px -10px rgba(15,43,40,.6)' }"
+          >
+            <div
+              class="absolute"
+              style="top: -30px; right: -20px; width: 110px; height: 110px; border-radius: 50%"
+              :style="{ background: tarjetaView(t, i).orb }"
+            ></div>
+            <div class="mb-6 flex items-center justify-between">
+              <span class="truncate text-[11px] font-semibold" style="letter-spacing: 0.03em; color: rgba(241, 236, 225, 0.7)">
+                {{ tarjetaView(t, i).label }}
+              </span>
+              <div style="width: 30px; height: 21px; border-radius: 5px; background: linear-gradient(135deg, #e8c97e, #b8893a)"></div>
+            </div>
+            <p class="m-0 text-[10px] font-semibold" style="color: rgba(241, 236, 225, 0.55); letter-spacing: 0.05em">A PAGAR ESTE MES</p>
+            <p class="m-0 mt-1 text-[24px] font-semibold" style="font-family: 'Space Grotesk', sans-serif; letter-spacing: -0.02em">
+              {{ tarjetaView(t, i).amount }}
+            </p>
+            <div class="mt-[14px] flex items-center justify-end">
+              <span class="text-[10px]" style="color: rgba(241, 236, 225, 0.55)">{{ tarjetaView(t, i).linea }}</span>
+            </div>
+          </div>
+        </div>
+        <div
+          v-else
+          class="mb-[18px] rounded-[20px] border border-dashed px-4 py-6 text-center text-[12px] font-medium"
+          style="border-color: #e7e0d2; color: #9a9384"
+        >
+          Aún no registraste tarjetas.
+        </div>
+
+        <div class="mx-0.5 mb-[11px] flex items-center justify-between">
+          <p class="m-0 text-[15px] font-extrabold" style="letter-spacing: -0.01em">Movimientos</p>
+          <span class="text-[11px] font-semibold" style="color: #9a9384">{{ todasLasDescripciones.length }} este mes</span>
+        </div>
+
+        <div ref="chipsScrollRef" class="mn-scroll mb-3 flex gap-[7px] overflow-x-auto px-0.5 pb-3">
+          <button
+            v-for="chip in filterChips"
+            :key="chip.key"
+            type="button"
+            class="whitespace-nowrap rounded-full border-none px-[14px] py-[7px] text-[12px] font-bold transition-all"
+            :style="activeFilter === chip.key
+              ? { background: chip.color, color: '#fff', boxShadow: '0 2px 8px -2px ' + chip.color }
+              : { background: '#fff', color: '#8C8578', border: '1px solid #E7E0D2' }"
+            @click="activeFilter = chip.key"
+          >
+            {{ chip.label }}
+          </button>
+        </div>
+
+        <div
+          v-if="!hasData"
+          class="flex flex-col items-center justify-center rounded-[22px] border bg-white px-5 py-14 text-center"
+          style="border-color: #e7e0d2; box-shadow: 0 1px 3px rgba(28, 26, 21, 0.05)"
+          data-testid="descriptions-empty"
+        >
+          <p class="m-0 text-[14px] font-bold">Sin movimientos</p>
+          <p class="m-0 mt-1 text-[12px]" style="color: #9a9384">Registrá ingresos o gastos para verlos acá.</p>
+        </div>
+
+        <div
+          v-else
+          class="overflow-hidden rounded-[22px] border bg-white"
+          style="border-color: #e7e0d2; box-shadow: 0 1px 3px rgba(28, 26, 21, 0.05)"
+          data-testid="descriptions-list"
+        >
+          <div v-for="group in visibleGroups" :key="group.key" style="border-top: 1px solid #f0ebe0" class="first:border-t-0">
+            <div class="flex items-center justify-between px-4 pb-2 pt-3">
+              <span class="text-[11px] font-extrabold uppercase" style="letter-spacing: 0.04em" :style="{ color: group.color }">
+                {{ group.label }}
+              </span>
+              <span class="text-[13px] font-semibold" style="font-family: 'Space Grotesk', sans-serif" :style="{ color: group.color }">
+                {{ group.sign }}{{ fmt(group.total) }}
               </span>
             </div>
-
-            <div v-if="todasLasDescripciones.length > 0" class="mb-4">
-              <div class="flex items-center justify-between text-[11px] mb-1.5">
-                <span class="text-slate-500">
-                  Entra <span class="font-semibold text-emerald-600 tabular-nums">{{ formatShort(resumen.totalIngresos) }}</span>
-                  · Sale <span class="font-semibold text-rose-600 tabular-nums">{{ formatShort(totalSalidasMes) }}</span>
-                </span>
-                <span class="font-semibold tabular-nums" :class="netoMes >= 0 ? 'text-emerald-600' : 'text-rose-600'">
-                  Neto {{ netoMes >= 0 ? '+' : '−' }}{{ formatShort(Math.abs(netoMes)) }}
-                </span>
-              </div>
-              <div class="flex h-1.5 rounded-full overflow-hidden bg-slate-100" aria-hidden="true">
-                <div
-                  class="bg-emerald-500"
-                  :style="{ width: (resumen.totalIngresos / Math.max(resumen.totalIngresos + totalSalidasMes, 1) * 100) + '%' }"
-                ></div>
-                <div
-                  class="bg-orange-500"
-                  :style="{ width: (resumen.totalGastado / Math.max(resumen.totalIngresos + totalSalidasMes, 1) * 100) + '%' }"
-                ></div>
-                <div
-                  class="bg-amber-500"
-                  :style="{ width: (resumen.totalCuotaMensualDeudas / Math.max(resumen.totalIngresos + totalSalidasMes, 1) * 100) + '%' }"
-                ></div>
-                <div
-                  class="bg-rose-500"
-                  :style="{ width: (resumen.totalTarjetas / Math.max(resumen.totalIngresos + totalSalidasMes, 1) * 100) + '%' }"
-                ></div>
-              </div>
-            </div>
-
-            <div v-if="todasLasDescripciones.length > 0" class="flex flex-col lg:flex-row gap-3">
-              <div class="flex gap-1 bg-slate-100 p-1 rounded-xl overflow-x-auto scrollbar-hide">
-                <button
-                  v-for="tab in filterTabs"
-                  :key="tab.key"
-                  class="px-3 py-1.5 text-xs font-semibold rounded-lg transition-all whitespace-nowrap"
-                  :class="activeFilter === tab.key ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'"
-                  :style="activeFilter === tab.key ? { color: tab.color } : {}"
-                  @click="activeFilter = tab.key"
-                >
-                  {{ tab.label }}
-                </button>
-              </div>
-
-              <div class="flex gap-2 lg:ml-auto">
-                <div class="relative flex-1 lg:flex-none lg:w-56">
-                  <Search :size="14" class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                  <input
-                    v-model="searchQuery"
-                    type="text"
-                    placeholder="Buscar transacción..."
-                    class="w-full pl-9 pr-8 py-2 text-xs bg-[#F8F6F1] border border-[#E5E0D5] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4D9B97]/30 focus:border-[#4D9B97] focus:bg-white transition-all"
-                  />
-                  <button
-                    v-if="searchQuery"
-                    class="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 rounded hover:bg-slate-200 text-slate-400"
-                    @click="searchQuery = ''"
-                    aria-label="Limpiar búsqueda"
-                  >
-                    <X :size="12" />
-                  </button>
-                </div>
-                <button
-                  class="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold bg-slate-50 border border-slate-200 rounded-lg text-slate-600 hover:bg-slate-100 transition-colors"
-                  :title="sortDesc ? 'Mayor a menor' : 'Menor a mayor'"
-                  @click="sortDesc = !sortDesc"
-                >
-                  <ArrowUpDown :size="12" />
-                  {{ sortDesc ? 'Mayor' : 'Menor' }}
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <div
-            v-if="todasLasDescripciones.length === 0"
-            class="flex flex-col items-center justify-center py-16 px-5 text-center"
-            data-testid="descriptions-empty"
-          >
-            <div class="w-14 h-14 rounded-2xl bg-slate-50 flex items-center justify-center mb-3">
-              <Inbox :size="24" class="text-slate-400" />
-            </div>
-            <p class="text-sm font-semibold text-slate-900">Sin transacciones</p>
-            <p class="text-xs text-slate-500 mt-1">Registrá ingresos o gastos para verlos acá.</p>
-          </div>
-
-          <div v-else-if="hasActiveFilterOrSearch" data-testid="descriptions-list">
             <div
-              v-if="filteredFlatItems.length === 0"
-              class="flex flex-col items-center justify-center py-12 text-center"
+              v-for="(item, idx) in group.items"
+              :key="group.key + '-' + idx"
+              class="flex items-center gap-[11px] px-4 py-[11px]"
+              style="border-top: 1px solid #f6f2ea"
+              data-testid="description-item"
             >
-              <div class="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center mb-2">
-                <Search :size="20" class="text-slate-400" />
-              </div>
-              <p class="text-sm font-semibold text-slate-700">Sin resultados</p>
-              <p class="text-xs text-slate-500 mt-1">Probá con otro término o filtro</p>
-            </div>
-            <div v-else class="divide-y divide-slate-50">
               <div
-                v-for="(item, idx) in filteredFlatItems"
-                :key="'flat-' + idx"
-                class="group relative flex items-center gap-3 px-6 py-3.5 hover:bg-slate-50/60 transition-colors"
-                data-testid="description-item"
+                class="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-[11px] text-[14px] font-semibold"
+                style="font-family: 'Space Grotesk', sans-serif"
+                :style="{ background: group.avatarBg, color: group.color }"
               >
-                <span
-                  class="absolute left-0 top-2 bottom-2 w-1 rounded-r-full"
-                  :style="{ backgroundColor: colorFor(item.tipo) }"
-                ></span>
-                <div class="flex-1 min-w-0 ml-1">
-                  <div class="flex items-center gap-2 mb-1">
-                    <p class="text-sm font-semibold text-slate-900 truncate leading-tight">{{ item.descripcion }}</p>
-                    <span
-                      class="text-[10px] font-bold rounded-full px-1.5 py-0.5 shrink-0"
-                      :style="{ backgroundColor: colorFor(item.tipo) + '1A', color: colorFor(item.tipo) }"
-                      data-testid="description-type"
-                    >
-                      {{ item.tipo }}
-                    </span>
-                  </div>
-                  <div class="flex items-center gap-2">
-                    <div class="flex-1 h-1 bg-slate-100 rounded-full overflow-hidden max-w-[160px]">
-                      <div
-                        class="h-full rounded-full transition-all"
-                        :style="{ width: percentOfGroup(item.monto, item.tipo) + '%', backgroundColor: colorFor(item.tipo) }"
-                      ></div>
-                    </div>
-                    <span class="text-[10px] text-slate-400 tabular-nums">{{ percentOfGroup(item.monto, item.tipo) }}%</span>
-                  </div>
-                </div>
-                <p class="text-sm font-bold shrink-0 tabular-nums" :style="{ color: colorFor(item.tipo) }" data-testid="description-monto">
-                  {{ signFor(item.tipo) }}{{ formatCurrency(item.monto) }}
-                </p>
+                {{ avatarLetter(item.descripcion) }}
               </div>
+              <div class="min-w-0 flex-1">
+                <p class="m-0 truncate text-[13px] font-bold">{{ item.descripcion }}</p>
+                <p class="m-0 mt-0.5 text-[11px] font-medium" style="color: #9a9384" data-testid="description-type">{{ item.tipo }}</p>
+              </div>
+              <span
+                class="shrink-0 text-[14px] font-semibold"
+                style="font-family: 'Space Grotesk', sans-serif"
+                :style="{ color: group.color }"
+                data-testid="description-monto"
+              >
+                {{ group.sign }}{{ fmt(item.monto) }}
+              </span>
             </div>
-          </div>
-
-          <div v-else data-testid="descriptions-list">
-            <template v-for="group in transactionGroups" :key="group.key">
-              <div
-                v-if="group.items.length > 0"
-                class="border-b border-slate-100 last:border-0"
-              >
-                <button
-                  class="flex items-center justify-between w-full px-6 py-3.5 hover:bg-slate-50/60 transition-colors sticky top-0 bg-white/95 backdrop-blur-sm z-[1]"
-                  @click="toggleGroup(group.key)"
-                >
-                  <div class="flex items-center gap-2.5">
-                    <span
-                      class="inline-flex items-center text-[11px] font-bold rounded-full px-2.5 py-0.5"
-                      :style="{ backgroundColor: group.color + '1A', color: group.color }"
-                    >
-                      {{ group.label }}
-                    </span>
-                    <span class="text-xs text-slate-400">{{ group.items.length }} mov.</span>
-                  </div>
-                  <div class="flex items-center gap-3">
-                    <span class="text-sm font-bold tabular-nums" :style="{ color: group.color }">
-                      {{ group.sign }}{{ formatShort(group.total) }}
-                    </span>
-                    <component :is="group.open ? ChevronUp : ChevronDown" :size="14" class="text-slate-400" />
-                  </div>
-                </button>
-                <div v-if="group.open" class="divide-y divide-slate-50">
-                  <div
-                    v-for="(item, idx) in [...group.items].sort((a, b) => sortDesc ? b.monto - a.monto : a.monto - b.monto)"
-                    :key="group.key + '-' + idx"
-                    class="group relative flex items-center gap-3 px-6 py-3.5 hover:bg-slate-50/60 transition-colors"
-                    data-testid="description-item"
-                  >
-                    <span
-                      class="absolute left-0 top-2 bottom-2 w-1 rounded-r-full opacity-0 group-hover:opacity-100 transition-opacity"
-                      :style="{ backgroundColor: group.color }"
-                    ></span>
-                    <div class="flex-1 min-w-0 ml-1">
-                      <p class="text-sm font-semibold text-slate-900 truncate leading-tight mb-1">{{ item.descripcion }}</p>
-                      <div class="flex items-center gap-2">
-                        <div class="flex-1 h-1 bg-slate-100 rounded-full overflow-hidden max-w-[200px]">
-                          <div
-                            class="h-full rounded-full transition-all"
-                            :style="{ width: percentOfGroup(item.monto, item.tipo) + '%', backgroundColor: group.color }"
-                          ></div>
-                        </div>
-                        <span class="text-[10px] text-slate-400 tabular-nums">{{ percentOfGroup(item.monto, item.tipo) }}%</span>
-                        <span class="text-[10px] text-slate-400 hidden sm:inline" data-testid="description-type">{{ item.tipo }}</span>
-                      </div>
-                    </div>
-                    <p class="text-sm font-bold shrink-0 tabular-nums" :style="{ color: group.color }" data-testid="description-monto">
-                      {{ group.sign }}{{ formatCurrency(item.monto) }}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </template>
           </div>
         </div>
       </template>
     </div>
   </div>
 </template>
+
+<style scoped>
+.mn-scroll::-webkit-scrollbar {
+  display: none;
+}
+.mn-scroll {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.mn-orb {
+  animation: mnSheen 9s ease-in-out infinite alternate;
+}
+@keyframes mnSheen {
+  0% {
+    transform: scale(1) translate(0, 0);
+  }
+  100% {
+    transform: scale(1.2) translate(-15px, 15px);
+  }
+}
+</style>

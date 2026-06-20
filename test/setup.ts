@@ -179,7 +179,7 @@ export function resetAiFetchHandler(): void {
 const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
   const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url
   if (url === '/api/ai-insights') {
-    let body: Record<string, unknown> = {}
+    let body: Record<string, unknown>
     try {
       body = init?.body ? (JSON.parse(String(init.body)) as Record<string, unknown>) : {}
     } catch {

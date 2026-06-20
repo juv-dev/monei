@@ -1,12 +1,23 @@
 <script setup lang="ts">
 import { ref, reactive, watch, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { TrendingUp, Trash2, Inbox, Pencil, Check, X, ArrowUpDown, Search, Plus } from 'lucide-vue-next'
+import {
+  TrendingUp,
+  Trash2,
+  Pencil,
+  Check,
+  X,
+  Plus,
+  ChevronLeft,
+  ChevronRight,
+  Loader2,
+  ArrowUpDown,
+  Search,
+} from 'lucide-vue-next'
 import { useIngresos } from '../composables/useIngresos'
 import { useAppFeedback } from '~/shared/composables/useAppFeedback'
+import { useSelectedMonth } from '~/shared/composables/useSelectedMonth'
 import AppModal from '~/shared/components/ui/AppModal.vue'
-import EmptyState from '~/shared/components/ui/EmptyState.vue'
-import MonthSelector from '~/shared/components/ui/MonthSelector.vue'
 import ConfirmDialog from '~/shared/components/ui/ConfirmDialog.vue'
 import { formatMoneyDisplay, parseMoneyInput, onDecimalInput } from '~/shared/utils/format'
 import { validateMonto, validateDescripcion, sanitize } from '~/shared/utils/validation'
@@ -15,10 +26,21 @@ import type { Ingreso } from '../types'
 const route = useRoute()
 const router = useRouter()
 
-const { ingresos, isLoading, isError, totalIngresos, addIngreso, updateIngreso, removeIngreso, isAdding, isUpdating, isRemoving } =
-  useIngresos()
+const {
+  ingresos,
+  isLoading,
+  isError,
+  totalIngresos,
+  addIngreso,
+  updateIngreso,
+  removeIngreso,
+  isAdding,
+  isUpdating,
+  isRemoving,
+} = useIngresos()
 
 const { startLoading, finishLoading, showToast } = useAppFeedback()
+const { monthLabel, isCurrentMonth, prevMonth, nextMonth } = useSelectedMonth()
 
 const form = reactive({ monto: '', descripcion: '' })
 const formError = ref<string | null>(null)
@@ -27,51 +49,47 @@ const isModalOpen = ref(false)
 const editingId = ref<string | null>(null)
 const editForm = reactive({ monto: '', descripcion: '' })
 
-const searchQuery = ref('')
-const sortDesc = ref(true)
+const egSearch = ref('')
+const egSort = ref<'monto' | 'nombre'>('monto')
 
-const filteredIngresos = computed(() => {
-  const q = searchQuery.value.trim().toLowerCase()
-  let list = ingresos.value.slice()
-  if (q) list = list.filter((i) => i.descripcion.toLowerCase().includes(q))
-  list.sort((a, b) => (sortDesc.value ? b.monto - a.monto : a.monto - b.monto))
-  return list
-})
+const EG_COLORS: string[] = [
+  '#1E9E6A',
+  '#2A7E76',
+  '#4C9A6E',
+  '#5B9E7A',
+  '#3FB98C',
+  '#2A9D8F',
+  '#5B6FB8',
+  '#7A6CCB',
+]
 
 const avgIngreso = computed(() =>
   ingresos.value.length ? totalIngresos.value / ingresos.value.length : 0,
 )
-const topIngreso = computed(() =>
-  ingresos.value.length ? Math.max(...ingresos.value.map((i) => i.monto)) : 0,
-)
 
-function percentOfTotal(monto: number): number {
-  if (totalIngresos.value <= 0) return 0
-  return Math.min(100, Math.round((monto / totalIngresos.value) * 100))
-}
-
-function startEdit(ingreso: Ingreso) {
-  editingId.value = ingreso.id
-  editForm.descripcion = ingreso.descripcion
-  editForm.monto = String(ingreso.monto)
-}
-
-function cancelEdit() {
-  editingId.value = null
-}
-
-function saveEdit(id: string) {
-  const monto = parseMoneyInput(editForm.monto)
-  if (!editForm.descripcion.trim()) return
-  if (isNaN(monto) || monto <= 0) return
-  updateIngreso(id, { monto, descripcion: editForm.descripcion.trim() })
-}
-
-watch(isUpdating, (newVal, oldVal) => {
-  if (oldVal && !newVal) {
-    editingId.value = null
-  }
+const topIngreso = computed((): Ingreso | null => {
+  if (!ingresos.value.length) return null
+  return ingresos.value.reduce((top, cur) => (cur.monto > top.monto ? cur : top))
 })
+
+const filteredSorted = computed((): Ingreso[] => {
+  const q = egSearch.value.trim().toLowerCase()
+  let list = ingresos.value
+  if (q) list = list.filter((i) => i.descripcion.toLowerCase().includes(q))
+  if (egSort.value === 'nombre') {
+    return [...list].sort((a, b) => a.descripcion.localeCompare(b.descripcion, 'es'))
+  }
+  return [...list].sort((a, b) => b.monto - a.monto)
+})
+
+function pctOfTotal(monto: number): string {
+  if (!totalIngresos.value) return '0%'
+  return Math.round((monto / totalIngresos.value) * 100) + '%'
+}
+
+function avatarLetter(text: string): string {
+  return (text.trim().charAt(0) || '·').toUpperCase()
+}
 
 function formatCurrency(value: number): string {
   return new Intl.NumberFormat('es-PE', { style: 'currency', currency: 'PEN' }).format(value)
@@ -82,11 +100,26 @@ function openModal(): void {
   isModalOpen.value = true
 }
 
-onMounted(() => {
-  if (route.query.nuevo === '1') {
-    openModal()
-    const { nuevo: _nuevo, ...rest } = route.query
-    void router.replace({ query: rest })
+function startEdit(ingreso: Ingreso): void {
+  editingId.value = ingreso.id
+  editForm.descripcion = ingreso.descripcion
+  editForm.monto = String(ingreso.monto)
+}
+
+function cancelEdit(): void {
+  editingId.value = null
+}
+
+function saveEdit(id: string): void {
+  const monto = parseMoneyInput(editForm.monto)
+  if (!editForm.descripcion.trim()) return
+  if (isNaN(monto) || monto <= 0) return
+  updateIngreso(id, { monto, descripcion: editForm.descripcion.trim() })
+}
+
+watch(isUpdating, (newVal, oldVal) => {
+  if (oldVal && !newVal) {
+    editingId.value = null
   }
 })
 
@@ -114,7 +147,7 @@ function handleSubmit(): void {
     return
   }
 
-  startLoading('#10B981')
+  startLoading('#1E9E6A')
   addIngreso({ monto, descripcion })
   form.monto = ''
   form.descripcion = ''
@@ -130,277 +163,626 @@ function confirmDelete(): void {
   if (pendingDeleteId.value) removeIngreso(pendingDeleteId.value)
   pendingDeleteId.value = null
 }
+
+onMounted(() => {
+  if (route.query.nuevo === '1') {
+    openModal()
+    const { nuevo: _nuevo, ...rest } = route.query
+    void router.replace({ query: rest })
+  }
+})
 </script>
 
 <template>
-  <div class="min-h-screen bg-[#F8F6F1]" data-testid="ingresos-view">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-10">
-      <div class="flex items-center justify-between gap-3 flex-wrap mb-5">
+  <div
+    class="min-h-screen"
+    style="background: #f1ece1; font-family: 'Manrope', system-ui, sans-serif; color: #1c1a15"
+    data-testid="ingresos-view"
+  >
+    <div class="mx-auto w-full max-w-[460px] px-[18px] pb-28 pt-6">
+      <div class="mb-[15px] flex items-start justify-between">
         <div>
-          <h1 class="text-2xl lg:text-3xl font-bold text-[#1A1A2E]">Ingresos</h1>
-          <p class="text-sm text-[#64748B] mt-0.5">Registrá y gestioná tus fuentes de ingreso</p>
+          <p class="m-0" style="font-size: 25px; font-weight: 800; letter-spacing: -0.025em">
+            Ingresos
+          </p>
+          <p class="m-0" style="font-size: 12px; color: #9a9384; font-weight: 500; margin-top: 3px">
+            Organizá tu plata por fuente
+          </p>
         </div>
-        <div class="flex items-center gap-2">
-          <MonthSelector />
-          <button
-            class="flex items-center gap-2 py-2.5 px-4 text-white font-bold rounded-xl transition-all shadow-md hover:opacity-90 active:scale-95 text-sm"
-            style="background: linear-gradient(135deg, #10B981 0%, #10B981CC 100%)"
-            data-testid="open-modal-button"
-            @click="openModal"
-          >
-            <Plus :size="16" aria-hidden="true" />
-            Agregar ingreso
-          </button>
-        </div>
+        <button
+          type="button"
+          class="flex items-center border-none text-white"
+          style="
+            background: linear-gradient(135deg, #3fb98c, #1e9e6a);
+            box-shadow: 0 6px 14px -4px rgba(30, 158, 106, 0.5);
+            border-radius: 999px;
+            padding: 9px 13px;
+            font-size: 12px;
+            font-weight: 700;
+            white-space: nowrap;
+            gap: 6px;
+            cursor: pointer;
+          "
+          data-testid="open-modal-button"
+          @click="openModal"
+        >
+          <Plus :size="14" aria-hidden="true" />
+          Nueva fuente
+        </button>
       </div>
 
-      <!-- Stat grid -->
-      <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mt-6 mb-6" data-testid="summary-card">
-        <div
-          class="rounded-2xl p-4 border shadow-sm"
-          style="background: linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%); border-color: rgba(16, 185, 129, 0.25);"
+      <div
+        class="flex items-center justify-between"
+        style="
+          background: #fff;
+          border: 1px solid #e7e0d2;
+          border-radius: 13px;
+          padding: 7px 8px;
+          margin-bottom: 13px;
+        "
+      >
+        <button
+          type="button"
+          class="flex items-center justify-center border-none"
+          style="
+            width: 28px;
+            height: 28px;
+            border-radius: 8px;
+            background: #f4efe5;
+            cursor: pointer;
+          "
+          aria-label="Mes anterior"
+          @click="prevMonth"
         >
-          <div class="flex items-center gap-2 mb-2">
-            <div class="w-7 h-7 rounded-lg flex items-center justify-center" style="background: rgba(5, 150, 105, 0.12);">
-              <TrendingUp :size="14" style="color: #059669" aria-hidden="true" />
+          <ChevronLeft :size="14" style="color: #8a8273" />
+        </button>
+        <p class="capitalize m-0" style="font-size: 13px; font-weight: 700">{{ monthLabel }}</p>
+        <button
+          type="button"
+          class="flex items-center justify-center border-none disabled:opacity-40"
+          style="
+            width: 28px;
+            height: 28px;
+            border-radius: 8px;
+            background: #f4efe5;
+            cursor: pointer;
+          "
+          :disabled="isCurrentMonth"
+          aria-label="Mes siguiente"
+          @click="nextMonth"
+        >
+          <ChevronRight :size="14" style="color: #8a8273" />
+        </button>
+      </div>
+
+      <div
+        class="grid"
+        style="grid-template-columns: 1fr 1fr; gap: 9px; margin-bottom: 13px"
+        data-testid="summary-card"
+      >
+        <div
+          style="
+            background: linear-gradient(135deg, #e3f4ec, #cfebdd);
+            border: 1px solid rgba(30, 158, 106, 0.18);
+            border-radius: 16px;
+            padding: 13px;
+          "
+        >
+          <div class="flex items-center" style="gap: 7px; margin-bottom: 7px">
+            <div
+              class="flex items-center justify-center"
+              style="
+                width: 24px;
+                height: 24px;
+                border-radius: 7px;
+                background: rgba(30, 158, 106, 0.16);
+              "
+            >
+              <TrendingUp :size="13" style="color: #1e9e6a" aria-hidden="true" />
             </div>
-            <p class="text-[10px] font-semibold uppercase tracking-wider" style="color: #047857">Total</p>
+            <span
+              style="
+                font-size: 10px;
+                font-weight: 700;
+                text-transform: uppercase;
+                color: #1a8059;
+                letter-spacing: 0.05em;
+              "
+            >
+              Total
+            </span>
           </div>
-          <p class="text-xl lg:text-2xl font-black tabular-nums tracking-tight" style="color: #064E3B" data-testid="total-ingresos">
+          <p
+            class="m-0"
+            style="
+              font-family: 'Space Grotesk', sans-serif;
+              font-size: 20px;
+              font-weight: 600;
+              letter-spacing: -0.02em;
+            "
+            data-testid="total-ingresos"
+          >
             {{ formatCurrency(totalIngresos) }}
           </p>
         </div>
 
-        <div class="rounded-2xl p-4 bg-white border border-slate-200/60 shadow-sm">
-          <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-500 mb-2">Registros</p>
-          <p class="text-xl lg:text-2xl font-black text-slate-900 tabular-nums tracking-tight">{{ ingresos.length }}</p>
-        </div>
-
-        <div class="rounded-2xl p-4 bg-white border border-slate-200/60 shadow-sm">
-          <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-500 mb-2">Promedio</p>
-          <p class="text-xl lg:text-2xl font-black text-slate-900 tabular-nums tracking-tight">
-            {{ ingresos.length ? formatCurrency(avgIngreso) : '—' }}
+        <div
+          style="
+            background: #fff;
+            border: 1px solid #e7e0d2;
+            border-radius: 16px;
+            padding: 13px;
+            box-shadow: 0 1px 3px rgba(28, 26, 21, 0.05);
+          "
+        >
+          <p
+            class="m-0"
+            style="
+              font-size: 10px;
+              font-weight: 700;
+              text-transform: uppercase;
+              color: #9a9384;
+              letter-spacing: 0.05em;
+            "
+          >
+            Fuentes
+          </p>
+          <p
+            class="m-0"
+            style="
+              font-family: 'Space Grotesk', sans-serif;
+              font-size: 20px;
+              font-weight: 600;
+              margin-top: 7px;
+            "
+          >
+            {{ ingresos.length }}
           </p>
         </div>
 
-        <div class="rounded-2xl p-4 bg-white border border-slate-200/60 shadow-sm">
-          <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-500 mb-2">Mayor ingreso</p>
-          <p class="text-xl lg:text-2xl font-black text-slate-900 tabular-nums tracking-tight">
-            {{ ingresos.length ? formatCurrency(topIngreso) : '—' }}
+        <div
+          style="
+            background: #fff;
+            border: 1px solid #e7e0d2;
+            border-radius: 16px;
+            padding: 13px;
+            box-shadow: 0 1px 3px rgba(28, 26, 21, 0.05);
+          "
+        >
+          <p
+            class="m-0"
+            style="
+              font-size: 10px;
+              font-weight: 700;
+              text-transform: uppercase;
+              color: #9a9384;
+              letter-spacing: 0.05em;
+            "
+          >
+            Mayor fuente
+          </p>
+          <p
+            class="m-0"
+            style="font-size: 14px; font-weight: 800; margin-top: 7px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap"
+          >
+            {{ topIngreso ? topIngreso.descripcion : '—' }}
+          </p>
+          <p
+            v-if="topIngreso"
+            class="m-0"
+            style="
+              font-family: 'Space Grotesk', sans-serif;
+              font-size: 12px;
+              font-weight: 600;
+              color: #9a9384;
+              margin-top: 2px;
+            "
+          >
+            {{ formatCurrency(topIngreso.monto) }}
+          </p>
+        </div>
+
+        <div
+          style="
+            background: #fff;
+            border: 1px solid #e7e0d2;
+            border-radius: 16px;
+            padding: 13px;
+            box-shadow: 0 1px 3px rgba(28, 26, 21, 0.05);
+          "
+        >
+          <p
+            class="m-0"
+            style="
+              font-size: 10px;
+              font-weight: 700;
+              text-transform: uppercase;
+              color: #9a9384;
+              letter-spacing: 0.05em;
+            "
+          >
+            Promedio
+          </p>
+          <p
+            class="m-0"
+            style="
+              font-family: 'Space Grotesk', sans-serif;
+              font-size: 20px;
+              font-weight: 600;
+              margin-top: 7px;
+            "
+          >
+            {{ ingresos.length ? formatCurrency(avgIngreso) : '—' }}
           </p>
         </div>
       </div>
 
-      <!-- Lista de ingresos -->
-      <div class="bg-white rounded-2xl border border-slate-200/60 overflow-hidden">
-        <div class="px-6 py-5 border-b border-slate-100">
-          <div class="flex items-center justify-between mb-4">
-            <div>
-              <h2 class="text-base font-bold text-slate-900">Lista de Ingresos</h2>
-              <p class="text-xs text-slate-500 mt-0.5">Todos los registros del mes</p>
-            </div>
-            <span
-              v-if="ingresos.length > 0"
-              class="bg-emerald-50 text-emerald-700 text-xs font-bold rounded-full px-3 py-1 tabular-nums"
-            >
-              {{ ingresos.length }}
-            </span>
-          </div>
+      <div class="flex" style="gap: 9px; margin-bottom: 13px">
+        <div class="flex-1" style="position: relative">
+          <Search
+            :size="15"
+            style="
+              position: absolute;
+              left: 12px;
+              top: 50%;
+              transform: translateY(-50%);
+              color: #a39a88;
+              pointer-events: none;
+            "
+            aria-hidden="true"
+          />
+          <input
+            v-model="egSearch"
+            type="text"
+            placeholder="Buscar ingreso..."
+            style="
+              width: 100%;
+              box-sizing: border-box;
+              border: 1px solid #e7e0d2;
+              background: #fff;
+              border-radius: 13px;
+              padding: 11px 12px 11px 36px;
+              font-size: 13px;
+              color: #1c1a15;
+              outline: none;
+            "
+          />
+        </div>
+        <button
+          type="button"
+          class="flex items-center border-none"
+          style="
+            gap: 6px;
+            border: 1px solid #e7e0d2;
+            background: #fff;
+            border-radius: 13px;
+            padding: 0 13px;
+            font-size: 12px;
+            font-weight: 700;
+            color: #5a5448;
+            cursor: pointer;
+            white-space: nowrap;
+          "
+          @click="egSort = egSort === 'monto' ? 'nombre' : 'monto'"
+        >
+          <ArrowUpDown :size="13" style="color: #5a5448" aria-hidden="true" />
+          {{ egSort === 'monto' ? 'Monto' : 'Nombre' }}
+        </button>
+      </div>
 
-          <div v-if="ingresos.length > 0" class="flex gap-2">
-            <div class="relative flex-1">
-              <Search :size="14" class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-              <input
-                v-model="searchQuery"
-                type="text"
-                placeholder="Buscar ingreso..."
-                class="w-full pl-9 pr-8 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400 focus:bg-white transition-all"
-              />
-              <button
-                v-if="searchQuery"
-                class="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 rounded hover:bg-slate-200 text-slate-400"
-                @click="searchQuery = ''"
-                aria-label="Limpiar búsqueda"
-              >
-                <X :size="12" />
-              </button>
-            </div>
-            <button
-              class="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold bg-slate-50 border border-slate-200 rounded-lg text-slate-600 hover:bg-slate-100 transition-colors"
-              :title="sortDesc ? 'Mayor a menor' : 'Menor a mayor'"
-              @click="sortDesc = !sortDesc"
+      <div
+        v-if="isLoading"
+        class="flex items-center justify-center"
+        style="gap: 12px; padding: 64px 0; color: #9a9384"
+        data-testid="loading-state"
+      >
+        <Loader2 :size="22" class="animate-spin" aria-hidden="true" />
+        <span style="font-size: 13px; font-weight: 500">Cargando...</span>
+      </div>
+
+      <div
+        v-else-if="isError"
+        style="text-align: center; font-size: 13px; padding: 48px 0; color: #c25a4e"
+        data-testid="error-state"
+      >
+        Error al cargar los ingresos
+      </div>
+
+      <div
+        v-else-if="ingresos.length === 0"
+        style="
+          background: #fff;
+          border: 1px solid #e7e0d2;
+          border-radius: 22px;
+          padding: 40px 24px;
+          text-align: center;
+          box-shadow: 0 1px 3px rgba(28, 26, 21, 0.05);
+        "
+        data-testid="empty-state"
+      >
+        <div
+          class="flex items-center justify-center"
+          style="
+            width: 54px;
+            height: 54px;
+            border-radius: 16px;
+            background: #e3f4ec;
+            margin: 0 auto 14px;
+          "
+        >
+          <TrendingUp :size="24" style="color: #1e9e6a" aria-hidden="true" />
+        </div>
+        <p class="m-0" style="font-size: 15px; font-weight: 800">
+          No hay ingresos registrados
+        </p>
+        <p class="m-0" style="font-size: 12px; color: #9a9384; margin: 5px 0 16px">
+          Agregá tu primera fuente de ingreso este mes
+        </p>
+        <button
+          type="button"
+          class="border-none text-white"
+          style="
+            background: linear-gradient(135deg, #3fb98c, #1e9e6a);
+            border-radius: 999px;
+            padding: 11px 20px;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+          "
+          @click="openModal"
+        >
+          Nueva fuente
+        </button>
+      </div>
+
+      <div v-else data-testid="ingresos-list">
+        <div
+          v-for="(ingreso, idx) in filteredSorted"
+          :key="ingreso.id"
+          class="group"
+          style="
+            background: #fff;
+            border: 1px solid #e7e0d2;
+            border-radius: 18px;
+            margin-bottom: 11px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(28, 26, 21, 0.05);
+          "
+          data-testid="ingreso-item"
+        >
+          <div
+            v-if="editingId !== ingreso.id"
+            class="flex items-center"
+            style="gap: 11px; padding: 13px 14px 11px"
+          >
+            <div
+              class="flex items-center justify-center shrink-0"
+              style="
+                width: 36px;
+                height: 36px;
+                border-radius: 11px;
+                font-family: 'Space Grotesk', sans-serif;
+                font-size: 15px;
+                font-weight: 600;
+              "
+              :style="{
+                background: EG_COLORS[idx % EG_COLORS.length] + '22',
+                color: EG_COLORS[idx % EG_COLORS.length],
+              }"
+              aria-hidden="true"
             >
-              <ArrowUpDown :size="12" />
-              {{ sortDesc ? 'Mayor' : 'Menor' }}
+              {{ avatarLetter(ingreso.descripcion) }}
+            </div>
+
+            <div class="flex-1 min-w-0">
+              <p
+                class="m-0"
+                style="
+                  font-size: 14px;
+                  font-weight: 700;
+                  white-space: nowrap;
+                  overflow: hidden;
+                  text-overflow: ellipsis;
+                "
+                data-testid="ingreso-descripcion"
+              >
+                {{ ingreso.descripcion }}
+              </p>
+              <p class="m-0" style="font-size: 11px; color: #9a9384; font-weight: 500; margin-top: 2px">
+                {{ pctOfTotal(ingreso.monto) }} del total
+              </p>
+            </div>
+
+            <span
+              class="shrink-0"
+              style="
+                font-family: 'Space Grotesk', sans-serif;
+                font-size: 15px;
+                font-weight: 600;
+                color: #1e9e6a;
+              "
+              data-testid="ingreso-monto"
+            >
+              {{ formatCurrency(ingreso.monto) }}
+            </span>
+
+            <button
+              type="button"
+              class="flex items-center justify-center border-none opacity-0 group-hover:opacity-100 transition-opacity"
+              style="background: none; cursor: pointer; padding: 4px"
+              :aria-label="`Editar ingreso ${ingreso.descripcion}`"
+              data-testid="edit-button"
+              @click="startEdit(ingreso)"
+            >
+              <Pencil :size="13" style="color: #a39a88" />
+            </button>
+
+            <button
+              type="button"
+              class="flex items-center justify-center border-none opacity-0 group-hover:opacity-100 transition-opacity"
+              style="background: none; cursor: pointer; padding: 4px"
+              :disabled="isRemoving"
+              :aria-label="`Eliminar ingreso ${ingreso.descripcion}`"
+              data-testid="delete-button"
+              @click="handleDelete(ingreso.id)"
+            >
+              <Trash2 :size="14" style="color: #c9b9a0" />
             </button>
           </div>
-        </div>
 
-        <div
-          v-if="isLoading"
-          class="flex items-center justify-center gap-2 py-16 text-slate-400"
-          data-testid="loading-state"
-        >
-          <span class="text-sm">Cargando...</span>
-        </div>
-
-        <div v-else-if="isError" class="text-center py-16 text-sm text-rose-600" data-testid="error-state">
-          Error al cargar los ingresos
-        </div>
-
-        <EmptyState
-          v-else-if="ingresos.length === 0"
-          :icon="Inbox"
-          color="#10B981"
-          title="No hay ingresos registrados"
-          subtitle="Registrá tus fuentes de ingreso para este mes"
-          action-label="Agregar ingreso"
-          testid="empty-state"
-          :inline="true"
-          @action="openModal"
-        />
-
-        <div
-          v-else-if="filteredIngresos.length === 0"
-          class="flex flex-col items-center justify-center py-12 text-center"
-        >
-          <div class="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center mb-2">
-            <Search :size="20" class="text-slate-400" />
-          </div>
-          <p class="text-sm font-semibold text-slate-700">Sin resultados</p>
-          <p class="text-xs text-slate-500 mt-1">Probá con otro término</p>
-        </div>
-
-        <div v-else class="divide-y divide-slate-50" data-testid="ingresos-list">
           <div
-            v-for="ingreso in filteredIngresos"
-            :key="ingreso.id"
-            class="group relative hover:bg-slate-50/60 transition-colors"
-            data-testid="ingreso-item"
+            v-if="editingId !== ingreso.id"
+            style="height: 5px; background: #f4efe5; margin: 0 14px 12px; border-radius: 999px; overflow: hidden"
           >
-            <div v-if="editingId !== ingreso.id" class="flex items-center gap-3 px-6 py-3.5">
-              <span
-                class="absolute left-0 top-2 bottom-2 w-1 rounded-r-full opacity-0 group-hover:opacity-100 transition-opacity bg-emerald-500"
-              ></span>
-              <div
-                class="w-10 h-10 rounded-xl flex items-center justify-center text-sm font-bold shrink-0 text-emerald-700 bg-emerald-50"
-                aria-hidden="true"
-              >
-                {{ ingreso.descripcion.charAt(0).toUpperCase() }}
-              </div>
+            <div
+              style="height: 100%; border-radius: 999px"
+              :style="{
+                width: pctOfTotal(ingreso.monto),
+                background: EG_COLORS[idx % EG_COLORS.length],
+              }"
+            />
+          </div>
 
-              <div class="flex-1 min-w-0">
-                <div class="flex items-center gap-2 mb-1">
-                  <p class="text-sm font-semibold text-slate-900 truncate" data-testid="ingreso-descripcion">
-                    {{ ingreso.descripcion }}
-                  </p>
-                  <span class="text-[10px] text-slate-400">
-                    {{ new Date(ingreso.createdAt).toLocaleDateString('es-PE') }}
-                  </span>
-                </div>
-                <div class="flex items-center gap-2">
-                  <div class="flex-1 h-1 bg-slate-100 rounded-full overflow-hidden max-w-[200px]">
-                    <div
-                      class="h-full rounded-full bg-emerald-500 transition-all"
-                      :style="{ width: percentOfTotal(ingreso.monto) + '%' }"
-                    ></div>
-                  </div>
-                  <span class="text-[10px] text-slate-400 tabular-nums">{{ percentOfTotal(ingreso.monto) }}%</span>
-                </div>
-              </div>
-
-              <div class="flex items-center gap-1 shrink-0">
-                <span class="text-sm font-bold tabular-nums text-emerald-600 mr-2" data-testid="ingreso-monto">
-                  +{{ formatCurrency(ingreso.monto) }}
-                </span>
-                <button
-                  class="opacity-0 group-hover:opacity-100 w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-all"
-                  :aria-label="`Editar ingreso ${ingreso.descripcion}`"
-                  data-testid="edit-button"
-                  @click="startEdit(ingreso)"
-                >
-                  <Pencil :size="14" />
-                </button>
-                <button
-                  class="opacity-0 group-hover:opacity-100 w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-                  :aria-label="`Eliminar ingreso ${ingreso.descripcion}`"
-                  :disabled="isRemoving"
-                  data-testid="delete-button"
-                  @click="handleDelete(ingreso.id)"
-                >
-                  <Trash2 :size="14" />
-                </button>
-              </div>
-            </div>
-
-            <div v-else class="flex items-center gap-2 px-6 py-3">
-              <input
-                v-model="editForm.descripcion"
-                type="text"
-                placeholder="Descripción"
-                class="flex-1 px-3 py-2 border border-slate-200 rounded-xl text-sm bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400 transition-all"
-                data-testid="edit-descripcion-input"
-                @keydown.enter.prevent="saveEdit(ingreso.id)"
-                @keydown.esc.prevent="cancelEdit"
-              />
-              <input
-                type="text"
-                inputmode="decimal"
-                :value="editForm.monto"
-                placeholder="0.00"
-                class="w-28 px-3 py-2 border border-slate-200 rounded-xl text-sm bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400 transition-all"
-                data-testid="edit-monto-input"
-                @input="onDecimalInput($event, (v) => (editForm.monto = v))"
-                @blur="editForm.monto = formatMoneyDisplay(editForm.monto)"
-                @keydown.enter.prevent="saveEdit(ingreso.id)"
-                @keydown.esc.prevent="cancelEdit"
-              />
-              <button
-                :disabled="isUpdating"
-                class="w-9 h-9 rounded-lg flex items-center justify-center bg-emerald-500 text-white hover:bg-emerald-600 disabled:opacity-50 transition-colors"
-                aria-label="Guardar cambios"
-                data-testid="save-edit-button"
-                @click="saveEdit(ingreso.id)"
-              >
-                <Check :size="14" />
-              </button>
-              <button
-                class="w-9 h-9 rounded-lg flex items-center justify-center bg-slate-100 text-slate-500 hover:bg-slate-200 transition-colors"
-                aria-label="Cancelar edición"
-                data-testid="cancel-edit-button"
-                @click="cancelEdit"
-              >
-                <X :size="14" />
-              </button>
-            </div>
+          <div
+            v-else
+            class="flex items-center"
+            style="gap: 8px; padding: 12px 14px"
+          >
+            <input
+              v-model="editForm.descripcion"
+              type="text"
+              placeholder="Descripción"
+              class="flex-1 min-w-0"
+              style="
+                border: 1px solid #e7e0d2;
+                background: #f8f5ef;
+                border-radius: 11px;
+                padding: 8px 12px;
+                font-size: 13px;
+                outline: none;
+                color: #1c1a15;
+              "
+              data-testid="edit-descripcion-input"
+              @keydown.enter.prevent="saveEdit(ingreso.id)"
+              @keydown.esc.prevent="cancelEdit"
+            />
+            <input
+              type="text"
+              inputmode="decimal"
+              :value="editForm.monto"
+              placeholder="0.00"
+              style="
+                width: 96px;
+                border: 1px solid #e7e0d2;
+                background: #f8f5ef;
+                border-radius: 11px;
+                padding: 8px 12px;
+                font-size: 13px;
+                outline: none;
+                color: #1c1a15;
+              "
+              data-testid="edit-monto-input"
+              @input="onDecimalInput($event, (v) => (editForm.monto = v))"
+              @blur="editForm.monto = formatMoneyDisplay(editForm.monto)"
+              @keydown.enter.prevent="saveEdit(ingreso.id)"
+              @keydown.esc.prevent="cancelEdit"
+            />
+            <button
+              type="button"
+              :disabled="isUpdating"
+              class="flex items-center justify-center border-none text-white shrink-0"
+              style="
+                width: 34px;
+                height: 34px;
+                border-radius: 10px;
+                background: #1e9e6a;
+                cursor: pointer;
+              "
+              aria-label="Guardar cambios"
+              data-testid="save-edit-button"
+              @click="saveEdit(ingreso.id)"
+            >
+              <Check :size="13" />
+            </button>
+            <button
+              type="button"
+              class="flex items-center justify-center border-none shrink-0"
+              style="
+                width: 34px;
+                height: 34px;
+                border-radius: 10px;
+                background: #f0ebe0;
+                color: #6e6757;
+                cursor: pointer;
+              "
+              aria-label="Cancelar edición"
+              data-testid="cancel-edit-button"
+              @click="cancelEdit"
+            >
+              <X :size="13" />
+            </button>
           </div>
         </div>
       </div>
     </div>
   </div>
 
-  <AppModal :open="isModalOpen" title="Agregar Ingreso" accent-color="#10B981" @close="isModalOpen = false">
+  <AppModal
+    :open="isModalOpen"
+    title="Agregar Ingreso"
+    accent-color="#1E9E6A"
+    @close="isModalOpen = false"
+  >
     <form data-testid="ingresos-form" novalidate @submit.prevent="handleSubmit">
       <div class="space-y-4">
         <div>
           <label
             for="descripcion-ingreso"
-            class="block text-xs font-semibold text-slate-600 mb-1.5 uppercase tracking-wide"
+            style="
+              display: block;
+              font-size: 11px;
+              font-weight: 700;
+              text-transform: uppercase;
+              color: #9a9384;
+              letter-spacing: 0.05em;
+              margin: 0 0 8px;
+            "
           >
-            Descripción
+            Descripción del ingreso
           </label>
           <input
             id="descripcion-ingreso"
             v-model="form.descripcion"
             type="text"
-            placeholder="Ej: Salario mensual"
-            class="w-full px-4 py-3 border border-slate-200 rounded-xl text-sm bg-slate-50 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400 focus:bg-white transition-all"
+            placeholder="Ej: Sueldo, Proyecto, Bono..."
+            style="
+              width: 100%;
+              box-sizing: border-box;
+              border: 1px solid #e7e0d2;
+              background: #fbf9f4;
+              border-radius: 14px;
+              padding: 14px;
+              font-size: 15px;
+              outline: none;
+              color: #1c1a15;
+            "
             data-testid="descripcion-input"
           />
         </div>
 
         <div>
-          <label for="monto-ingreso" class="block text-xs font-semibold text-slate-600 mb-1.5 uppercase tracking-wide">
+          <label
+            for="monto-ingreso"
+            style="
+              display: block;
+              font-size: 11px;
+              font-weight: 700;
+              text-transform: uppercase;
+              color: #9a9384;
+              letter-spacing: 0.05em;
+              margin: 0 0 8px;
+            "
+          >
             Monto (S/)
           </label>
           <input
@@ -409,7 +791,19 @@ function confirmDelete(): void {
             inputmode="decimal"
             :value="form.monto"
             placeholder="0.00"
-            class="w-full px-4 py-3 border border-slate-200 rounded-xl text-sm bg-slate-50 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400 focus:bg-white transition-all"
+            style="
+              width: 100%;
+              box-sizing: border-box;
+              border: 1px solid #e7e0d2;
+              background: #fbf9f4;
+              border-radius: 14px;
+              padding: 14px;
+              font-family: 'Space Grotesk', sans-serif;
+              font-size: 16px;
+              font-weight: 600;
+              outline: none;
+              color: #1c1a15;
+            "
             data-testid="monto-input"
             @input="onDecimalInput($event, (v) => (form.monto = v))"
             @blur="form.monto = formatMoneyDisplay(form.monto)"
@@ -418,7 +812,15 @@ function confirmDelete(): void {
 
         <p
           v-if="formError"
-          class="text-sm bg-rose-50 border border-rose-200 rounded-xl px-3 py-2.5 text-rose-700"
+          style="
+            background: #fbedeb;
+            border: 1px solid rgba(194, 90, 78, 0.2);
+            color: #c25a4e;
+            border-radius: 11px;
+            padding: 10px 12px;
+            font-size: 13px;
+            margin: 0;
+          "
           role="alert"
           data-testid="form-error"
         >
@@ -428,8 +830,17 @@ function confirmDelete(): void {
         <button
           type="submit"
           :disabled="isAdding"
-          class="w-full py-3 text-white font-bold rounded-xl transition-all shadow-md shadow-emerald-500/20 hover:shadow-lg hover:shadow-emerald-500/30 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
-          style="background: linear-gradient(135deg, #059669 0%, #10B981 100%);"
+          class="border-none text-white"
+          style="
+            width: 100%;
+            background: linear-gradient(135deg, #3fb98c, #1e9e6a);
+            border-radius: 15px;
+            padding: 15px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 8px 18px -6px rgba(30, 158, 106, 0.5);
+          "
           data-testid="submit-button"
         >
           {{ isAdding ? 'Agregando...' : '+ Agregar ingreso' }}

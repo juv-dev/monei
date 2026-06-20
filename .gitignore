@@ -30,11 +30,19 @@ coverage
 .env.*
 
 # Extra Rules
-.agent/
-.agents/
-.claude/
-.continue/
-.vercel
+.agent/**
+.agents/**
+.atl/**
+.claude/**
+.continue/**
 .env*.local
-skills/
+.github/copilot-instructions.md
+.github/instructions/*.md
+.vercel
+CLAUDE.md
+openspec.config.yaml
+openspec/**
 skills-lock.json
+skills/**
+best-practices.md
+.mockup/

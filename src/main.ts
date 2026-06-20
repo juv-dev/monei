@@ -55,7 +55,7 @@ window.fetch = async (...args) => {
   try {
     return await _originalFetch(...args)
   } catch (err) {
-    let isClerkHost = false
+    let isClerkHost: boolean
     try {
       const hostname = new URL(url, window.location.origin).hostname.toLowerCase()
       isClerkHost =

@@ -1,4 +1,4 @@
-import { defineConfig, loadEnv } from 'vite'
+import { defineConfig, loadEnv, type Plugin, type ViteDevServer } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import tailwindcss from '@tailwindcss/vite'
 import Components from 'unplugin-vue-components/vite'
@@ -17,6 +17,58 @@ function clerkFapiHost(publishableKey: string): string {
   }
 }
 
+function localApiPlugin(env: Record<string, string>): Plugin {
+  const routes: Record<string, string> = {
+    '/api/db': '/api/db.ts',
+    '/api/ai-insights': '/api/ai-insights.ts',
+  }
+  return {
+    name: 'monei-local-api',
+    apply: 'serve',
+    configureServer(server: ViteDevServer) {
+      for (const [key, value] of Object.entries(env)) {
+        if (value) process.env[key] = value
+      }
+      server.middlewares.use(async (req, res, next) => {
+        const path = (req.url ?? '').split('?')[0] ?? ''
+        const modPath = routes[path]
+        if (!modPath) return next()
+        try {
+          const chunks: Buffer[] = []
+          for await (const chunk of req) chunks.push(chunk as Buffer)
+          const raw = Buffer.concat(chunks).toString('utf-8')
+          const body = raw ? JSON.parse(raw) : undefined
+          const mod = await server.ssrLoadModule(modPath)
+          const handler = mod.default as (req: unknown, res: unknown) => Promise<void>
+          const shimReq = { method: req.method, headers: req.headers, body }
+          const shimRes = {
+            status(code: number) {
+              res.statusCode = code
+              return shimRes
+            },
+            setHeader(name: string, value: string) {
+              res.setHeader(name, value)
+              return shimRes
+            },
+            json(data: unknown) {
+              res.setHeader('content-type', 'application/json')
+              res.end(JSON.stringify(data))
+            },
+            end() {
+              res.end()
+            },
+          }
+          await handler(shimReq, shimRes)
+        } catch (err) {
+          res.statusCode = 500
+          res.setHeader('content-type', 'application/json')
+          res.end(JSON.stringify({ error: err instanceof Error ? err.message : 'local api error' }))
+        }
+      })
+    },
+  }
+}
+
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
@@ -24,6 +76,7 @@ export default defineConfig(({ mode }) => {
 
   return {
   plugins: [
+    localApiPlugin(env),
     vue(),
     tailwindcss(),
     Components({
@@ -131,7 +184,6 @@ export default defineConfig(({ mode }) => {
         manualChunks: {
           'vendor-vue': ['vue', 'vue-router', 'pinia'],
           'vendor-query': ['@tanstack/vue-query'],
-          'vendor-charts': ['chart.js', 'vue-chartjs'],
         },
       },
     },
