@@ -14,6 +14,7 @@ export const ROUTE_NAMES = {
   TARJETAS: 'tarjetas',
   REPORTES: 'reportes',
   CONFIGURACION: 'configuracion',
+  MASCOTA: 'mascota',
 } as const
 
 const router = createRouter({
@@ -77,7 +78,7 @@ const router = createRouter({
         {
           path: 'tarjetas',
           name: ROUTE_NAMES.TARJETAS,
-          redirect: { name: ROUTE_NAMES.CREDITOS, query: { tab: 'tarjetas' } },
+          component: () => import('~/modules/tarjetas/views/TarjetasView.vue'),
         },
         {
           path: 'reportes',
@@ -88,6 +89,11 @@ const router = createRouter({
           path: 'configuracion',
           name: ROUTE_NAMES.CONFIGURACION,
           component: () => import('~/modules/configuracion/views/ConfiguracionView.vue'),
+        },
+        {
+          path: 'mascota',
+          name: ROUTE_NAMES.MASCOTA,
+          component: () => import('~/modules/mascota/views/MascotaView.vue'),
         },
       ],
     },

@@ -35,6 +35,7 @@ export function createTestRouter() {
       { path: '/creditos', name: 'creditos', component: stub },
       { path: '/reportes', name: 'reportes', component: stub },
       { path: '/configuracion', name: 'configuracion', component: stub },
+      { path: '/mascota', name: 'mascota', component: stub },
     ],
   })
 }

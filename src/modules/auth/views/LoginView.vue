@@ -99,7 +99,6 @@ function toggleMode(): void {
     style="background: #EDEAE3;"
     data-testid="login-page"
   >
-    <!-- Decorative blobs -->
     <div class="absolute inset-0 pointer-events-none" aria-hidden="true">
       <div
         class="absolute -top-40 -left-40 w-[500px] h-[500px] rounded-full opacity-25"
@@ -112,10 +111,8 @@ function toggleMode(): void {
     </div>
 
     <div class="relative w-full max-w-[390px]">
-      <!-- Card -->
       <div class="bg-white rounded-3xl shadow-2xl overflow-hidden">
 
-        <!-- Brand header -->
         <div
           class="pt-9 pb-7 px-8 text-center"
           style="background: linear-gradient(135deg, #C8AA72 0%, #8A6840 100%)"
@@ -124,29 +121,34 @@ function toggleMode(): void {
             class="w-14 h-14 rounded-2xl mx-auto mb-4 flex items-center justify-center"
             style="background: rgba(255,255,255,0.18)"
           >
-            <svg width="32" height="32" viewBox="0 0 40 40" fill="none" aria-hidden="true">
-              <path
-                d="M7 30 L7 16 Q7 9 14 9 Q20 9 20 16 Q20 9 27 9 Q33 9 33 16 L33 30"
-                stroke="white"
-                stroke-width="3.5"
-                fill="none"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              />
-              <circle cx="27" cy="9" r="2.5" fill="white" />
+            <svg width="36" height="36" viewBox="0 0 36 36" fill="none" aria-hidden="true">
+              <defs>
+                <linearGradient id="coin-grad-login" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#C8AA72" />
+                  <stop offset="100%" stop-color="#8A6840" />
+                </linearGradient>
+              </defs>
+              <circle cx="18" cy="18" r="17" fill="url(#coin-grad-login)" stroke="rgba(255,255,255,0.35)" stroke-width="1.5" />
+              <text
+                x="18"
+                y="24"
+                text-anchor="middle"
+                font-family="Space Grotesk, sans-serif"
+                font-weight="700"
+                font-size="14"
+                fill="white"
+              >S/</text>
             </svg>
           </div>
           <h1 class="text-2xl font-black text-white tracking-tight">monei</h1>
           <p class="text-sm text-white/65 mt-1">Tu dinero, bajo control</p>
         </div>
 
-        <!-- Auth section -->
         <div class="px-8 pt-7 pb-8">
           <p class="text-[15px] font-bold text-[#1A1A2E] text-center mb-6">
             {{ isRegisterMode ? 'Crear cuenta' : 'Acceder a tu cuenta' }}
           </p>
 
-          <!-- Error -->
           <div
             v-if="error"
             class="flex items-center gap-2 text-sm text-red-600 bg-red-50 border border-red-100 rounded-2xl px-4 py-3 mb-5"
@@ -157,7 +159,6 @@ function toggleMode(): void {
             {{ error }}
           </div>
 
-          <!-- Success -->
           <div
             v-if="successMessage"
             class="flex items-center gap-2 text-sm text-emerald-700 bg-emerald-50 border border-emerald-100 rounded-2xl px-4 py-3 mb-5"
@@ -168,7 +169,6 @@ function toggleMode(): void {
             {{ successMessage }}
           </div>
 
-          <!-- Social buttons -->
           <div class="space-y-2.5">
             <button
               type="button"
@@ -200,14 +200,12 @@ function toggleMode(): void {
             </button>
           </div>
 
-          <!-- Divider -->
           <div class="flex items-center gap-3 my-5">
             <div class="flex-1 h-px bg-[#EEEEF0]"></div>
             <span class="text-xs text-[#B0B8C4] font-medium">o</span>
             <div class="flex-1 h-px bg-[#EEEEF0]"></div>
           </div>
 
-          <!-- Email form -->
           <div v-if="showEmailForm">
             <form class="space-y-2.5" @submit.prevent="handleEmailSubmit">
               <input
@@ -274,14 +272,12 @@ function toggleMode(): void {
             <span class="flex-1 text-center">Continuar con correo</span>
           </button>
 
-          <!-- Divider -->
           <div class="flex items-center gap-3 my-5">
             <div class="flex-1 h-px bg-[#EEEEF0]"></div>
             <span class="text-xs text-[#B0B8C4] font-medium">o</span>
             <div class="flex-1 h-px bg-[#EEEEF0]"></div>
           </div>
 
-          <!-- Demo -->
           <div data-testid="credentials-hint">
             <button
               type="button"

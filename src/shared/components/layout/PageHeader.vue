@@ -18,17 +18,17 @@ const emit = defineEmits<{ action: [] }>()
 <template>
   <div class="flex items-center justify-between">
     <div>
-      <h1 class="text-2xl lg:text-3xl font-bold text-[#1A1A2E]">{{ title }}</h1>
+      <h1 class="text-[22px] font-extrabold text-[#1A1A2E]">{{ title }}</h1>
       <p v-if="subtitle" class="text-sm text-[#64748B] mt-0.5">{{ subtitle }}</p>
     </div>
     <button
       v-if="buttonLabel"
-      class="flex items-center gap-2 py-2.5 px-4 text-white font-bold rounded-xl transition-all shadow-md hover:opacity-90 active:scale-95 text-sm"
+      class="flex items-center gap-1.5 py-1.5 px-3 text-white font-bold rounded-xl transition-all shadow-md hover:opacity-90 active:scale-95 text-[12px]"
       :style="{ background: `linear-gradient(135deg, ${buttonColor} 0%, ${buttonColor}CC 100%)` }"
       :data-testid="buttonTestid"
       @click="emit('action')"
     >
-      <Plus :size="16" aria-hidden="true" />
+      <Plus :size="14" aria-hidden="true" />
       {{ buttonLabel }}
     </button>
   </div>

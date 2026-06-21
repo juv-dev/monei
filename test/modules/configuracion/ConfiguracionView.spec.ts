@@ -1,6 +1,18 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { computed, ref, nextTick } from 'vue'
 import { flushPromises } from '@vue/test-utils'
+
+vi.mock('~/shared/composables/usePushNotifications', () => ({
+  usePushNotifications: vi.fn(),
+}))
+
+vi.mock('~/shared/composables/useExchangeRate', () => ({
+  useExchangeRate: vi.fn(),
+}))
+
 import { useAuthStore } from '~/stores/auth'
+import { usePushNotifications } from '~/shared/composables/usePushNotifications'
+import { useExchangeRate } from '~/shared/composables/useExchangeRate'
 import ConfiguracionView from '~/modules/configuracion/views/ConfiguracionView.vue'
 import { mountWithPlugins } from '../../helpers/setup'
 
@@ -8,6 +20,26 @@ describe('should ConfiguracionView', () => {
   beforeEach(() => {
     localStorage.clear()
     sessionStorage.clear()
+    vi.clearAllMocks()
+    vi.mocked(usePushNotifications).mockReturnValue({
+      isSupported: ref(false),
+      isEnabled: ref(false),
+      isConfigured: ref(false),
+      isWorking: ref(false),
+      permission: ref('default' as NotificationPermission),
+      enable: vi.fn().mockResolvedValue(undefined),
+      disable: vi.fn().mockResolvedValue(undefined),
+    } as any)
+    vi.mocked(useExchangeRate).mockReturnValue({
+      rate: ref(3.75),
+      isFallback: ref(true),
+      updatedAt: ref(''),
+      updatedAtDisplay: computed(() => ''),
+      isLoading: ref(false),
+      usdToPen: vi.fn((v: number) => v * 3.75),
+      penToUsd: vi.fn((v: number) => v / 3.75),
+      refresh: vi.fn().mockResolvedValue(undefined),
+    } as any)
   })
 
   function mountWithAuthUser(
@@ -34,7 +66,6 @@ describe('should ConfiguracionView', () => {
     return { wrapper, auth, router }
   }
 
-  // ─── Renderizado ─────────────────────────────────────────────────────────
   it('should render the configuracion view', async () => {
     const { wrapper } = mountWithAuthUser()
     await flushPromises()
@@ -84,7 +115,6 @@ describe('should ConfiguracionView', () => {
     expect(wrapper.find('[data-testid="info-provider"]').text()).toBe('GitHub')
   })
 
-  // ─── Avatar ────────────────────────────────────────────────────────────────
   it('should show user initial when no avatar', async () => {
     const { wrapper } = mountWithAuthUser()
     await flushPromises()
@@ -102,7 +132,6 @@ describe('should ConfiguracionView', () => {
     expect(wrapper.find('[data-testid="user-initial"]').exists()).toBe(false)
   })
 
-  // ─── Logout ────────────────────────────────────────────────────────────────
   it('should render logout button', async () => {
     const { wrapper } = mountWithAuthUser()
     await flushPromises()
@@ -125,12 +154,189 @@ describe('should ConfiguracionView', () => {
     expect(pushSpy).toHaveBeenCalledWith({ name: 'login' })
   })
 
-  // ─── No password form ──────────────────────────────────────────────────────
   it('should NOT render password change form', async () => {
     const { wrapper } = mountWithAuthUser()
     await flushPromises()
 
     expect(wrapper.find('[data-testid="change-password-form"]').exists()).toBe(false)
     expect(wrapper.find('[data-testid="current-pass-input"]').exists()).toBe(false)
+  })
+
+  it('should show session badge with Google label for google provider', async () => {
+    const { wrapper } = mountWithAuthUser({ provider: 'google' })
+    await flushPromises()
+    expect(wrapper.text()).toContain('Sesión activa · Google')
+  })
+
+  it('should show session badge with Email label for email provider', async () => {
+    const { wrapper } = mountWithAuthUser({ provider: 'email' })
+    await flushPromises()
+    expect(wrapper.text()).toContain('Sesión activa · Email')
+  })
+
+  it('should show session badge without provider label for unknown provider', async () => {
+    const { wrapper } = mountWithAuthUser({ provider: 'unknown_xyz' })
+    await flushPromises()
+    expect(wrapper.text()).toContain('Sesión activa')
+    expect(wrapper.text()).not.toContain('Sesión activa ·')
+  })
+
+  it('should show Gestionar cuenta button when user is not demo', async () => {
+    const { wrapper } = mountWithAuthUser({ provider: 'google' })
+    await flushPromises()
+    expect(wrapper.text()).toContain('Gestionar cuenta')
+  })
+
+  it('should hide Gestionar cuenta button when user is demo', async () => {
+    const { wrapper } = mountWithAuthUser({ provider: 'demo' })
+    await flushPromises()
+    expect(wrapper.text()).not.toContain('Gestionar cuenta')
+  })
+
+  it('should not throw when Gestionar cuenta button is clicked with null clerk', async () => {
+    const { wrapper } = mountWithAuthUser({ provider: 'google' })
+    await flushPromises()
+    const manageBtn = wrapper.findAll('button').find(b => b.text().includes('Gestionar cuenta'))
+    await expect(manageBtn!.trigger('click')).resolves.not.toThrow()
+  })
+
+  it('should show push-not-supported message when push is not supported', async () => {
+    const { wrapper } = mountWithAuthUser()
+    await flushPromises()
+    expect(wrapper.find('[data-testid="push-not-supported"]').exists()).toBe(true)
+  })
+
+  it('should show push-not-configured message when push is supported but not configured', async () => {
+    vi.mocked(usePushNotifications).mockReturnValue({
+      isSupported: ref(true),
+      isEnabled: ref(false),
+      isConfigured: ref(false),
+      isWorking: ref(false),
+      permission: ref('default' as NotificationPermission),
+      enable: vi.fn().mockResolvedValue(undefined),
+      disable: vi.fn().mockResolvedValue(undefined),
+    } as any)
+    const { wrapper } = mountWithAuthUser()
+    await flushPromises()
+    expect(wrapper.find('[data-testid="push-not-configured"]').exists()).toBe(true)
+  })
+
+  it('should show push toggle button with aria-pressed false when push is configured but not enabled', async () => {
+    vi.mocked(usePushNotifications).mockReturnValue({
+      isSupported: ref(true),
+      isEnabled: ref(false),
+      isConfigured: ref(true),
+      isWorking: ref(false),
+      permission: ref('default' as NotificationPermission),
+      enable: vi.fn().mockResolvedValue(undefined),
+      disable: vi.fn().mockResolvedValue(undefined),
+    } as any)
+    const { wrapper } = mountWithAuthUser()
+    await flushPromises()
+    const toggle = wrapper.find('[data-testid="push-toggle-button"]')
+    expect(toggle.exists()).toBe(true)
+    expect(toggle.attributes('aria-pressed')).toBe('false')
+  })
+
+  it('should show push toggle button with aria-pressed true when push is enabled', async () => {
+    vi.mocked(usePushNotifications).mockReturnValue({
+      isSupported: ref(true),
+      isEnabled: ref(true),
+      isConfigured: ref(true),
+      isWorking: ref(false),
+      permission: ref('granted' as NotificationPermission),
+      enable: vi.fn().mockResolvedValue(undefined),
+      disable: vi.fn().mockResolvedValue(undefined),
+    } as any)
+    const { wrapper } = mountWithAuthUser()
+    await flushPromises()
+    expect(wrapper.find('[data-testid="push-toggle-button"]').attributes('aria-pressed')).toBe('true')
+  })
+
+  it('should call enable when push toggle is clicked and notifications are not enabled', async () => {
+    const enableFn = vi.fn().mockResolvedValue(undefined)
+    vi.mocked(usePushNotifications).mockReturnValue({
+      isSupported: ref(true),
+      isEnabled: ref(false),
+      isConfigured: ref(true),
+      isWorking: ref(false),
+      permission: ref('default' as NotificationPermission),
+      enable: enableFn,
+      disable: vi.fn().mockResolvedValue(undefined),
+    } as any)
+    const { wrapper } = mountWithAuthUser()
+    await flushPromises()
+    await wrapper.find('[data-testid="push-toggle-button"]').trigger('click')
+    await flushPromises()
+    expect(enableFn).toHaveBeenCalled()
+  })
+
+  it('should call disable when push toggle is clicked and notifications are enabled', async () => {
+    const disableFn = vi.fn().mockResolvedValue(undefined)
+    vi.mocked(usePushNotifications).mockReturnValue({
+      isSupported: ref(true),
+      isEnabled: ref(true),
+      isConfigured: ref(true),
+      isWorking: ref(false),
+      permission: ref('granted' as NotificationPermission),
+      enable: vi.fn().mockResolvedValue(undefined),
+      disable: disableFn,
+    } as any)
+    const { wrapper } = mountWithAuthUser()
+    await flushPromises()
+    await wrapper.find('[data-testid="push-toggle-button"]').trigger('click')
+    await flushPromises()
+    expect(disableFn).toHaveBeenCalled()
+  })
+
+  it('should disable push toggle button when notification permission is denied', async () => {
+    vi.mocked(usePushNotifications).mockReturnValue({
+      isSupported: ref(true),
+      isEnabled: ref(false),
+      isConfigured: ref(true),
+      isWorking: ref(false),
+      permission: ref('denied' as NotificationPermission),
+      enable: vi.fn().mockResolvedValue(undefined),
+      disable: vi.fn().mockResolvedValue(undefined),
+    } as any)
+    const { wrapper } = mountWithAuthUser()
+    await flushPromises()
+    expect(wrapper.find('[data-testid="push-toggle-button"]').attributes('disabled')).toBeDefined()
+  })
+
+  it('should show plan alimenticio button after hasPet toggle is activated', async () => {
+    const { wrapper } = mountWithAuthUser()
+    await flushPromises()
+    await wrapper.find('[aria-label="Activar plan mascota"]').trigger('click')
+    await nextTick()
+    expect(wrapper.find('[aria-label="Abrir plan alimenticio"]').exists()).toBe(true)
+  })
+
+  it('should navigate to mascota when plan alimenticio button is clicked', async () => {
+    const { wrapper, router } = mountWithAuthUser()
+    await flushPromises()
+    await wrapper.find('[aria-label="Activar plan mascota"]').trigger('click')
+    await nextTick()
+    await wrapper.find('[aria-label="Abrir plan alimenticio"]').trigger('click')
+    await flushPromises()
+    expect(router.currentRoute.value.name).toBe('mascota')
+  })
+
+  it('should show the exchange rate value formatted to 3 decimals', async () => {
+    const { wrapper } = mountWithAuthUser()
+    await flushPromises()
+    expect(wrapper.text()).toContain('3.750')
+  })
+
+  it('should show Estimado badge when exchange rate is using fallback value', async () => {
+    const { wrapper } = mountWithAuthUser()
+    await flushPromises()
+    expect(wrapper.text()).toContain('Estimado')
+  })
+
+  it('should show Desconocido label for unknown provider', async () => {
+    const { wrapper } = mountWithAuthUser({ provider: 'xyz' })
+    await flushPromises()
+    expect(wrapper.find('[data-testid="info-provider"]').text()).toBe('Desconocido')
   })
 })

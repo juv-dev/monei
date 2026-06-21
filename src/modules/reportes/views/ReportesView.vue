@@ -187,14 +187,14 @@ function resetImport(): void {
 </script>
 
 <template>
-  <div class="min-h-screen bg-[#F8F6F1]" data-testid="reportes-view">
-    <div class="max-w-3xl mx-auto p-5 lg:p-8 space-y-5">
+  <div class="min-h-full bg-[#F8F6F1]" data-testid="reportes-view">
+    <div class="mx-auto w-full max-w-[460px] px-[18px] pt-5 pb-28 space-y-5">
       <div>
-        <h1 class="text-2xl lg:text-3xl font-bold text-[#1A1A2E]">Reportes</h1>
+        <h1 class="text-[22px] font-extrabold text-[#1A1A2E]">Reportes</h1>
         <p class="text-sm text-[#64748B] mt-0.5">Exportá e importá tu información financiera</p>
       </div>
 
-      <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <div class="grid grid-cols-2 gap-3">
         <div
           v-for="stat in stats"
           :key="stat.label"
@@ -212,7 +212,7 @@ function resetImport(): void {
       </div>
 
       <div class="bg-white rounded-2xl border border-[#E5E0D5] shadow-sm overflow-hidden">
-        <div class="p-6 lg:p-8">
+        <div class="p-5">
           <div class="flex items-start gap-4">
             <div
               class="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0"
@@ -245,7 +245,7 @@ function resetImport(): void {
           </div>
         </div>
 
-        <div class="px-6 pb-6 lg:px-8 lg:pb-8">
+        <div class="px-5 pb-5">
           <button
             type="button"
             :disabled="isExporting"
@@ -271,7 +271,7 @@ function resetImport(): void {
           @change="handleFileChange"
         />
 
-        <div class="p-6 lg:p-8">
+        <div class="p-5">
           <template v-if="importStep === 'idle'">
             <div class="flex items-start gap-4">
               <div
@@ -318,7 +318,7 @@ function resetImport(): void {
                 </p>
               </div>
             </div>
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            <div class="grid grid-cols-2 gap-2">
               <div
                 v-for="item in importPreview"
                 :key="item.label"
@@ -351,7 +351,7 @@ function resetImport(): void {
           </template>
         </div>
 
-        <div class="px-6 pb-6 lg:px-8 lg:pb-8">
+        <div class="px-5 pb-5">
           <button
             v-if="importStep === 'idle'"
             type="button"

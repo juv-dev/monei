@@ -7,12 +7,10 @@ import { useConfiguracion } from '~/modules/configuracion/composables/useConfigu
 describe('useConfiguracion', () => {
   let result: ReturnType<typeof useConfiguracion>
   let authStore: ReturnType<typeof useAuthStore>
-  let unmount: () => void
 
   beforeEach(() => {
     const setup = withSetup(() => useConfiguracion())
     result = setup.result
-    unmount = setup.unmount
 
     authStore = useAuthStore()
     vi.spyOn(authStore, 'changePassword')

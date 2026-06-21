@@ -380,29 +380,27 @@ async function copyText(text: string): Promise<void> {
 
 <template>
   <div class="min-h-full bg-[#F8F6F1]" data-testid="presupuesto-view">
-    <div class="max-w-6xl mx-auto p-5 lg:p-8 space-y-5">
+    <div class="mx-auto w-full max-w-[460px] px-[18px] pt-5 pb-28 space-y-5">
       <div class="flex items-center justify-between gap-3 flex-wrap">
         <div>
-          <h1 class="text-2xl lg:text-3xl font-bold text-[#1A1A2E]">Egresos</h1>
+          <h1 class="text-[22px] font-extrabold text-[#1A1A2E]">Egresos</h1>
           <p class="text-sm text-[#64748B] mt-0.5">Organizá tus egresos por secciones</p>
         </div>
         <div class="flex items-center gap-2">
           <MonthSelector />
           <button
-            class="flex items-center gap-2 py-2.5 px-4 text-white font-bold rounded-xl transition-all shadow-md hover:opacity-90 active:scale-95 text-sm"
+            class="flex items-center gap-1.5 py-1.5 px-3 text-white font-bold rounded-xl transition-all shadow-md hover:opacity-90 active:scale-95 text-[12px]"
             style="background: linear-gradient(135deg, #F97316 0%, #F97316CC 100%)"
             data-testid="open-modal-button"
             @click="openModal"
           >
-            <Plus :size="16" aria-hidden="true" />
+            <Plus :size="14" aria-hidden="true" />
             Nueva sección
           </button>
         </div>
       </div>
 
-      <!-- Stat grid -->
-      <div class="grid grid-cols-2 lg:grid-cols-4 gap-3" data-testid="summary-card">
-        <!-- Total (highlighted) -->
+      <div class="grid grid-cols-2 gap-3" data-testid="summary-card">
         <div
           class="rounded-2xl p-4 border shadow-sm"
           style="background: linear-gradient(135deg, #FFF7ED 0%, #FFEDD5 100%); border-color: rgba(249, 115, 22, 0.25);"
@@ -413,32 +411,28 @@ async function copyText(text: string): Promise<void> {
             </div>
             <p class="text-[10px] font-semibold uppercase tracking-wider" style="color: #C2410C">Total</p>
           </div>
-          <p class="text-xl lg:text-2xl font-black tabular tracking-tight" style="color: #9A3412" data-testid="total-gastado">
+          <p class="text-lg font-black tabular tracking-tight" style="color: #9A3412" data-testid="total-gastado">
             {{ formatCurrency(totalGastado) }}
           </p>
         </div>
 
-        <!-- Secciones -->
         <div class="rounded-2xl p-4 bg-white border border-slate-200/60 shadow-sm">
           <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-500 mb-2">Secciones</p>
-          <p class="text-xl lg:text-2xl font-black text-slate-900 tabular tracking-tight">{{ porCategoria.length }}</p>
+          <p class="text-lg font-black text-slate-900 tabular tracking-tight">{{ porCategoria.length }}</p>
         </div>
 
-        <!-- Mayor -->
         <div class="rounded-2xl p-4 bg-white border border-slate-200/60 shadow-sm min-w-0">
           <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-500 mb-2">Mayor sección</p>
-          <p class="text-sm lg:text-base font-bold text-slate-900 truncate">{{ seccionMayor ? seccionMayor.nombre : '—' }}</p>
+          <p class="text-sm font-bold text-slate-900 truncate">{{ seccionMayor ? seccionMayor.nombre : '—' }}</p>
           <p v-if="seccionMayor" class="text-[11px] text-slate-500 tabular mt-0.5">{{ formatCurrency(seccionMayor.subtotal) }}</p>
         </div>
 
-        <!-- Promedio -->
         <div class="rounded-2xl p-4 bg-white border border-slate-200/60 shadow-sm">
           <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-500 mb-2">Promedio</p>
-          <p class="text-xl lg:text-2xl font-black text-slate-900 tabular tracking-tight">{{ formatCurrency(promedioSeccion) }}</p>
+          <p class="text-lg font-black text-slate-900 tabular tracking-tight">{{ formatCurrency(promedioSeccion) }}</p>
         </div>
       </div>
 
-      <!-- Toolbar -->
       <div v-if="sortedPorCategoria.length" class="flex items-center gap-3">
         <div class="relative flex-1">
           <Search :size="15" class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" aria-hidden="true" />
@@ -461,7 +455,6 @@ async function copyText(text: string): Promise<void> {
         </button>
       </div>
 
-      <!-- Lista -->
       <div class="space-y-3">
         <div v-if="isLoading" class="text-center py-16 text-slate-400" data-testid="loading-state">Cargando...</div>
 
@@ -642,7 +635,7 @@ async function copyText(text: string): Promise<void> {
                       {{ formatCurrency(gasto.monto) }}
                     </span>
                     <button
-                      class="lg:opacity-0 lg:group-hover:opacity-100 w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-all"
+                      class="w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-all"
                       :aria-label="`Editar ${gasto.descripcion}`"
                       data-testid="edit-button"
                       @click.stop="startEdit(gasto)"
@@ -650,7 +643,7 @@ async function copyText(text: string): Promise<void> {
                       <Pencil :size="13" />
                     </button>
                     <button
-                      class="lg:opacity-0 lg:group-hover:opacity-100 w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-all"
+                      class="w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-all"
                       :aria-label="`Eliminar ${gasto.descripcion}`"
                       data-testid="delete-button"
                       @click.stop="handleDelete(gasto.id)"
@@ -741,21 +734,21 @@ async function copyText(text: string): Promise<void> {
                 />
                 <button
                   :disabled="isAdding"
-                  class="h-9 px-3 rounded-xl text-white hover:opacity-90 disabled:opacity-50 transition-all flex items-center shadow-sm"
+                  class="w-8 h-8 rounded-full flex items-center justify-center text-white hover:opacity-90 disabled:opacity-50 transition-all shadow-sm shrink-0"
                   style="background: linear-gradient(135deg, #EA580C 0%, #F97316 100%);"
                   aria-label="Guardar ítem"
                   data-testid="inline-save-button"
                   @click.stop="saveNewItem(cat.nombre)"
                 >
-                  <Check :size="14" />
+                  <Check :size="13" />
                 </button>
                 <button
-                  class="h-9 px-3 rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200 transition-all flex items-center"
+                  class="w-8 h-8 rounded-full flex items-center justify-center bg-slate-100 text-slate-600 hover:bg-slate-200 transition-all shrink-0"
                   aria-label="Cancelar"
                   data-testid="inline-cancel-button"
                   @click.stop="cancelAddItem"
                 >
-                  <X :size="14" />
+                  <X :size="13" />
                 </button>
               </div>
               <p v-if="addInlineError" class="text-xs text-orange-600" data-testid="inline-error">
