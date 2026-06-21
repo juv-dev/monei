@@ -38,11 +38,12 @@ coverage
 .env*.local
 .github/copilot-instructions.md
 .github/instructions/*.md
+.mockup/
 .vercel
+AGENTS.md
+best-practices.md
 CLAUDE.md
 openspec.config.yaml
 openspec/**
 skills-lock.json
 skills/**
-best-practices.md
-.mockup/
