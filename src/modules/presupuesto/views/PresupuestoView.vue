@@ -206,7 +206,18 @@ function saveNewItem(categoriaNombre: string) {
     return
   }
   startLoading('#F97316')
-  addGasto({ monto, descripcion, categoria: categoriaNombre })
+  addGasto(
+    { monto, descripcion, categoria: categoriaNombre },
+    {
+      onSuccess: () => {
+        showToast('Egreso agregado correctamente')
+        addingToCategoria.value = null
+      },
+      onSettled: () => {
+        finishLoading()
+      },
+    },
+  )
 }
 
 const editingCategoria = ref<string | null>(null)
@@ -302,14 +313,6 @@ onMounted(() => {
     openModal()
     const { nuevo: _nuevo, ...rest } = route.query
     void router.replace({ query: rest })
-  }
-})
-
-watch(isAdding, (newVal, oldVal) => {
-  if (oldVal && !newVal) {
-    finishLoading()
-    showToast('Egreso agregado correctamente')
-    addingToCategoria.value = null
   }
 })
 
@@ -544,7 +547,7 @@ async function copyText(text: string): Promise<void> {
                     <div class="flex items-center gap-1.5">
                       <span class="font-bold text-slate-900 text-sm truncate" data-testid="categoria-nombre">{{ cat.nombre }}</span>
                       <button
-                        class="opacity-0 group-hover/header:opacity-100 w-6 h-6 rounded-md flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-all shrink-0"
+                        class="opacity-100 sm:opacity-0 sm:group-hover/header:opacity-100 w-6 h-6 rounded-md flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-all shrink-0"
                         :aria-label="`Editar nombre de ${cat.nombre}`"
                         data-testid="edit-categoria-button"
                         @click.stop="startEditCategoria(cat.nombre)"
@@ -572,7 +575,7 @@ async function copyText(text: string): Promise<void> {
                   </div>
                 </div>
                 <button
-                  class="opacity-0 group-hover/header:opacity-100 w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-all"
+                  class="opacity-100 sm:opacity-0 sm:group-hover/header:opacity-100 w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-all"
                   :aria-label="`Eliminar sección ${cat.nombre}`"
                   data-testid="delete-categoria-button"
                   @click.stop="requestDeleteCategoria(cat.nombre)"
@@ -658,7 +661,7 @@ async function copyText(text: string): Promise<void> {
                     v-model="editForm.descripcion"
                     type="text"
                     placeholder="Descripción"
-                    class="flex-1 px-3 py-1.5 border border-slate-200 rounded-lg text-sm bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-orange-400/30 focus:border-orange-400/40"
+                    class="flex-1 min-w-0 px-3 py-1.5 border border-slate-200 rounded-lg text-sm bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-orange-400/30 focus:border-orange-400/40"
                     data-testid="edit-descripcion-input"
                     @keydown.enter.prevent="saveEdit(gasto.id)"
                     @keydown.esc.prevent="cancelEdit"
@@ -715,7 +718,7 @@ async function copyText(text: string): Promise<void> {
                   v-model="addInlineForm.descripcion"
                   type="text"
                   placeholder="Descripción del egreso"
-                  class="flex-1 px-3 py-2 border border-slate-200 rounded-xl text-sm bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-400/30 focus:border-orange-400/40"
+                  class="flex-1 min-w-0 px-3 py-2 border border-slate-200 rounded-xl text-sm bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-400/30 focus:border-orange-400/40"
                   data-testid="inline-descripcion-input"
                   @keydown.enter.prevent="saveNewItem(cat.nombre)"
                   @keydown.esc.prevent="cancelAddItem"

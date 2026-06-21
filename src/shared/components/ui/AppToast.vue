@@ -9,7 +9,7 @@ defineEmits<{ dismiss: [id: number] }>()
 </script>
 
 <template>
-  <div class="fixed top-4 right-4 z-[60] flex flex-col gap-2 pointer-events-none">
+  <div class="fixed inset-x-4 bottom-[calc(6rem+env(safe-area-inset-bottom))] sm:inset-x-auto sm:bottom-auto sm:top-4 sm:right-4 z-[60] flex flex-col items-center sm:items-end gap-2 pointer-events-none">
     <TransitionGroup name="toast">
       <div
         v-for="toast in toasts"

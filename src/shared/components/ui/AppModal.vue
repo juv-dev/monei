@@ -38,7 +38,7 @@ onBeforeUnmount(() => {
 <template>
   <div
     v-show="open"
-    class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4"
+    class="fixed inset-0 z-[60] flex items-end sm:items-center justify-center p-0 sm:p-4"
     data-testid="app-modal"
   >
     <!-- Backdrop -->
@@ -75,7 +75,7 @@ onBeforeUnmount(() => {
       </div>
 
       <!-- Content (scrolleable) -->
-      <div class="flex-1 overflow-y-auto px-6 py-5 modal-scroll">
+      <div class="flex-1 overflow-y-auto px-6 pt-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] sm:pb-5 modal-scroll">
         <slot />
       </div>
 

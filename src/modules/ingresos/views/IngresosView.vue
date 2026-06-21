@@ -608,7 +608,7 @@ onMounted(() => {
 
             <button
               type="button"
-              class="flex items-center justify-center border-none opacity-0 group-hover:opacity-100 transition-opacity"
+              class="flex items-center justify-center border-none opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
               style="background: none; cursor: pointer; padding: 4px"
               :aria-label="`Editar ingreso ${ingreso.descripcion}`"
               data-testid="edit-button"
@@ -619,7 +619,7 @@ onMounted(() => {
 
             <button
               type="button"
-              class="flex items-center justify-center border-none opacity-0 group-hover:opacity-100 transition-opacity"
+              class="flex items-center justify-center border-none opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
               style="background: none; cursor: pointer; padding: 4px"
               :disabled="isRemoving"
               :aria-label="`Eliminar ingreso ${ingreso.descripcion}`"

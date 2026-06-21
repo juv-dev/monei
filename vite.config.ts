@@ -20,14 +20,13 @@ function clerkFapiHost(publishableKey: string): string {
 function localApiPlugin(env: Record<string, string>): Plugin {
   const routes: Record<string, string> = {
     '/api/db': '/api/db.ts',
-    '/api/ai-insights': '/api/ai-insights.ts',
   }
   return {
     name: 'monei-local-api',
     apply: 'serve',
     configureServer(server: ViteDevServer) {
       for (const [key, value] of Object.entries(env)) {
-        if (value) process.env[key] = value
+        if (value && process.env[key] === undefined) process.env[key] = value
       }
       server.middlewares.use(async (req, res, next) => {
         const path = (req.url ?? '').split('?')[0] ?? ''

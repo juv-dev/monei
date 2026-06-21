@@ -73,19 +73,19 @@ describe('OnboardingModal', () => {
   it('clicking through all steps to the last shows "Empezar" button text', async () => {
     mountModal()
 
-    for (let i = 0; i < 4; i++) {
+    for (let i = 0; i < 3; i++) {
       await clickButton('Siguiente')
     }
 
     expect(findButton('Empezar')).not.toBeNull()
     expect(findButton('Siguiente')).toBeNull()
-    expect(bodyText()).toContain('Insights inteligentes')
+    expect(bodyText()).toContain('Gestiona todo')
   })
 
   it('clicking "Empezar" on last step emits "close" and sets localStorage', async () => {
     const { wrapper } = mountModal()
 
-    for (let i = 0; i < 4; i++) {
+    for (let i = 0; i < 3; i++) {
       await clickButton('Siguiente')
     }
 
@@ -123,16 +123,13 @@ describe('OnboardingModal', () => {
       return bar?.style.width ?? ''
     }
 
-    expect(getProgressWidth()).toBe('20%')
+    expect(getProgressWidth()).toBe('25%')
 
     await clickButton('Siguiente')
-    expect(getProgressWidth()).toBe('40%')
+    expect(getProgressWidth()).toBe('50%')
 
     await clickButton('Siguiente')
-    expect(getProgressWidth()).toBe('60%')
-
-    await clickButton('Siguiente')
-    expect(getProgressWidth()).toBe('80%')
+    expect(getProgressWidth()).toBe('75%')
 
     await clickButton('Siguiente')
     expect(getProgressWidth()).toBe('100%')
