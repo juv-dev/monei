@@ -27,7 +27,6 @@ export function createTestRouter() {
       { path: '/', name: 'home', component: stub },
       { path: '/login', name: 'login', component: stub },
       { path: '/dashboard', name: 'dashboard', component: stub },
-      { path: '/insights', name: 'insights', component: stub },
       { path: '/ingresos', name: 'ingresos', component: stub },
       { path: '/presupuesto', name: 'presupuesto', component: stub },
       { path: '/deudas', name: 'deudas', component: stub },

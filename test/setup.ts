@@ -158,39 +158,7 @@ vi.mock('~/config/neon', () => {
 
 const originalFetch = globalThis.fetch
 
-type AiFetchHandler = (body: Record<string, unknown>) => unknown
-
-const aiFetchDefaultHandler: AiFetchHandler = (body) => {
-  const action = body['action']
-  if (action === 'chat') return { reply: 'mock reply' }
-  return { analysis: {} }
-}
-
-let aiFetchHandler: AiFetchHandler = aiFetchDefaultHandler
-
-export function setAiFetchHandler(handler: AiFetchHandler): void {
-  aiFetchHandler = handler
-}
-
-export function resetAiFetchHandler(): void {
-  aiFetchHandler = aiFetchDefaultHandler
-}
-
 const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
-  const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url
-  if (url === '/api/ai-insights') {
-    let body: Record<string, unknown>
-    try {
-      body = init?.body ? (JSON.parse(String(init.body)) as Record<string, unknown>) : {}
-    } catch {
-      body = {}
-    }
-    const payload = aiFetchHandler(body)
-    return new Response(JSON.stringify(payload), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' },
-    })
-  }
   if (typeof originalFetch === 'function') {
     return originalFetch(input as RequestInfo, init)
   }
@@ -268,7 +236,6 @@ beforeEach(() => {
   sessionStorageMock.clear()
   clearNeonStore()
   uuidCounter = 0
-  resetAiFetchHandler()
   setActivePinia(createPinia())
   vi.clearAllMocks()
 })

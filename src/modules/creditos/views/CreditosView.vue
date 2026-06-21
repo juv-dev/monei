@@ -6,6 +6,8 @@ import { useAppFeedback } from '~/shared/composables/useAppFeedback'
 import type { Deuda } from '~/shared/types'
 import { formatMoneyDisplay, parseMoneyInput, onDecimalInput, onIntInput } from '~/shared/utils/format'
 import { validateMonto, validateDescripcion, validateTasaInteres, sanitize } from '~/shared/utils/validation'
+import AppModal from '~/shared/components/ui/AppModal.vue'
+import ConfirmDialog from '~/shared/components/ui/ConfirmDialog.vue'
 
 const {
   deudas,

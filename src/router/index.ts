@@ -6,7 +6,6 @@ export const ROUTE_NAMES = {
   LOGIN: 'login',
   SSO_CALLBACK: 'sso-callback',
   DASHBOARD: 'dashboard',
-  INSIGHTS: 'insights',
   INGRESOS: 'ingresos',
   PRESUPUESTO: 'presupuesto',
   CREDITOS: 'creditos',
@@ -45,11 +44,6 @@ const router = createRouter({
           path: 'dashboard',
           name: ROUTE_NAMES.DASHBOARD,
           component: () => import('~/modules/dashboard/views/DashboardView.vue'),
-        },
-        {
-          path: 'insights',
-          name: ROUTE_NAMES.INSIGHTS,
-          component: () => import('~/modules/insights/views/InsightsView.vue'),
         },
         {
           path: 'ingresos',

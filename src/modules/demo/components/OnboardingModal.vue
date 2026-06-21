@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { X, ArrowRight, ArrowLeft, Wallet, PiggyBank, CreditCard, TrendingUp, BarChart3 } from 'lucide-vue-next'
+import { X, ArrowRight, ArrowLeft, Wallet, PiggyBank, CreditCard, BarChart3 } from 'lucide-vue-next'
 
 const emit = defineEmits<{ close: [] }>()
 
@@ -34,13 +34,6 @@ const steps = [
     title: 'Gestiona todo',
     description:
       'Usa el menú lateral para navegar entre Ingresos, Presupuesto (gastos), Deudas y Tarjetas. Puedes agregar, editar y eliminar registros.',
-  },
-  {
-    icon: TrendingUp,
-    color: '#F59E0B',
-    title: 'Insights inteligentes',
-    description:
-      'En la sección de Insights encontrarás un análisis automático: puntaje financiero, alertas, proyecciones de deuda y recomendaciones personalizadas.',
   },
 ]
 

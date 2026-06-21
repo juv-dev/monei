@@ -73,7 +73,8 @@ export function usePresupuesto() {
     isLoading: computed(() => query.isLoading.value),
     isError: computed(() => query.isError.value),
     totalGastado,
-    addGasto: (data: NuevoGasto) => addMutation.mutate(data),
+    addGasto: (data: NuevoGasto, options?: Parameters<typeof addMutation.mutate>[1]) =>
+      addMutation.mutate(data, options),
     updateGasto: (id: string, data: { monto?: number; descripcion?: string; categoria?: string }) =>
       updateMutation.mutate({ id, data }),
     removeGasto: (id: string) => removeMutation.mutate(id),
